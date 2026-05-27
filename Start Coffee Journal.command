@@ -5,9 +5,8 @@
 
 cd "$(dirname "$0")"
 
-# Prefer the working node@24 keg first (the default /opt/homebrew/bin/node may be
-# broken by a Homebrew library mismatch), then fall back to others.
-export PATH="/opt/homebrew/opt/node@24/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+# Make sure Homebrew's bin is on PATH (where node/npm live).
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 pause_exit() { echo ""; read -n 1 -s -r -p "Press any key to close..."; exit 1; }
 
