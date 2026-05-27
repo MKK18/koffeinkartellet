@@ -1,5 +1,6 @@
 // E2E: shared catalog + tastings from two people + aggregation, against local PocketBase.
 import PocketBase from "../node_modules/pocketbase/dist/pocketbase.es.mjs";
+import { assertSafeToTest } from "./_testlib.mjs";
 const pb = new PocketBase("http://127.0.0.1:8090");
 const ADMIN = { email: "admin@local.dev", password: "devpassword12345" };
 const fail = (m) => { console.error("❌", m); process.exit(1); };
@@ -7,6 +8,7 @@ const cleanup = [];
 
 // admin mints two invites
 await pb.collection("_superusers").authWithPassword(ADMIN.email, ADMIN.password);
+await assertSafeToTest(pb);
 const mkInvite = async () => (await pb.collection("invites").create({ code: "C-" + Math.random().toString(36).slice(2, 7), kind: "new_household" }));
 const inv1 = await mkInvite(), inv2 = await mkInvite();
 cleanup.push(["invites", inv1.id], ["invites", inv2.id]);

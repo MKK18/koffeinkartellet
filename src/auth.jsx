@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthChange, currentUser, logout as pbLogout } from "./pb.js";
+import { pb, onAuthChange, currentUser, isLoggedIn, logout as pbLogout } from "./pb.js";
 
 const AuthCtx = createContext(null);
 
@@ -9,6 +9,11 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsub = onAuthChange((u) => setUser(u));
+    // Refresh the cached session on load so profile/role changes (e.g. becoming
+    // admin) propagate without needing to sign out and back in.
+    if (isLoggedIn()) {
+      pb.collection("users").authRefresh().catch(() => { /* keep cached session if offline/expired */ });
+    }
     setReady(true);
     return unsub;
   }, []);

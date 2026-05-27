@@ -1,11 +1,13 @@
 // E2E: admin-gated invites, feed query, profile comparison data.
 import PocketBase from "../node_modules/pocketbase/dist/pocketbase.es.mjs";
+import { assertSafeToTest } from "./_testlib.mjs";
 const pb = new PocketBase("http://127.0.0.1:8090");
 const ADMIN = { email: "admin@local.dev", password: "devpassword12345" };
 const fail = (m) => { console.error("❌", m); process.exit(1); };
 const cleanup = [];
 
 await pb.collection("_superusers").authWithPassword(ADMIN.email, ADMIN.password);
+await assertSafeToTest(pb);
 const seed = await pb.collection("invites").create({ code: "SEED-" + Math.random().toString(36).slice(2, 6), kind: "new_household" });
 cleanup.push(["invites", seed.id]);
 pb.authStore.clear();

@@ -1,5 +1,6 @@
 // End-to-end test of the invite-gated signup + login flow against local PocketBase.
 import PocketBase from "../node_modules/pocketbase/dist/pocketbase.es.mjs";
+import { assertSafeToTest } from "./_testlib.mjs";
 
 const pb = new PocketBase("http://127.0.0.1:8090");
 const ADMIN = { email: "admin@local.dev", password: "devpassword12345" };
@@ -7,6 +8,7 @@ const fail = (m) => { console.error("❌", m); process.exit(1); };
 
 // 1. superuser mints a fresh invite
 await pb.collection("_superusers").authWithPassword(ADMIN.email, ADMIN.password);
+await assertSafeToTest(pb);
 const code = "TEST-" + Math.random().toString(36).slice(2, 7).toUpperCase();
 const invite = await pb.collection("invites").create({ code, kind: "new_household" });
 console.log("✓ admin minted invite:", code);
