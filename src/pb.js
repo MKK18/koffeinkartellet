@@ -15,6 +15,12 @@ pb.autoCancellation(false);
 export const currentUser = () => pb.authStore.record;
 export const isLoggedIn = () => pb.authStore.isValid;
 
+// URL of a user's uploaded avatar photo, or "" if they have none.
+export function avatarUrl(user) {
+  if (!user?.avatar) return "";
+  try { return pb.files.getURL(user, user.avatar); } catch { return ""; }
+}
+
 export function onAuthChange(cb) {
   // fire once immediately, then on every change
   cb(pb.authStore.record);

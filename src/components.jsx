@@ -2,6 +2,29 @@ import { useState, useEffect, useRef } from "react";
 import { C, sans, serif } from "./ui.jsx";
 import { useIsWide } from "./useMediaQuery.js";
 import { COFFEE_COUNTRIES } from "./lib.js";
+import { avatarUrl } from "./pb.js";
+
+// Round avatar: shows the uploaded photo if there is one, else a colored circle
+// with the person's first initial.
+export function Avatar({ user, size = 32, onClick, ring }) {
+  const url = avatarUrl(user);
+  const initial = (user?.name || user?.email || "?").trim().charAt(0).toUpperCase();
+  const base = {
+    width: size, height: size, borderRadius: "50%", flexShrink: 0,
+    border: ring ? `2px solid ${ring}` : "none",
+    cursor: onClick ? "pointer" : "default", display: "block",
+  };
+  if (url) {
+    return <img src={url} alt={user?.name || ""} onClick={onClick} style={{ ...base, objectFit: "cover" }} />;
+  }
+  return (
+    <div onClick={onClick} title={user?.name || ""} style={{
+      ...base, background: user?.color || C.brown, display: "flex", alignItems: "center",
+      justifyContent: "center", color: "#fff8f0", fontFamily: serif, fontWeight: 700,
+      fontSize: Math.round(size * 0.46), lineHeight: 1, userSelect: "none",
+    }}>{initial}</div>
+  );
+}
 
 export function Pill({ children, green, awaiting, color }) {
   if (awaiting) {

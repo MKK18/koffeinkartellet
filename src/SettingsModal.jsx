@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { getApiKey, setApiKey } from "./settings.js";
 import { updateProfile, changePassword, requestEmailChange, currentUser } from "./pb.js";
 import { useAuth } from "./auth.jsx";
+import { compressImage } from "./lib.js";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn, RATER_COLORS } from "./ui.jsx";
-import { Sheet, SectionHead } from "./components.jsx";
+import { Sheet, SectionHead, Avatar } from "./components.jsx";
 
 function Note({ ok, children }) {
   if (!children) return null;
@@ -17,7 +18,18 @@ export default function SettingsModal({ onClose }) {
   const [name, setName] = useState(user?.name || "");
   const [color, setColor] = useState(user?.color || RATER_COLORS[0]);
   const [bio, setBio] = useState(user?.bio || "");
+  const [avatarBlob, setAvatarBlob] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const [removeAvatar, setRemoveAvatar] = useState(false);
   const [profileMsg, setProfileMsg] = useState(null);
+  const fileRef = useRef();
+
+  const pickAvatar = async (file) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    const { blob } = await compressImage(file);
+    setAvatarBlob(blob); setRemoveAvatar(false);
+    setAvatarPreview(URL.createObjectURL(blob));
+  };
 
   // password
   const [oldPw, setOldPw] = useState("");
@@ -37,8 +49,22 @@ export default function SettingsModal({ onClose }) {
 
   const saveProfile = async () => {
     setBusy("profile"); setProfileMsg(null);
-    try { await updateProfile({ name: name.trim(), color, bio: bio.trim() }); refresh(); setProfileMsg({ ok: true, t: "Profile saved." }); }
-    catch (e) { setProfileMsg({ ok: false, t: e?.message || "Couldn't save." }); }
+    try {
+      let patch;
+      if (avatarBlob || removeAvatar) {
+        patch = new FormData();
+        patch.append("name", name.trim());
+        patch.append("color", color);
+        patch.append("bio", bio.trim());
+        patch.append("avatar", avatarBlob || "", avatarBlob ? "avatar.jpg" : undefined);
+      } else {
+        patch = { name: name.trim(), color, bio: bio.trim() };
+      }
+      await updateProfile(patch);
+      refresh();
+      setAvatarBlob(null); setAvatarPreview(""); setRemoveAvatar(false);
+      setProfileMsg({ ok: true, t: "Profile saved." });
+    } catch (e) { setProfileMsg({ ok: false, t: e?.message || "Couldn't save." }); }
     finally { setBusy(""); }
   };
 
@@ -70,6 +96,17 @@ export default function SettingsModal({ onClose }) {
 
       {/* Profile */}
       <SectionHead title="Profile" />
+      <label style={labelStyle}>Photo</label>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+        {avatarPreview
+          ? <img src={avatarPreview} alt="" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover" }} />
+          : <Avatar user={{ ...user, color, avatar: removeAvatar ? "" : user?.avatar }} size={56} />}
+        <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => pickAvatar(e.target.files[0])} />
+        <button onClick={() => fileRef.current?.click()} style={{ ...ghostBtn, padding: "7px 12px", fontSize: 12 }}>Upload photo</button>
+        {(user?.avatar || avatarPreview) && (
+          <button onClick={() => { setAvatarBlob(null); setAvatarPreview(""); setRemoveAvatar(true); }} style={{ ...ghostBtn, padding: "7px 12px", fontSize: 12, color: "#b07060", borderColor: "#e0c0b0" }}>Remove</button>
+        )}
+      </div>
       <label style={labelStyle}>Display name</label>
       <input style={{ ...inputStyle, marginBottom: 12 }} value={name} onChange={(e) => setName(e.target.value)} />
       <label style={labelStyle}>Color</label>

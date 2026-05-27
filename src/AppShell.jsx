@@ -2,18 +2,19 @@ import { useState, useCallback, useMemo } from "react";
 import { C, sans, serif, FontLink } from "./ui.jsx";
 import { useAuth } from "./auth.jsx";
 import { NavProvider } from "./nav.jsx";
-import { Sheet } from "./components.jsx";
+import { Sheet, Avatar } from "./components.jsx";
 import Catalog from "./Catalog.jsx";
 import Feed from "./Feed.jsx";
 import Profile from "./Profile.jsx";
 import CoffeeDetail from "./CoffeeDetail.jsx";
 import CoffeeForm from "./CoffeeForm.jsx";
 import SettingsModal from "./SettingsModal.jsx";
+import AccountMenu from "./AccountMenu.jsx";
 
 const TABS = [
   { id: "catalog", label: "Catalog", icon: "☕" },
   { id: "feed", label: "Feed", icon: "📋" },
-  { id: "me", label: "You", icon: "👤" },
+  { id: "taste", label: "Taste", icon: "👅" },
 ];
 
 export default function AppShell() {
@@ -23,6 +24,7 @@ export default function AppShell() {
   const [form, setForm] = useState(null);        // { mode: 'add'|'edit', coffee }
   const [profileId, setProfileId] = useState(null);
   const [settings, setSettings] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [dataVersion, setDataVersion] = useState(0);
 
   const bumpData = useCallback(() => setDataVersion((v) => v + 1), []);
@@ -38,7 +40,7 @@ export default function AppShell() {
   }), [dataVersion, bumpData]);
 
   const Screen = tab === "catalog" ? <Catalog /> : tab === "feed" ? <Feed /> : <Profile />;
-  const title = tab === "catalog" ? "The catalog" : tab === "feed" ? "Feed" : "You";
+  const title = tab === "catalog" ? "The catalog" : tab === "feed" ? "Feed" : "Taste";
 
   return (
     <NavProvider value={nav}>
@@ -52,15 +54,15 @@ export default function AppShell() {
               <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#b89870", fontFamily: sans }}>☕ Koffeinkartellet</div>
               <h1 style={{ margin: "3px 0 0", fontFamily: serif, fontSize: 24, color: "#fff8f0", fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.01em" }}>{title}</h1>
             </div>
-            <span style={{ width: 30, height: 30, borderRadius: "50%", background: user?.color || C.brown, border: "2px solid #4a3525" }} title={user?.name} />
+            <Avatar user={user} size={34} ring="#4a3525" onClick={() => setAccountOpen(true)} />
           </div>
         </div>
 
         {/* Active screen */}
         <div key={tab}>{Screen}</div>
 
-        {/* Floating add button (hidden on profile tab) */}
-        {tab !== "me" && (
+        {/* Floating add button (hidden on the Taste tab) */}
+        {tab !== "taste" && (
           <button onClick={() => nav.addCoffee()} aria-label="Add coffee" style={{
             position: "fixed", right: 18, bottom: "calc(84px + env(safe-area-inset-bottom))", zIndex: 30,
             width: 58, height: 58, borderRadius: "50%", border: "none", background: C.brown, color: "#fff8f0",
@@ -113,6 +115,7 @@ export default function AppShell() {
           />
         )}
         {settings && <SettingsModal onClose={() => setSettings(false)} />}
+        {accountOpen && <AccountMenu onClose={() => setAccountOpen(false)} onOpenSettings={() => setSettings(true)} />}
       </div>
     </NavProvider>
   );

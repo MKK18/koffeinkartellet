@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { C, sans, serif, ghostBtn, primaryBtn } from "./ui.jsx";
+import { C, sans, serif } from "./ui.jsx";
 import { useAuth } from "./auth.jsx";
 import { useNav } from "./nav.jsx";
-import {
-  getUser, listTastingsByUser, listInvites, createInvite, deleteInvite, ensureMyHousehold,
-} from "./data.js";
+import { Avatar } from "./components.jsx";
+import { getUser, listTastingsByUser } from "./data.js";
 import TasteProfile from "./TasteProfile.jsx";
 
 function Stat({ value, label, color = C.brown }) {
@@ -48,57 +47,10 @@ function Bars({ title, data, color }) {
   );
 }
 
-function AdminInvites() {
-  const [invites, setInvites] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState("");
-  const load = () => listInvites().then(setInvites).catch(() => setInvites([]));
-  useEffect(() => { load(); }, []);
-
-  const mint = async (kind) => {
-    setBusy(true);
-    try {
-      // "join my household" invites must reference the admin's group.
-      const group = kind === "join_group" ? (await ensureMyHousehold()).group?.id : null;
-      await createInvite({ kind, group });
-      await load();
-    } finally { setBusy(false); }
-  };
-  const copy = (code) => { navigator.clipboard?.writeText(code); setCopied(code); setTimeout(() => setCopied(""), 1500); };
-  const remove = async (id) => { if (confirm("Delete this invite?")) { await deleteInvite(id); await load(); } };
-
-  return (
-    <div style={{ marginTop: 24, padding: 16, background: C.tint, borderRadius: 14, border: `1px solid ${C.borderSoft}` }}>
-      <div style={{ fontFamily: serif, fontSize: 17, color: C.ink, marginBottom: 4 }}>Invites <span style={{ fontSize: 11, background: C.brown, color: "#fff8f0", padding: "2px 7px", borderRadius: 8, letterSpacing: "0.06em", verticalAlign: "middle" }}>ADMIN</span></div>
-      <div style={{ fontSize: 12, color: C.muted, fontFamily: sans, marginBottom: 12 }}>Mint a code and share it. Recipients use it to sign up.</div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-        <button onClick={() => mint("join_group")} disabled={busy} style={primaryBtn(!busy)}>+ Invite to my household</button>
-        <button onClick={() => mint("new_household")} disabled={busy} style={ghostBtn}>+ New household invite</button>
-      </div>
-      {invites === null ? <div style={{ color: C.muted, fontFamily: sans, fontSize: 13 }}>Loading…</div> : invites.length === 0 ? (
-        <div style={{ color: C.faint, fontFamily: sans, fontSize: 13 }}>No invites yet.</div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {invites.map((inv) => (
-            <div key={inv.id} style={{ display: "flex", alignItems: "center", gap: 8, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 10px" }}>
-              <code style={{ fontFamily: "monospace", fontSize: 14, color: C.ink, letterSpacing: "0.04em" }}>{inv.code}</code>
-              <span style={{ fontSize: 10, color: C.faint, fontFamily: sans }}>{inv.kind === "new_household" ? "new household" : "join"}</span>
-              {inv.used_by && <span style={{ fontSize: 10, color: "#4a7a50", fontFamily: sans }}>used</span>}
-              <span style={{ flex: 1 }} />
-              {!inv.used_by && <button onClick={() => copy(inv.code)} style={{ ...ghostBtn, padding: "5px 10px", fontSize: 12 }}>{copied === inv.code ? "Copied!" : "Copy"}</button>}
-              <button onClick={() => remove(inv.id)} style={{ background: "none", border: "none", color: "#b89880", cursor: "pointer", fontSize: 16 }}>×</button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // userId: whose profile. onClose: present when shown as an overlay (someone else).
 export default function Profile({ userId, onClose }) {
-  const { user: me, logout } = useAuth();
-  const { openCoffee, openSettings } = useNav();
+  const { user: me } = useAuth();
+  const { openCoffee } = useNav();
   const isMe = !userId || userId === me?.id;
   const [view, setView] = useState("profile"); // own profile: 'profile' | 'palate'
   const [person, setPerson] = useState(isMe ? me : null);
@@ -139,7 +91,7 @@ export default function Profile({ userId, onClose }) {
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "16px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-        <span style={{ width: 52, height: 52, borderRadius: "50%", background: color, flexShrink: 0 }} />
+        <Avatar user={person} size={52} />
         <div style={{ flex: 1 }}>
           <h2 style={{ margin: 0, fontFamily: serif, fontSize: 24, color: C.ink }}>{person?.name || "…"}{person?.is_admin && <span style={{ fontSize: 10, background: C.brown, color: "#fff8f0", padding: "2px 7px", borderRadius: 8, letterSpacing: "0.06em", marginLeft: 8, verticalAlign: "middle" }}>ADMIN</span>}</h2>
           {person?.bio && <div style={{ fontSize: 13, color: C.muted, fontFamily: sans, marginTop: 2 }}>{person.bio}</div>}
@@ -155,7 +107,7 @@ export default function Profile({ userId, onClose }) {
 
       {isMe && (
         <div style={{ display: "flex", gap: 6, background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, padding: 4, marginBottom: 20 }}>
-          {[["profile", "Profile"], ["palate", "Palate vs household"]].map(([id, label]) => {
+          {[["profile", "My taste"], ["palate", "Household taste"]].map(([id, label]) => {
             const active = view === id;
             return (
               <button key={id} onClick={() => setView(id)} style={{
@@ -213,17 +165,6 @@ export default function Profile({ userId, onClose }) {
       <Bars title={`${isMe ? "Your" : "Their"} favourite origins`} data={groupAverages(tastings || [], "origin")} color={color} />
       <Bars title="By process" data={groupAverages(tastings || [], "process")} color={color} />
       </>)}
-
-      {isMe && (
-        <>
-          {me?.is_admin && <AdminInvites />}
-          <div style={{ display: "flex", gap: 10, marginTop: 24, paddingTop: 16, borderTop: "1px solid #ecddd0" }}>
-            <button onClick={openSettings} style={ghostBtn}>⚙ Account &amp; settings</button>
-            <span style={{ flex: 1 }} />
-            <button onClick={logout} style={{ ...ghostBtn, color: "#b07060", borderColor: "#e0c0b0" }}>Sign out</button>
-          </div>
-        </>
-      )}
     </div>
   );
 }
