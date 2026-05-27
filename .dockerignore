@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.env
+.env.*
+pocketbase/pocketbase
+pocketbase/pb_data
+pocketbase/pb_public
+pocketbase/*.zip
+pocketbase/CHANGELOG.md
+pocketbase/LICENSE.md
+*.log
+.DS_Store
+.claude

@@ -1,8 +1,12 @@
 import PocketBase from "pocketbase";
 
 // One shared PocketBase client for the whole app.
-// URL comes from .env (VITE_PB_URL) so the same code works locally and in prod.
-export const pb = new PocketBase(import.meta.env.VITE_PB_URL || "http://127.0.0.1:8090");
+// - explicit VITE_PB_URL wins (set it in .env if you want)
+// - local dev: the PocketBase binary on your Mac
+// - production: same origin "/" — the PocketBase container serves the app AND
+//   the API from one domain, so no hardcoded URL is needed.
+const PB_URL = import.meta.env.VITE_PB_URL || (import.meta.env.DEV ? "http://127.0.0.1:8090" : "/");
+export const pb = new PocketBase(PB_URL);
 
 // Keep auth state across reloads (PocketBase already persists to localStorage,
 // this just makes the autoCancel behaviour saner for a small app).
