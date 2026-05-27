@@ -218,7 +218,7 @@ export default function Profile({ userId, onClose }) {
         <>
           {me?.is_admin && <AdminInvites />}
           <div style={{ display: "flex", gap: 10, marginTop: 24, paddingTop: 16, borderTop: "1px solid #ecddd0" }}>
-            <button onClick={openSettings} style={ghostBtn}>⚙ Settings (API key)</button>
+            <button onClick={openSettings} style={ghostBtn}>⚙ Account &amp; settings</button>
             <span style={{ flex: 1 }} />
             <button onClick={logout} style={{ ...ghostBtn, color: "#b07060", borderColor: "#e0c0b0" }}>Sign out</button>
           </div>

@@ -95,5 +95,25 @@ export async function signUpWithInvite({ email, password, name, color, code }) {
 export async function updateProfile(patch) {
   const u = currentUser();
   if (!u) throw new Error("Not logged in.");
-  return pb.collection("users").update(u.id, patch);
+  const rec = await pb.collection("users").update(u.id, patch);
+  await pb.collection("users").authRefresh();
+  return rec;
+}
+
+// Change password. PocketBase requires the current password; we then re-auth
+// so the session stays valid with the new credentials.
+export async function changePassword(oldPassword, newPassword) {
+  const u = currentUser();
+  if (!u) throw new Error("Not logged in.");
+  await pb.collection("users").update(u.id, {
+    oldPassword, password: newPassword, passwordConfirm: newPassword,
+  });
+  await pb.collection("users").authWithPassword(u.email, newPassword);
+}
+
+// Request an email change. PocketBase sends a confirmation link to the NEW
+// address; the change only takes effect once that link is clicked. Requires
+// email delivery (configured on the server in Phase 2).
+export async function requestEmailChange(newEmail) {
+  return pb.collection("users").requestEmailChange(newEmail);
 }

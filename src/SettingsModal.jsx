@@ -1,35 +1,125 @@
 import { useState } from "react";
 import { getApiKey, setApiKey } from "./settings.js";
-import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
-import { Sheet } from "./components.jsx";
+import { updateProfile, changePassword, requestEmailChange, currentUser } from "./pb.js";
+import { useAuth } from "./auth.jsx";
+import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn, RATER_COLORS } from "./ui.jsx";
+import { Sheet, SectionHead } from "./components.jsx";
+
+function Note({ ok, children }) {
+  if (!children) return null;
+  return <div style={{ marginTop: 8, fontSize: 13, fontFamily: sans, color: ok ? "#3a6040" : "#a05040" }}>{children}</div>;
+}
 
 export default function SettingsModal({ onClose }) {
+  const { user, refresh } = useAuth();
+
+  // profile
+  const [name, setName] = useState(user?.name || "");
+  const [color, setColor] = useState(user?.color || RATER_COLORS[0]);
+  const [bio, setBio] = useState(user?.bio || "");
+  const [profileMsg, setProfileMsg] = useState(null);
+
+  // password
+  const [oldPw, setOldPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [pwMsg, setPwMsg] = useState(null);
+
+  // email
+  const [newEmail, setNewEmail] = useState("");
+  const [emailMsg, setEmailMsg] = useState(null);
+
+  // api key
   const [key, setKey] = useState(getApiKey());
-  const [show, setShow] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+  const [keyMsg, setKeyMsg] = useState(null);
+
+  const [busy, setBusy] = useState("");
+
+  const saveProfile = async () => {
+    setBusy("profile"); setProfileMsg(null);
+    try { await updateProfile({ name: name.trim(), color, bio: bio.trim() }); refresh(); setProfileMsg({ ok: true, t: "Profile saved." }); }
+    catch (e) { setProfileMsg({ ok: false, t: e?.message || "Couldn't save." }); }
+    finally { setBusy(""); }
+  };
+
+  const savePassword = async () => {
+    if (newPw.length < 8) { setPwMsg({ ok: false, t: "New password must be at least 8 characters." }); return; }
+    setBusy("pw"); setPwMsg(null);
+    try { await changePassword(oldPw, newPw); setOldPw(""); setNewPw(""); setPwMsg({ ok: true, t: "Password changed." }); }
+    catch (e) { setPwMsg({ ok: false, t: e?.message?.includes("password") ? "Current password is incorrect." : "Couldn't change password." }); }
+    finally { setBusy(""); }
+  };
+
+  const saveEmail = async () => {
+    if (!newEmail.includes("@")) { setEmailMsg({ ok: false, t: "Enter a valid email." }); return; }
+    setBusy("email"); setEmailMsg(null);
+    try { await requestEmailChange(newEmail.trim()); setEmailMsg({ ok: true, t: `Confirmation sent to ${newEmail.trim()}. Click the link there to finish. (Email delivery goes live after deployment.)` }); setNewEmail(""); }
+    catch (e) { setEmailMsg({ ok: false, t: e?.message || "Couldn't request the change." }); }
+    finally { setBusy(""); }
+  };
+
+  const saveKey = () => { setApiKey(key.trim()); setKeyMsg({ ok: true, t: "Saved." }); };
 
   return (
-    <Sheet onClose={onClose} maxWidth={460}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <h2 style={{ margin: 0, fontFamily: serif, fontSize: 22, color: C.ink }}>Settings</h2>
+    <Sheet onClose={onClose} maxWidth={480}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+        <h2 style={{ margin: 0, fontFamily: serif, fontSize: 22, color: C.ink }}>Account &amp; settings</h2>
         <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 26, color: C.muted, cursor: "pointer", lineHeight: 1 }}>×</button>
       </div>
-      <p style={{ fontSize: 13, color: "#5a4030", fontFamily: sans, lineHeight: 1.55, marginBottom: 16 }}>
-        Paste your <strong>Anthropic API key</strong> to enable AI package scanning. It stays in this browser only and is sent only to Anthropic when you scan a photo.
-      </p>
-      <label style={labelStyle}>API Key</label>
-      <div style={{ position: "relative", marginBottom: 8 }}>
-        <input type={show ? "text" : "password"} value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-ant-..." style={{ ...inputStyle, paddingRight: 64 }} />
-        <button onClick={() => setShow((s) => !s)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.muted, fontFamily: sans, fontSize: 12, cursor: "pointer", padding: "4px 8px" }}>{show ? "Hide" : "Show"}</button>
+      <div style={{ fontSize: 12, color: C.muted, fontFamily: sans }}>Signed in as {currentUser()?.email}</div>
+
+      {/* Profile */}
+      <SectionHead title="Profile" />
+      <label style={labelStyle}>Display name</label>
+      <input style={{ ...inputStyle, marginBottom: 12 }} value={name} onChange={(e) => setName(e.target.value)} />
+      <label style={labelStyle}>Color</label>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        {RATER_COLORS.map((c) => (
+          <button key={c} type="button" onClick={() => setColor(c)} style={{ width: 32, height: 32, borderRadius: "50%", background: c, cursor: "pointer", border: color === c ? "3px solid #2c1a0e" : "3px solid transparent" }} />
+        ))}
       </div>
-      <p style={{ fontSize: 12, color: C.faint, fontFamily: sans, marginBottom: 20 }}>
-        Get a key at console.anthropic.com → API Keys.
-      </p>
-      <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
-        <button onClick={() => { setApiKey(""); setKey(""); }} style={{ ...ghostBtn, color: "#b07060", borderColor: "#e0c0b0" }}>Remove key</button>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={onClose} style={ghostBtn}>Cancel</button>
-          <button onClick={() => { setApiKey(key.trim()); onClose(); }} style={primaryBtn(true)}>Save</button>
-        </div>
+      <label style={labelStyle}>Bio</label>
+      <textarea style={{ ...inputStyle, minHeight: 50, resize: "vertical" }} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="optional" />
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+        <button onClick={saveProfile} disabled={busy === "profile"} style={primaryBtn(busy !== "profile")}>{busy === "profile" ? "Saving…" : "Save profile"}</button>
+      </div>
+      <Note ok={profileMsg?.ok}>{profileMsg?.t}</Note>
+
+      {/* Password */}
+      <SectionHead title="Change password" />
+      <label style={labelStyle}>Current password</label>
+      <input type="password" style={{ ...inputStyle, marginBottom: 12 }} value={oldPw} onChange={(e) => setOldPw(e.target.value)} autoComplete="current-password" />
+      <label style={labelStyle}>New password</label>
+      <input type="password" style={inputStyle} value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" />
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+        <button onClick={savePassword} disabled={busy === "pw" || !oldPw || !newPw} style={primaryBtn(busy !== "pw" && !!oldPw && !!newPw)}>{busy === "pw" ? "Saving…" : "Change password"}</button>
+      </div>
+      <Note ok={pwMsg?.ok}>{pwMsg?.t}</Note>
+
+      {/* Email */}
+      <SectionHead title="Change email" />
+      <label style={labelStyle}>New email</label>
+      <input type="email" style={inputStyle} value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="new@example.com" />
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+        <button onClick={saveEmail} disabled={busy === "email" || !newEmail} style={primaryBtn(busy !== "email" && !!newEmail)}>{busy === "email" ? "Sending…" : "Send confirmation"}</button>
+      </div>
+      <Note ok={emailMsg?.ok}>{emailMsg?.t}</Note>
+
+      {/* API key */}
+      <SectionHead title="Anthropic API key" />
+      <div style={{ fontSize: 12, color: C.muted, fontFamily: sans, marginBottom: 8 }}>Enables photo &amp; link scanning. Stored in this browser only.</div>
+      <div style={{ position: "relative" }}>
+        <input type={showKey ? "text" : "password"} value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-ant-..." style={{ ...inputStyle, paddingRight: 64 }} />
+        <button onClick={() => setShowKey((s) => !s)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.muted, fontFamily: sans, fontSize: 12, cursor: "pointer", padding: "4px 8px" }}>{showKey ? "Hide" : "Show"}</button>
+      </div>
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 10 }}>
+        <button onClick={() => { setApiKey(""); setKey(""); setKeyMsg({ ok: true, t: "Removed." }); }} style={{ ...ghostBtn, color: "#b07060", borderColor: "#e0c0b0" }}>Remove</button>
+        <button onClick={saveKey} style={primaryBtn(true)}>Save key</button>
+      </div>
+      <Note ok={keyMsg?.ok}>{keyMsg?.t}</Note>
+
+      <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #ecddd0", display: "flex", justifyContent: "flex-end" }}>
+        <button onClick={onClose} style={ghostBtn}>Done</button>
       </div>
     </Sheet>
   );
