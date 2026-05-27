@@ -1,6 +1,6 @@
 import { AuthProvider, useAuth } from "./auth.jsx";
 import LoginScreen from "./LoginScreen.jsx";
-import Catalog from "./Catalog.jsx";
+import AppShell from "./AppShell.jsx";
 import { C, sans } from "./ui.jsx";
 
 function Gate() {
@@ -12,7 +12,7 @@ function Gate() {
       </div>
     );
   }
-  return user ? <Catalog /> : <LoginScreen />;
+  return user ? <AppShell /> : <LoginScreen />;
 }
 
 export default function Root() {

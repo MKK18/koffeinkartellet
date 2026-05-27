@@ -51,10 +51,19 @@ export async function signUpWithInvite({ email, password, name, color, code }) {
     passwordConfirm: password,
     name,
     color: color || "#8B5E3C",
-    // first ever account becomes admin; otherwise normal member
     is_admin: false,
   });
   await login(email, password);
+
+  // The first-ever account becomes the admin (the person who set up the platform).
+  // NOTE: Phase 2 hardens this with a server-side hook so is_admin can't be self-set.
+  try {
+    const all = await pb.collection("users").getList(1, 1);
+    if (all.totalItems === 1) {
+      await pb.collection("users").update(currentUser().id, { is_admin: true });
+      await pb.collection("users").authRefresh();
+    }
+  } catch { /* non-fatal */ }
 
   // Mark invite used (best-effort).
   try {

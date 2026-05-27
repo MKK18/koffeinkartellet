@@ -82,6 +82,50 @@ export async function listAllTastings() {
   return pb.collection("tastings").getFullList({ sort: "-tasted_on" });
 }
 
+// Recent tastings across everyone, for the feed.
+export async function listRecentTastings(limit = 50) {
+  const res = await pb.collection("tastings").getList(1, limit, { sort: "-created", expand: "user,coffee" });
+  return res.items;
+}
+
+// Everything one person has tasted (for their profile).
+export async function listTastingsByUser(userId) {
+  return pb.collection("tastings").getFullList({ filter: `user = "${userId}"`, sort: "-tasted_on", expand: "coffee" });
+}
+
+export async function getUser(id) {
+  return pb.collection("users").getOne(id);
+}
+
+export async function listUsers() {
+  return pb.collection("users").getFullList({ sort: "name" });
+}
+
+// ── Invites (admin) ────────────────────────────────────────
+
+export function randomInviteCode() {
+  const words = ["BEAN", "BREW", "ROAST", "CREMA", "GRIND", "POUR", "CUP", "DRIP"];
+  const w = words[Math.floor(Math.random() * words.length)];
+  const n = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `${w}-${n}`;
+}
+
+export async function listInvites() {
+  return pb.collection("invites").getFullList({ sort: "-created", expand: "used_by,created_by" });
+}
+
+export async function createInvite({ kind = "join_group", group = null, code } = {}) {
+  return pb.collection("invites").create({
+    code: code || randomInviteCode(),
+    kind, group: group || null,
+    created_by: currentUser()?.id,
+  });
+}
+
+export async function deleteInvite(id) {
+  return pb.collection("invites").delete(id);
+}
+
 export async function listTastingsForCoffee(coffeeId) {
   return pb.collection("tastings").getFullList({
     filter: `coffee = "${coffeeId}"`,

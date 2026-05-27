@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
 import { Sheet, SectionHead, Pill, Spinner } from "./components.jsx";
 import { useAuth } from "./auth.jsx";
+import { useNav } from "./nav.jsx";
 import { listTastingsForCoffee, createTasting, updateTasting, deleteTasting, coffeeImageUrl } from "./data.js";
 
 function Fact({ label, value }) {
@@ -19,6 +20,7 @@ const EMPTY_T = { score: 7, grind: "", brew_method: "", notes: "", tasted_on: to
 
 export default function CoffeeDetail({ coffee, onClose, onEdit }) {
   const { user } = useAuth();
+  const { openProfile, bumpData } = useNav();
   const [tastings, setTastings] = useState(null);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(EMPTY_T);
@@ -51,12 +53,12 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
       if (editId) await updateTasting(editId, payload);
       else await createTasting(payload);
       setAdding(false); setEditId(null);
-      await load();
+      await load(); bumpData();
     } finally { setBusy(false); }
   };
   const remove = async (id) => {
     if (!confirm("Remove this tasting?")) return;
-    await deleteTasting(id); await load();
+    await deleteTasting(id); await load(); bumpData();
   };
 
   const img = coffeeImageUrl(coffee, "300x300");
@@ -127,7 +129,7 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
               return (
                 <div key={t.id} style={{ background: "#fdf4ee", border: "1px solid #f0e0d0", borderLeft: `4px solid ${u.color || C.brown}`, borderRadius: 10, padding: "12px 14px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: sans }}>
-                    <span style={{ color: u.color || C.brown, fontWeight: 700, fontSize: 13 }}>{u.name || "Someone"}</span>
+                    <span onClick={() => u.id && openProfile(u.id)} style={{ color: u.color || C.brown, fontWeight: 700, fontSize: 13, cursor: u.id ? "pointer" : "default" }}>{u.name || "Someone"}</span>
                     <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 18, color: u.color || C.brown }}>{Number(t.score).toFixed(1)}</span>
                     <span style={{ fontSize: 11, color: C.faint }}>/ 10</span>
                     {t.grind && <span style={{ fontSize: 11, padding: "1px 8px", borderRadius: 10, background: C.card, color: C.muted, border: `1px solid ${C.border}` }}>Grind {t.grind}</span>}
