@@ -25,7 +25,8 @@ COPY --from=build /app/dist ./pb_public
 COPY docker-entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
-# pb_data (SQLite + uploaded photos) lives on a mounted volume in production
-VOLUME ["/pb/pb_data"]
+# pb_data (SQLite + uploaded photos) persists via a Railway Volume mounted at
+# /pb/pb_data (added in the Railway UI). Railway rejects a Dockerfile VOLUME line,
+# so we don't declare one here.
 EXPOSE 8090
 ENTRYPOINT ["./entrypoint.sh"]
