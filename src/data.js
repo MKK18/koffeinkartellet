@@ -97,6 +97,36 @@ export async function getUser(id) {
   return pb.collection("users").getOne(id);
 }
 
+// The current user's household (group) + its members. Null if not in one.
+export async function getMyHousehold() {
+  const me = currentUser()?.id;
+  if (!me) return null;
+  const mine = await pb.collection("group_members").getFullList({ filter: `user = "${me}"`, expand: "group" });
+  if (!mine.length) return null;
+  const groupId = mine[0].group;
+  const members = await pb.collection("group_members").getFullList({ filter: `group = "${groupId}"`, expand: "user" });
+  return {
+    group: mine[0].expand?.group,
+    memberIds: members.map((m) => m.user),
+    members: members.map((m) => m.expand?.user).filter(Boolean),
+  };
+}
+
+// All tastings with their coffee + rater attached (for palate analysis).
+export async function listTastingsExpanded() {
+  return pb.collection("tastings").getFullList({ expand: "user,coffee", sort: "-tasted_on" });
+}
+
+// Return the current user's household, creating one if they don't have it yet.
+export async function ensureMyHousehold() {
+  const existing = await getMyHousehold();
+  if (existing?.group) return existing;
+  const me = currentUser();
+  const group = await pb.collection("groups").create({ name: `${me.name}'s household`, created_by: me.id });
+  await pb.collection("group_members").create({ group: group.id, user: me.id, role: "owner" });
+  return { group, memberIds: [me.id], members: [me] };
+}
+
 export async function listUsers() {
   return pb.collection("users").getFullList({ sort: "name" });
 }

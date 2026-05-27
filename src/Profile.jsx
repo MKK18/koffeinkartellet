@@ -3,8 +3,9 @@ import { C, sans, serif, ghostBtn, primaryBtn } from "./ui.jsx";
 import { useAuth } from "./auth.jsx";
 import { useNav } from "./nav.jsx";
 import {
-  getUser, listTastingsByUser, listInvites, createInvite, deleteInvite,
+  getUser, listTastingsByUser, listInvites, createInvite, deleteInvite, ensureMyHousehold,
 } from "./data.js";
+import TasteProfile from "./TasteProfile.jsx";
 
 function Stat({ value, label, color = C.brown }) {
   return (
@@ -54,7 +55,15 @@ function AdminInvites() {
   const load = () => listInvites().then(setInvites).catch(() => setInvites([]));
   useEffect(() => { load(); }, []);
 
-  const mint = async (kind) => { setBusy(true); try { await createInvite({ kind }); await load(); } finally { setBusy(false); } };
+  const mint = async (kind) => {
+    setBusy(true);
+    try {
+      // "join my household" invites must reference the admin's group.
+      const group = kind === "join_group" ? (await ensureMyHousehold()).group?.id : null;
+      await createInvite({ kind, group });
+      await load();
+    } finally { setBusy(false); }
+  };
   const copy = (code) => { navigator.clipboard?.writeText(code); setCopied(code); setTimeout(() => setCopied(""), 1500); };
   const remove = async (id) => { if (confirm("Delete this invite?")) { await deleteInvite(id); await load(); } };
 
@@ -91,6 +100,7 @@ export default function Profile({ userId, onClose }) {
   const { user: me, logout } = useAuth();
   const { openCoffee, openSettings } = useNav();
   const isMe = !userId || userId === me?.id;
+  const [view, setView] = useState("profile"); // own profile: 'profile' | 'palate'
   const [person, setPerson] = useState(isMe ? me : null);
   const [tastings, setTastings] = useState(null);
   const [myTastings, setMyTastings] = useState(null);
@@ -143,6 +153,26 @@ export default function Profile({ userId, onClose }) {
         <Stat value={distinctCoffees || "—"} label="Coffees" color={color} />
       </div>
 
+      {isMe && (
+        <div style={{ display: "flex", gap: 6, background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, padding: 4, marginBottom: 20 }}>
+          {[["profile", "Profile"], ["palate", "Palate vs household"]].map(([id, label]) => {
+            const active = view === id;
+            return (
+              <button key={id} onClick={() => setView(id)} style={{
+                flex: 1, padding: "9px 4px", borderRadius: 9, border: "none", cursor: "pointer",
+                fontFamily: sans, fontSize: 13, fontWeight: active ? 600 : 500,
+                background: active ? C.card : "transparent", color: active ? C.brown : C.muted,
+                boxShadow: active ? "0 1px 4px rgba(100,70,40,0.12)" : "none",
+              }}>{label}</button>
+            );
+          })}
+        </div>
+      )}
+
+      {isMe && view === "palate" && <TasteProfile />}
+
+      {(!isMe || view === "profile") && (<>
+
       {comparison && (
         <div style={{ marginBottom: 22 }}>
           <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: C.faint, fontFamily: sans, marginBottom: 10 }}>You &amp; {person?.name}</div>
@@ -182,6 +212,7 @@ export default function Profile({ userId, onClose }) {
 
       <Bars title={`${isMe ? "Your" : "Their"} favourite origins`} data={groupAverages(tastings || [], "origin")} color={color} />
       <Bars title="By process" data={groupAverages(tastings || [], "process")} color={color} />
+      </>)}
 
       {isMe && (
         <>
