@@ -1,0 +1,103 @@
+import { pb, currentUser } from "./pb.js";
+
+// ── Coffees (shared catalog) ───────────────────────────────
+
+export async function listCoffees(search = "") {
+  const opts = { sort: "-created", expand: "added_by" };
+  const q = (search || "").trim();
+  if (q) {
+    const esc = q.replace(/"/g, '\\"');
+    opts.filter = `name ~ "${esc}" || roaster ~ "${esc}" || origin ~ "${esc}" || region ~ "${esc}"`;
+  }
+  const res = await pb.collection("coffees").getList(1, 100, opts);
+  return res.items;
+}
+
+// For dedupe suggestions while typing a new coffee's name.
+export async function searchCoffeesByName(name) {
+  const q = (name || "").trim();
+  if (q.length < 2) return [];
+  const esc = q.replace(/"/g, '\\"');
+  const res = await pb.collection("coffees").getList(1, 6, { filter: `name ~ "${esc}"`, sort: "-created" });
+  return res.items;
+}
+
+export async function getCoffee(id) {
+  return pb.collection("coffees").getOne(id, { expand: "added_by" });
+}
+
+// fields: plain object. imageBlob: optional Blob to upload as the package photo.
+export async function createCoffee(fields, imageBlob) {
+  const body = buildCoffeeBody(fields, imageBlob);
+  return pb.collection("coffees").create(body);
+}
+
+export async function updateCoffee(id, fields, imageBlob) {
+  const body = buildCoffeeBody(fields, imageBlob);
+  return pb.collection("coffees").update(id, body);
+}
+
+export async function deleteCoffee(id) {
+  return pb.collection("coffees").delete(id);
+}
+
+function buildCoffeeBody(fields, imageBlob) {
+  const base = {
+    name: fields.name || "",
+    roaster: fields.roaster || "",
+    origin: fields.origin || "",
+    region: fields.region || "",
+    producer: fields.producer || "",
+    varietal: fields.varietal || "",
+    process: fields.process || "",
+    roast_level: fields.roastLevel || "",
+    altitude: fields.altitude || "",
+    harvest: fields.harvest || "",
+    importer: fields.importer || "",
+    tags: fields.tags || [],
+    bag_notes: fields.notes || "",
+    added_by: fields.added_by || currentUser()?.id,
+  };
+  if (imageBlob) {
+    const fd = new FormData();
+    Object.entries(base).forEach(([k, v]) => {
+      fd.append(k, k === "tags" ? JSON.stringify(v) : v);
+    });
+    fd.append("image", imageBlob, "package.jpg");
+    return fd;
+  }
+  return base;
+}
+
+// URL for a coffee's package photo (or "" if none). thumb e.g. "300x300".
+export function coffeeImageUrl(record, thumb = "") {
+  if (!record?.image) return "";
+  return pb.files.getURL(record, record.image, thumb ? { thumb } : {});
+}
+
+// ── Tastings ───────────────────────────────────────────────
+
+// All tastings (used to show average scores in the catalog list).
+export async function listAllTastings() {
+  return pb.collection("tastings").getFullList({ sort: "-tasted_on" });
+}
+
+export async function listTastingsForCoffee(coffeeId) {
+  return pb.collection("tastings").getFullList({
+    filter: `coffee = "${coffeeId}"`,
+    sort: "-tasted_on",
+    expand: "user",
+  });
+}
+
+export async function createTasting(fields) {
+  return pb.collection("tastings").create({ ...fields, user: currentUser()?.id });
+}
+
+export async function updateTasting(id, fields) {
+  return pb.collection("tastings").update(id, fields);
+}
+
+export async function deleteTasting(id) {
+  return pb.collection("tastings").delete(id);
+}

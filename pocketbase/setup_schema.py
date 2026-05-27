@@ -92,8 +92,14 @@ existing_names = {f["name"] for f in users["fields"]}
 for f in [txt("color", maxlen=20), boolean("is_admin"), txt("bio", maxlen=500)]:
     if f["name"] not in existing_names:
         users["fields"].append(f)
-req("PATCH", f"/api/collections/{users['id']}", TOKEN, {"fields": users["fields"]})
-print("extended 'users' with color, is_admin, bio")
+# logged-in users can view each other's public profile (email stays hidden
+# unless emailVisibility); needed for tasting attribution + profiles.
+req("PATCH", f"/api/collections/{users['id']}", TOKEN, {
+    "fields": users["fields"],
+    "listRule": AUTH_OK,
+    "viewRule": AUTH_OK,
+})
+print("extended 'users' with color, is_admin, bio + opened list/view to authed users")
 
 # --- order matters for relations: delete dependents first ---
 for name in ["follows", "group_members", "invites", "tastings", "groups", "coffees"]:
@@ -134,7 +140,7 @@ tastings = create({
     "fields": [
         rel("coffee", coffees["id"], required=True, cascade=True),
         rel("user", users_id, required=True),
-        num("score", 0, 10), num("grind", 1, 10), txt("notes", maxlen=2000),
+        num("score", 0, 10), num("grind"), txt("notes", maxlen=2000),
         txt("brew_method", maxlen=120), datef("tasted_on"), autocreated(),
     ],
     "listRule": AUTH_OK, "viewRule": AUTH_OK,
