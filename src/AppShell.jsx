@@ -50,7 +50,7 @@ export default function AppShell() {
           <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#b89870", fontFamily: sans }}>☕ Koffeinkartellet</div>
-              <h1 style={{ margin: "3px 0 0", fontFamily: serif, fontSize: 22, color: "#fff8f0", fontWeight: 900 }}>{title}</h1>
+              <h1 style={{ margin: "3px 0 0", fontFamily: serif, fontSize: 24, color: "#fff8f0", fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.01em" }}>{title}</h1>
             </div>
             <span style={{ width: 30, height: 30, borderRadius: "50%", background: user?.color || C.brown, border: "2px solid #4a3525" }} title={user?.name} />
           </div>
