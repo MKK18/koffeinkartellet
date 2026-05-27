@@ -17,3 +17,11 @@ npm-debug.log*
 .env
 .env.*
 !.env.example
+
+# PocketBase: ignore the binary + local data, but KEEP migrations (schema as code)
+pocketbase/pocketbase
+pocketbase/pb_data/
+pocketbase/pb_public/
+pocketbase/*.zip
+pocketbase/CHANGELOG.md
+pocketbase/LICENSE.md
