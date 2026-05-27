@@ -44,21 +44,10 @@ export async function compressImage(file) {
   });
 }
 
-// Ask Claude to read a coffee package photo and extract structured fields.
-// Calls the Anthropic API directly from the browser using the user's own key.
-export async function extractBeanFromImage(base64) {
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error("NO_API_KEY");
-
-  const prompt = `You are a specialty coffee expert. Examine this coffee packaging image carefully.
-
-First, extract everything visible on the package (name, roaster, origin, region/area, producer/farm, varietal/cultivar, process, roast level, altitude, harvest season, importer, tasting notes/flavor descriptors).
-
-Then use web_search to look up this specific coffee to fill in any details not visible on the package.
-
-Respond ONLY with a valid JSON object — no markdown, no explanation, no backticks. Use exactly these keys:
+// Shared JSON field spec for both the photo scanner and the URL importer.
+const FIELD_SPEC = `Respond ONLY with a valid JSON object — no markdown, no explanation, no backticks. Use exactly these keys:
 {
-  "name": "the coffee's name as on the bag",
+  "name": "the coffee's name",
   "roaster": "roaster name",
   "origin": "country",
   "region": "specific region/area",
@@ -70,9 +59,15 @@ Respond ONLY with a valid JSON object — no markdown, no explanation, no backti
   "harvest": "harvest season e.g. Nov 2024",
   "importer": "importer name if known",
   "tags": ["from this list only: ${FLAVOR_TAGS.join(", ")}"],
-  "notes": "tasting notes from the bag or from your search"
+  "notes": "tasting notes from the bag/page or from your search"
 }
 Use empty string "" for unknown string fields. Use [] for unknown tags.`;
+
+// Core call: posts to the Anthropic Messages API (browser-direct, user's own key)
+// and parses the trailing JSON object out of the response.
+async function callExtraction({ content, tools, maxTokens = 1200 }) {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("NO_API_KEY");
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -84,15 +79,9 @@ Use empty string "" for unknown string fields. Use [] for unknown tags.`;
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-5",
-      max_tokens: 1000,
-      tools: [{ type: "web_search_20250305", name: "web_search" }],
-      messages: [{
-        role: "user",
-        content: [
-          { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
-          { type: "text", text: prompt },
-        ],
-      }],
+      max_tokens: maxTokens,
+      tools,
+      messages: [{ role: "user", content }],
     }),
   });
 
@@ -101,12 +90,40 @@ Use empty string "" for unknown string fields. Use [] for unknown tags.`;
     throw new Error(`API error ${res.status}: ${body.slice(0, 200)}`);
   }
   const data = await res.json();
-  const textBlocks = data.content.filter((b) => b.type === "text");
+  const textBlocks = (data.content || []).filter((b) => b.type === "text");
   const raw = textBlocks[textBlocks.length - 1]?.text || "";
-  const clean = raw.replace(/```json|```/g, "").trim();
-  const match = clean.match(/\{[\s\S]*\}/);
+  const match = raw.replace(/```json|```/g, "").trim().match(/\{[\s\S]*\}/);
   if (!match) throw new Error("No JSON in response");
   return JSON.parse(match[0]);
+}
+
+// Read a coffee package photo and extract structured fields.
+export async function extractBeanFromImage(base64) {
+  const prompt = `You are a specialty coffee expert. Examine this coffee packaging image carefully.
+Extract everything visible on the package, then use web_search to look up this specific coffee to fill in details not visible on the package.
+${FIELD_SPEC}`;
+  return callExtraction({
+    tools: [{ type: "web_search_20250305", name: "web_search" }],
+    content: [
+      { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
+      { type: "text", text: prompt },
+    ],
+  });
+}
+
+// Read a roaster's product page URL and extract structured fields.
+export async function extractBeanFromUrl(url) {
+  const prompt = `You are a specialty coffee expert. Fetch the coffee product page at ${url} using web_fetch and read it carefully.
+Extract the coffee's details from the page. If anything important is missing, you may use web_search to fill gaps.
+${FIELD_SPEC}`;
+  return callExtraction({
+    maxTokens: 1500,
+    tools: [
+      { type: "web_fetch_20250910", name: "web_fetch", max_uses: 3 },
+      { type: "web_search_20250305", name: "web_search", max_uses: 3 },
+    ],
+    content: prompt,
+  });
 }
 
 // Average + per-person breakdown for a coffee's tastings (array of {user, score, expand}).

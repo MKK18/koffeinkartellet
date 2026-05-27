@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
 import { Sheet, SectionHead, Tag, Spinner, CountryCombobox } from "./components.jsx";
-import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, compressImage, extractBeanFromImage } from "./lib.js";
+import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, compressImage, extractBeanFromImage, extractBeanFromUrl } from "./lib.js";
 import { createCoffee, updateCoffee, searchCoffeesByName, coffeeImageUrl } from "./data.js";
 
 const EMPTY = {
@@ -26,12 +26,45 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting, o
   const [dupes, setDupes] = useState([]);
   const [scanning, setScanning] = useState(false);
   const [scanMsg, setScanMsg] = useState("");
+  const [url, setUrl] = useState("");
+  const [fetchingUrl, setFetchingUrl] = useState(false);
+  const [urlMsg, setUrlMsg] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef();
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const toggleTag = (t) => set("tags", form.tags.includes(t) ? form.tags.filter((x) => x !== t) : [...form.tags, t]);
+
+  // Merge AI-extracted fields into the form (only filling blanks-friendly keys).
+  const applyExtracted = (x) => setForm((f) => ({
+    ...f,
+    name: x.name || f.name, roaster: x.roaster || f.roaster, origin: x.origin || f.origin,
+    region: x.region || f.region, producer: x.producer || f.producer,
+    varietal: VARIETALS.includes(x.varietal) ? x.varietal : f.varietal,
+    process: PROCESSES.includes(x.process) ? x.process : f.process,
+    roastLevel: ROAST_LEVELS.includes(x.roastLevel) ? x.roastLevel : f.roastLevel,
+    altitude: x.altitude || f.altitude, harvest: x.harvest || f.harvest, importer: x.importer || f.importer,
+    tags: x.tags?.filter((t) => FLAVOR_TAGS.includes(t))?.length ? x.tags.filter((t) => FLAVOR_TAGS.includes(t)) : f.tags,
+    notes: x.notes || f.notes,
+  }));
+
+  const fetchFromUrl = async () => {
+    const link = url.trim();
+    if (!link) return;
+    setFetchingUrl(true); setUrlMsg(""); setError("");
+    try {
+      const x = await extractBeanFromUrl(link);
+      applyExtracted(x);
+      setUrlMsg("✓ Filled in from the link — check and adjust below");
+    } catch (err) {
+      setUrlMsg(err?.message === "NO_API_KEY"
+        ? "Add your Anthropic API key in Settings to import from a link."
+        : "Couldn't read that page — try the photo instead, or fill in manually.");
+    } finally {
+      setFetchingUrl(false);
+    }
+  };
 
   // Search-before-add: warn about likely duplicates as they type the name.
   useEffect(() => {
@@ -60,16 +93,7 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting, o
       setScanning(true);
       try {
         const x = await extractBeanFromImage(b64);
-        setForm((f) => ({
-          ...f,
-          name: x.name || f.name, roaster: x.roaster || f.roaster, origin: x.origin || f.origin,
-          region: x.region || f.region, producer: x.producer || f.producer,
-          varietal: VARIETALS.includes(x.varietal) ? x.varietal : f.varietal,
-          process: PROCESSES.includes(x.process) ? x.process : f.process,
-          roastLevel: ROAST_LEVELS.includes(x.roastLevel) ? x.roastLevel : f.roastLevel,
-          altitude: x.altitude || f.altitude, harvest: x.harvest || f.harvest, importer: x.importer || f.importer,
-          tags: x.tags?.filter((t) => FLAVOR_TAGS.includes(t)) || f.tags, notes: x.notes || f.notes,
-        }));
+        applyExtracted(x);
         setScanMsg("✓ Filled in from the photo — check and adjust below");
       } catch (err) {
         setScanMsg(err?.message === "NO_API_KEY"
@@ -142,6 +166,22 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting, o
           <div style={{ fontFamily: serif, fontSize: 15, color: "#6b4226", marginBottom: 4 }}>Take or upload a package photo</div>
           <div style={{ fontFamily: sans, fontSize: 12, color: C.faint }}>AI will scan it and fill in the details</div>
         </div>
+      )}
+
+      <SectionHead title="Or paste a link" />
+      <div style={{ display: "flex", gap: 8 }}>
+        <input
+          type="url" value={url} onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fetchFromUrl(); } }}
+          placeholder="https://roaster.com/shop/that-coffee"
+          style={{ ...inputStyle, flex: 1 }}
+        />
+        <button onClick={fetchFromUrl} disabled={fetchingUrl || !url.trim()} style={{ ...primaryBtn(!fetchingUrl && !!url.trim()), padding: "0 16px", whiteSpace: "nowrap" }}>
+          {fetchingUrl ? <Spinner /> : "Fetch"}
+        </button>
+      </div>
+      {urlMsg && (
+        <div style={{ marginTop: 8, fontSize: 13, fontFamily: sans, color: urlMsg.startsWith("✓") ? "#4a7a50" : "#a05040" }}>{urlMsg}</div>
       )}
 
       <SectionHead title="Basics" />
