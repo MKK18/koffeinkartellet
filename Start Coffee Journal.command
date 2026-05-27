@@ -4,8 +4,9 @@
 
 cd "$(dirname "$0")"
 
-# Make sure Node is on PATH (Homebrew default location for Apple Silicon Macs)
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+# Prefer the working node@24 keg first (the default /opt/homebrew/bin/node is
+# currently broken by a Homebrew library mismatch), then fall back to others.
+export PATH="/opt/homebrew/opt/node@24/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 if ! command -v node >/dev/null 2>&1; then
   echo ""
