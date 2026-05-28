@@ -248,7 +248,7 @@ Step 2 — ALSO run at least one web_search. This is mandatory, even if step 1 l
 
 Step 3 — Combine information from both. Prefer the richer, more authoritative source for each field. If sources conflict, prefer the roaster's own description.
 
-** IMAGE: This is critical. ALWAYS populate "image_url" if the page (or any search result page) exposes an og:image, twitter:image, or a JSON-LD product image. Use the absolute URL exactly as written. If multiple candidate images exist, prefer the largest / the product image (not a logo or background). Only leave it empty if you genuinely cannot find any. **
+** IMAGE: If — and ONLY if — the page HTML literally contains an og:image, twitter:image, or JSON-LD product image, copy that URL verbatim into "image_url". DO NOT construct, guess, or reconstruct URLs based on what a typical CDN path looks like (no inventing /cdn/shop/products/<slug>.jpg style paths). If you cannot find a literal image URL in the source, leave "image_url" empty — a separate scraper handles that case. **
 
 Be diligent. A response missing origin/process/varietal/notes/image_url when those exist online is a failure.
 
@@ -398,6 +398,20 @@ export async function verdictFromUrl(url, palate) {
       return getProvider() === "openai" ? openaiUrlVerdict(apiKey, url, palate) : anthropicUrlVerdict(apiKey, url, palate);
     },
   );
+}
+
+// Ask the server to scrape og:image / twitter:image / JSON-LD image from a
+// product page. Deterministic (no LLM) — used as a fallback when the AI
+// hallucinates an image URL that 404s. Returns "" if nothing found.
+export async function scrapePageImage(pageUrl) {
+  if (!pageUrl) return "";
+  try {
+    const res = await pb.send("/api/ai/page-meta", { method: "POST", body: { url: pageUrl } });
+    return res?.image_url || "";
+  } catch (e) {
+    console.log("[scrapePageImage] failed:", e?.message || e);
+    return "";
+  }
 }
 
 // Fetch an external image (a roaster's product photo) and return a Blob suitable

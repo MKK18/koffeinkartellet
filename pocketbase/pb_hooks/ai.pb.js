@@ -44,6 +44,52 @@ routerAdd("POST", "/api/ai/fetch-image", (e) => {
   return e.json(200, { base64: bytesToBase64(res.body || ""), contentType: ct });
 });
 
+// Authed: server-side page-meta scraper. Fetches a page's HTML and extracts
+// the og:image / twitter:image / JSON-LD product image deterministically
+// (no LLM, no guessing). Used as a fallback when the AI's image_url 404s
+// (because the model hallucinated a Shopify CDN path) or comes back empty.
+// Body: { url }. Returns { image_url }.
+routerAdd("POST", "/api/ai/page-meta", (e) => {
+  if (!e.auth || !e.auth.id) throw new ForbiddenError("Sign in required");
+  const body = e.requestInfo().body || {};
+  const pageUrl = String(body.url || "");
+  if (!/^https?:\/\//i.test(pageUrl)) throw new BadRequestError("Invalid URL");
+  let html = "";
+  try {
+    const res = $http.send({
+      url: pageUrl,
+      method: "GET",
+      timeout: 30,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; koffeinkartellet/1.0)" },
+    });
+    if (res.statusCode >= 400) return e.json(200, { image_url: "" });
+    html = String(res.body || "");
+  } catch (err) {
+    return e.json(200, { image_url: "" });
+  }
+  // Try og:image, twitter:image, and JSON-LD image fields in that order.
+  // Tolerate either attribute order (content="…" property="…" or vice versa).
+  const patterns = [
+    /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+    /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i,
+    /"image"\s*:\s*"([^"]+)"/i,
+    /"image"\s*:\s*\[\s*"([^"]+)"/i,
+  ];
+  let found = "";
+  for (let i = 0; i < patterns.length; i++) {
+    const m = html.match(patterns[i]);
+    if (m && m[1]) { found = m[1]; break; }
+  }
+  if (found) {
+    // Resolve protocol-relative + http→https, leave absolute paths alone.
+    if (found.indexOf("//") === 0) found = "https:" + found;
+    else if (found.indexOf("http://") === 0) found = "https://" + found.slice(7);
+  }
+  return e.json(200, { image_url: found });
+});
+
 // Authed: scan an image or a URL using the configured global key.
 // Body: { mode: "image" | "url", prompt: string, base64?: string, url?: string, provider?: "anthropic" | "openai" }
 routerAdd("POST", "/api/ai/scan", (e) => {

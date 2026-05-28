@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
 import { Sheet, SectionHead, Spinner, CountryCombobox, Combobox, FlavorPicker } from "./components.jsx";
-import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, compressImage, extractBeanFromImage, extractBeanFromUrl, fetchExternalImage } from "./lib.js";
+import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, compressImage, extractBeanFromImage, extractBeanFromUrl, fetchExternalImage, scrapePageImage } from "./lib.js";
 import { createCoffee, updateCoffee, deleteCoffee, searchCoffeesByName, coffeeImageUrl } from "./data.js";
 import { useAuth } from "./auth.jsx";
 import { useNav } from "./nav.jsx";
@@ -143,10 +143,29 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
       setFilledFrom("link");
       setTab("manual");
       // If the page exposed a product image, pull it down and stash as the coffee's photo.
-      if (x.image_url && !imageBlob && !preview) {
-        console.log("[fetchFromUrl] trying image_url:", x.image_url);
+      // Two-step fallback because the AI sometimes hallucinates Shopify CDN paths
+      // that 404: (a) try the AI's image_url, (b) deterministic scrape og:image
+      // from the actual page HTML.
+      if (!imageBlob && !preview) {
+        const tryImage = async (candidate, label) => {
+          if (!candidate) return null;
+          console.log(`[fetchFromUrl] trying ${label}:`, candidate);
+          const blob = await fetchExternalImage(candidate);
+          if (!blob) {
+            console.warn(`[fetchFromUrl] ${label} fetch returned null`);
+          }
+          return blob;
+        };
         try {
-          const blob = await fetchExternalImage(x.image_url);
+          let blob = await tryImage(x.image_url, "AI image_url");
+          if (!blob) {
+            const scraped = await scrapePageImage(link);
+            if (scraped && scraped !== x.image_url) {
+              blob = await tryImage(scraped, "scraped og:image");
+            } else if (!scraped) {
+              console.warn("[fetchFromUrl] page-meta scrape found no og:image");
+            }
+          }
           if (blob) {
             // Re-compress to our standard max-1024 JPEG for consistency.
             const file = new File([blob], "from-link.jpg", { type: blob.type || "image/jpeg" });
@@ -154,14 +173,10 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
             setImageBlob(compressed);
             setPreview(URL.createObjectURL(compressed));
             console.log("[fetchFromUrl] image attached");
-          } else {
-            console.warn("[fetchFromUrl] fetchExternalImage returned null for", x.image_url);
           }
         } catch (e) {
           console.warn("[fetchFromUrl] image-grab failed:", e);
         }
-      } else if (!x.image_url) {
-        console.warn("[fetchFromUrl] AI returned no image_url");
       }
     } catch (err) {
       setUrlMsg(err?.message === "NO_API_KEY"
