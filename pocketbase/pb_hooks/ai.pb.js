@@ -56,17 +56,47 @@ routerAdd("POST", "/api/ai/fetch-image", (e) => {
   const body = e.requestInfo().body || {};
   const url = String(body.url || "");
   if (!/^https?:\/\//i.test(url)) throw new BadRequestError("Invalid URL");
-  const res = $http.send({
-    url: url,
-    method: "GET",
-    timeout: 30,
-    headers: { "User-Agent": "Mozilla/5.0 (compatible; koffeinkartellet/1.0)" },
-  });
+  let res;
+  try {
+    res = $http.send({
+      url: url,
+      method: "GET",
+      timeout: 30,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "image/webp,image/avif,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": (url.match(/^(https?:\/\/[^\/]+)/) || [null, ""])[1] + "/",
+      },
+    });
+  } catch (err) {
+    throw new BadRequestError("HTTP fetch threw: " + String(err));
+  }
   if (res.statusCode >= 400) throw new BadRequestError("Image fetch failed: " + res.statusCode);
   const ct = (res.headers && res.headers["Content-Type"] && res.headers["Content-Type"][0]) || "application/octet-stream";
   if (!ct.startsWith("image/")) throw new BadRequestError("Not an image (" + ct + ")");
-  // res.body is Array<number> on PB 0.20+; bytesToBase64 handles both shapes.
-  return e.json(200, { base64: bytesToBase64(res.body || []), contentType: ct });
+  // Inline base64 encode of byte array. PB returns body as Array<number>; we
+  // can't rely on file-scope helpers being visible inside the route handler
+  // (see bodyToString scoping issue in page-meta).
+  const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const input = res.body || [];
+  const isArr = Array.isArray(input);
+  const len = isArr ? input.length : (input.length || 0);
+  let base64 = "";
+  try {
+    for (let i = 0; i < len; i += 3) {
+      const a = (isArr ? input[i] : input.charCodeAt(i)) & 0xff;
+      const b = (i + 1 < len) ? ((isArr ? input[i + 1] : input.charCodeAt(i + 1)) & 0xff) : 0;
+      const c = (i + 2 < len) ? ((isArr ? input[i + 2] : input.charCodeAt(i + 2)) & 0xff) : 0;
+      const t = (a << 16) | (b << 8) | c;
+      base64 += ABC[(t >> 18) & 63] + ABC[(t >> 12) & 63];
+      base64 += (i + 1 < len) ? ABC[(t >> 6) & 63] : "=";
+      base64 += (i + 2 < len) ? ABC[t & 63] : "=";
+    }
+  } catch (err) {
+    throw new BadRequestError("Encode threw (bodyType=" + typeof res.body + " isArr=" + isArr + " len=" + len + "): " + String(err));
+  }
+  return e.json(200, { base64: base64, contentType: ct });
 });
 
 // Authed: server-side page-meta scraper. Fetches a page's HTML and extracts
@@ -80,7 +110,7 @@ routerAdd("POST", "/api/ai/page-meta", (e) => {
   const pageUrl = String(body.url || "");
   if (!/^https?:\/\//i.test(pageUrl)) throw new BadRequestError("Invalid URL");
   let html = "";
-  let debug = { url: pageUrl, status: 0, htmlLen: 0 };
+  let debug = { url: pageUrl, status: 0, htmlLen: 0, codeVersion: "v3-inlined" };
   try {
     const res = $http.send({
       url: pageUrl,
