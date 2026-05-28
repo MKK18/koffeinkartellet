@@ -26,7 +26,14 @@ export const getProvider = () => {
 };
 
 export const setProvider = (p) => {
-  try { localStorage.setItem(PROVIDER_STORAGE, p === "openai" ? "openai" : "anthropic"); } catch { /* ignore */ }
+  try {
+    const v = (p === "openai" || p === "global") ? p : "anthropic";
+    localStorage.setItem(PROVIDER_STORAGE, v);
+  } catch { /* ignore */ }
 };
 
-export const hasApiKey = () => !!getApiKey();
+// Global mode uses a server-side shared key — no per-user key needed.
+export const hasApiKey = () => {
+  if (getProvider() === "global") return true; // server holds it
+  return !!getApiKey();
+};

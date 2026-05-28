@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { getApiKey, setApiKey, getProvider, setProvider as writeProvider } from "./settings.js";
 import { updateProfile, changePassword, requestEmailChange, currentUser } from "./pb.js";
 import { useAuth } from "./auth.jsx";
-import { compressImage } from "./lib.js";
+import { compressImage, aiStatus } from "./lib.js";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn, RATER_COLORS } from "./ui.jsx";
 import { Sheet, SectionHead, Avatar } from "./components.jsx";
 
@@ -45,6 +45,9 @@ export default function SettingsModal({ onClose }) {
   const [aiProvider, setAiProvider] = useState(getProvider());
   const [showKey, setShowKey] = useState(false);
   const [keyMsg, setKeyMsg] = useState(null);
+  const [globalAvail, setGlobalAvail] = useState({ anthropic: false, openai: false });
+  useEffect(() => { aiStatus().then(setGlobalAvail); }, []);
+  const globalReady = globalAvail.anthropic || globalAvail.openai;
   const providerInfo = {
     anthropic: { placeholder: "sk-ant-...", helper: "Get a key at console.anthropic.com → API Keys." },
     openai:    { placeholder: "sk-...",     helper: "Get a key at platform.openai.com → API Keys." },
@@ -156,29 +159,54 @@ export default function SettingsModal({ onClose }) {
       <div style={{ fontSize: 12, color: C.muted, fontFamily: sans, marginBottom: 10 }}>Enables photo &amp; link scanning. Stored in this browser only.</div>
 
       <label style={labelStyle}>Provider</label>
-      <div style={{ display: "flex", gap: 6, background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, padding: 4, marginBottom: 12 }}>
-        {[["anthropic", "Anthropic"], ["openai", "OpenAI"]].map(([id, label]) => {
+      <div style={{ display: "flex", gap: 6, background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, padding: 4, marginBottom: 12, flexWrap: "wrap" }}>
+        {[
+          ["anthropic", "Anthropic", true],
+          ["openai", "OpenAI", true],
+          ["global", "Global (shared)", globalReady],
+        ].map(([id, label, enabled]) => {
           const active = aiProvider === id;
           return (
-            <button key={id} type="button" onClick={() => setAiProvider(id)} style={{
-              flex: 1, padding: "9px 4px", borderRadius: 9, border: "none", cursor: "pointer",
+            <button key={id} type="button" disabled={!enabled} onClick={() => enabled && setAiProvider(id)} title={enabled ? "" : "No global key configured on the server yet"} style={{
+              flex: 1, minWidth: 100, padding: "9px 4px", borderRadius: 9, border: "none",
+              cursor: enabled ? "pointer" : "not-allowed",
               fontFamily: sans, fontSize: 13, fontWeight: active ? 600 : 500,
-              background: active ? C.card : "transparent", color: active ? C.brown : C.muted,
+              background: active ? C.card : "transparent",
+              color: active ? C.brown : (enabled ? C.muted : "#c5b5a5"),
               boxShadow: active ? "0 1px 4px rgba(100,70,40,0.12)" : "none",
             }}>{label}</button>
           );
         })}
       </div>
 
-      <label style={labelStyle}>API key</label>
-      <div style={{ position: "relative" }}>
-        <input type={showKey ? "text" : "password"} value={key} onChange={(e) => setKey(e.target.value)} placeholder={providerInfo[aiProvider].placeholder} style={{ ...inputStyle, paddingRight: 64 }} />
-        <button onClick={() => setShowKey((s) => !s)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.muted, fontFamily: sans, fontSize: 12, cursor: "pointer", padding: "4px 8px" }}>{showKey ? "Hide" : "Show"}</button>
-      </div>
-      <div style={{ fontSize: 11, color: C.faint, fontFamily: sans, marginTop: 6 }}>{providerInfo[aiProvider].helper}</div>
+      {aiProvider === "global" ? (
+        <div style={{ background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, padding: "12px 14px", fontSize: 13, fontFamily: sans, color: C.ink, lineHeight: 1.5 }}>
+          Using the shared key on the server — no personal key needed. Available:
+          {globalAvail.anthropic && <strong> Anthropic</strong>}
+          {globalAvail.anthropic && globalAvail.openai && " + "}
+          {globalAvail.openai && <strong> OpenAI</strong>}
+          .
+        </div>
+      ) : (
+        <>
+          <label style={labelStyle}>API key</label>
+          <div style={{ position: "relative" }}>
+            <input type={showKey ? "text" : "password"} value={key} onChange={(e) => setKey(e.target.value)} placeholder={providerInfo[aiProvider].placeholder} style={{ ...inputStyle, paddingRight: 64 }} />
+            <button onClick={() => setShowKey((s) => !s)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.muted, fontFamily: sans, fontSize: 12, cursor: "pointer", padding: "4px 8px" }}>{showKey ? "Hide" : "Show"}</button>
+          </div>
+          <div style={{ fontSize: 11, color: C.faint, fontFamily: sans, marginTop: 6 }}>{providerInfo[aiProvider].helper}</div>
+        </>
+      )}
+      {!globalReady && (
+        <div style={{ fontSize: 11, color: C.faint, fontFamily: sans, marginTop: 8, fontStyle: "italic" }}>
+          (Admin tip: set <code>ANTHROPIC_API_KEY</code> or <code>OPENAI_API_KEY</code> on the server to enable Global mode for everyone.)
+        </div>
+      )}
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 10 }}>
-        <button onClick={() => { setApiKey(""); setKey(""); setKeyMsg({ ok: true, t: "Removed." }); }} style={{ ...ghostBtn, color: "#b07060", borderColor: "#e0c0b0" }}>Remove</button>
-        <button onClick={saveKey} style={primaryBtn(true)}>Save key</button>
+        {aiProvider !== "global" && (
+          <button onClick={() => { setApiKey(""); setKey(""); setKeyMsg({ ok: true, t: "Removed." }); }} style={{ ...ghostBtn, color: "#b07060", borderColor: "#e0c0b0" }}>Remove</button>
+        )}
+        <button onClick={saveKey} style={primaryBtn(true)}>Save</button>
       </div>
       <Note ok={keyMsg?.ok}>{keyMsg?.t}</Note>
 

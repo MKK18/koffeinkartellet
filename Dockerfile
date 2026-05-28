@@ -19,8 +19,9 @@ RUN wget -q https://github.com/pocketbase/pocketbase/releases/download/v${PB_VER
   && unzip pocketbase_${PB_VERSION}_linux_amd64.zip \
   && rm pocketbase_${PB_VERSION}_linux_amd64.zip
 
-# Schema migrations (reproducible DB structure) and the built site
+# Schema migrations, server-side hooks (AI scan proxy), and the built site
 COPY pocketbase/pb_migrations ./pb_migrations
+COPY pocketbase/pb_hooks ./pb_hooks
 COPY --from=build /app/dist ./pb_public
 COPY docker-entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh

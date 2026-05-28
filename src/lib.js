@@ -1,4 +1,11 @@
 import { getApiKey, getProvider } from "./settings.js";
+import { pb } from "./pb.js";
+
+// Ask the server which global providers are configured (env vars present).
+export async function aiStatus() {
+  try { return await pb.send("/api/ai/status", { method: "GET" }); }
+  catch { return { anthropic: false, openai: false }; }
+}
 
 export const PROCESSES = ["Washed", "Natural", "Anaerobic", "Honey", "Wet-Hulled", "Carbonic Maceration", "Other"];
 export const ROAST_LEVELS = ["Light", "Light-Medium", "Medium", "Medium-Dark", "Dark"];
@@ -185,25 +192,35 @@ async function openaiUrl(apiKey, prompt) {
   return extractJson(text);
 }
 
+// ── Server proxy (global / shared key mode) ────────────────
+async function globalScan(mode, payload) {
+  const res = await pb.send("/api/ai/scan", { method: "POST", body: { mode, ...payload } });
+  return extractJson(res.text || "");
+}
+
 // ── Public extractors (provider-aware) ─────────────────────
 export async function extractBeanFromImage(base64) {
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error("NO_API_KEY");
+  const provider = getProvider();
   const prompt = `You are a specialty coffee expert. Examine this coffee packaging image carefully.
 Extract everything visible on the package. If you can search the web, look up this specific coffee to fill in details not visible.
 ${FIELD_SPEC}`;
-  return getProvider() === "openai"
+  if (provider === "global") return globalScan("image", { base64, prompt });
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("NO_API_KEY");
+  return provider === "openai"
     ? openaiImage(apiKey, base64, prompt)
     : anthropicImage(apiKey, base64, prompt);
 }
 
 export async function extractBeanFromUrl(url) {
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error("NO_API_KEY");
+  const provider = getProvider();
   const prompt = `You are a specialty coffee expert. Fetch the coffee product page at ${url} and read it carefully.
 Extract the coffee's details from the page. If anything important is missing, you may also search the web to fill gaps.
 ${FIELD_SPEC}`;
-  return getProvider() === "openai"
+  if (provider === "global") return globalScan("url", { url, prompt });
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("NO_API_KEY");
+  return provider === "openai"
     ? openaiUrl(apiKey, prompt)
     : anthropicUrl(apiKey, prompt);
 }
