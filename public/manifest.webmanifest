@@ -1,0 +1,19 @@
+{
+  "name": "Koffeinkartellet",
+  "short_name": "Koffein",
+  "description": "Coffee tasting journal — shared with your household.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6efe2",
+  "theme_color": "#f6efe2",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

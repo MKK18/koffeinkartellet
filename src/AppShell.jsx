@@ -10,6 +10,7 @@ import CoffeeDetail from "./CoffeeDetail.jsx";
 import CoffeeForm from "./CoffeeForm.jsx";
 import SettingsModal from "./SettingsModal.jsx";
 import AccountMenu from "./AccountMenu.jsx";
+import InstallPrompt from "./InstallPrompt.jsx";
 
 const TABS = [
   { id: "catalog", label: "Catalog", icon: "☕" },
@@ -116,6 +117,7 @@ export default function AppShell() {
         )}
         {settings && <SettingsModal onClose={() => setSettings(false)} />}
         {accountOpen && <AccountMenu onClose={() => setAccountOpen(false)} onOpenSettings={() => setSettings(true)} />}
+        <InstallPrompt />
       </div>
     </NavProvider>
   );
