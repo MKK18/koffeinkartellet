@@ -407,6 +407,7 @@ export async function scrapePageImage(pageUrl) {
   if (!pageUrl) return "";
   try {
     const res = await pb.send("/api/ai/page-meta", { method: "POST", body: { url: pageUrl } });
+    if (res?.debug) console.log("[scrapePageImage] debug:", res.debug);
     return res?.image_url || "";
   } catch (e) {
     console.log("[scrapePageImage] failed:", e?.message || e);

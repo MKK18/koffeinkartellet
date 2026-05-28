@@ -80,17 +80,26 @@ routerAdd("POST", "/api/ai/page-meta", (e) => {
   const pageUrl = String(body.url || "");
   if (!/^https?:\/\//i.test(pageUrl)) throw new BadRequestError("Invalid URL");
   let html = "";
+  let debug = { url: pageUrl, status: 0, htmlLen: 0 };
   try {
     const res = $http.send({
       url: pageUrl,
       method: "GET",
       timeout: 30,
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; koffeinkartellet/1.0)" },
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
     });
-    if (res.statusCode >= 400) return e.json(200, { image_url: "" });
+    debug.status = res.statusCode;
+    if (res.statusCode >= 400) return e.json(200, { image_url: "", debug: debug });
     html = bodyToString(res);
+    debug.htmlLen = html.length;
+    debug.sample = html.substring(0, 400);
   } catch (err) {
-    return e.json(200, { image_url: "" });
+    debug.error = String(err);
+    return e.json(200, { image_url: "", debug: debug });
   }
   // Try og:image, twitter:image, and JSON-LD image fields in that order.
   // Tolerate either attribute order (content="…" property="…" or vice versa).
@@ -103,16 +112,19 @@ routerAdd("POST", "/api/ai/page-meta", (e) => {
     /"image"\s*:\s*\[\s*"([^"]+)"/i,
   ];
   let found = "";
+  let matchedPattern = -1;
   for (let i = 0; i < patterns.length; i++) {
     const m = html.match(patterns[i]);
-    if (m && m[1]) { found = m[1]; break; }
+    if (m && m[1]) { found = m[1]; matchedPattern = i; break; }
   }
+  debug.matchedPattern = matchedPattern;
+  debug.ogImageInHtml = html.indexOf("og:image");
   if (found) {
     // Resolve protocol-relative + http→https, leave absolute paths alone.
     if (found.indexOf("//") === 0) found = "https:" + found;
     else if (found.indexOf("http://") === 0) found = "https://" + found.slice(7);
   }
-  return e.json(200, { image_url: found });
+  return e.json(200, { image_url: found, debug: debug });
 });
 
 // Authed: scan an image or a URL using the configured global key.
