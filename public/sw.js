@@ -1,9 +1,16 @@
 // Service worker — network-first for HTML/navigation so deploys are picked up
 // immediately; cache-first for hashed JS/CSS/images (cheap & safe — those URLs
-// only change when their content does). Bump VERSION on shape changes to evict
-// the old cache.
+// only change when their content does).
+//
+// VERSION is replaced at build time with a unique timestamp (see the `build`
+// script in package.json). Every deploy gets a fresh value, which makes the
+// browser see this SW file as changed → new SW installs → skipWaiting +
+// clients.claim run → controllerchange fires in main.jsx → page auto-reloads
+// onto the new bundle. Without this, the SW never updates and users
+// (especially PWA-installed ones) keep running the old code until they
+// manually clear cache.
 
-const VERSION = "v2";
+const VERSION = "__BUILD_ID__";
 const CACHE = `koffein-${VERSION}`;
 
 self.addEventListener("install", () => {
