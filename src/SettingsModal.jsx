@@ -65,7 +65,8 @@ export default function SettingsModal({ onClose }) {
         patch.append("name", name.trim());
         patch.append("color", color);
         patch.append("bio", bio.trim());
-        patch.append("avatar", avatarBlob || "", avatarBlob ? "avatar.jpg" : undefined);
+        if (avatarBlob) patch.append("avatar", avatarBlob, "avatar.jpg");
+        else patch.append("avatar", ""); // explicit clear (no filename arg)
       } else {
         patch = { name: name.trim(), color, bio: bio.trim() };
       }
@@ -121,6 +122,11 @@ export default function SettingsModal({ onClose }) {
           <button onClick={() => { setAvatarBlob(null); setAvatarPreview(""); setRemoveAvatar(true); }} style={{ ...ghostBtn, padding: "7px 12px", fontSize: 12, color: "#b07060", borderColor: "#e0c0b0" }}>Remove</button>
         )}
       </div>
+      {(avatarBlob || removeAvatar) && (
+        <div style={{ fontSize: 11, color: C.faint, fontFamily: sans, fontStyle: "italic", marginTop: -4, marginBottom: 12 }}>
+          Click <strong>Save profile</strong> below to keep this change.
+        </div>
+      )}
       <label style={labelStyle}>Display name</label>
       <input style={{ ...inputStyle, marginBottom: 12 }} value={name} onChange={(e) => setName(e.target.value)} />
       <label style={labelStyle}>Color</label>

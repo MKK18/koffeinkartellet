@@ -1,23 +1,22 @@
-// Minimal service worker — enables "Add to Home Screen" installability
-// and caches the SPA shell so the app opens fast (especially when launched
-// from the home screen). API calls (/api/*) are NOT cached — they hit
-// PocketBase live so data is always current.
+// Service worker — network-first for HTML/navigation so deploys are picked up
+// immediately; cache-first for hashed JS/CSS/images (cheap & safe — those URLs
+// only change when their content does). Bump VERSION on shape changes to evict
+// the old cache.
 
-const CACHE = "koffein-shell-v1";
-const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icon.svg"];
+const VERSION = "v2";
+const CACHE = `koffein-${VERSION}`;
 
-self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL).catch(() => {})));
+self.addEventListener("install", () => {
+  // Take over as soon as the new SW is installed — no waiting for tab close.
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (e) => {
@@ -25,20 +24,35 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
-  // Never cache API or admin dashboard requests.
+  // Never intercept API or admin dashboard requests.
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_/")) return;
-  // Cache-first for the rest (HTML shell, JS, CSS, icons).
+
+  // Navigation requests + HTML: network-first so updates are immediate.
+  const isHTML = req.mode === "navigate" || (req.headers.get("Accept") || "").includes("text/html");
+  if (isHTML) {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(req).then((c) => c || caches.match("/")))
+    );
+    return;
+  }
+
+  // Everything else (hashed assets, icons): cache-first.
   e.respondWith(
     caches.match(req).then((hit) => {
       if (hit) return hit;
       return fetch(req).then((res) => {
-        // Stash successful same-origin GET responses for next time.
         if (res.ok && res.type === "basic") {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy));
+          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
         }
         return res;
-      }).catch(() => caches.match("/"));
+      });
     })
   );
 });
