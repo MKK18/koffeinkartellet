@@ -1,4 +1,4 @@
-import { getApiKey } from "./settings.js";
+import { getApiKey, getProvider } from "./settings.js";
 
 export const PROCESSES = ["Washed", "Natural", "Anaerobic", "Honey", "Wet-Hulled", "Carbonic Maceration", "Other"];
 export const ROAST_LEVELS = ["Light", "Light-Medium", "Medium", "Medium-Dark", "Dark"];
@@ -92,67 +92,120 @@ const FIELD_SPEC = `Respond ONLY with a valid JSON object — no markdown, no ex
 }
 Use empty string "" for unknown string fields. Use [] for unknown tags.`;
 
-// Core call: posts to the Anthropic Messages API (browser-direct, user's own key)
-// and parses the trailing JSON object out of the response.
-async function callExtraction({ content, tools, maxTokens = 1200 }) {
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error("NO_API_KEY");
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-5",
-      max_tokens: maxTokens,
-      tools,
-      messages: [{ role: "user", content }],
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`API error ${res.status}: ${body.slice(0, 200)}`);
-  }
-  const data = await res.json();
-  const textBlocks = (data.content || []).filter((b) => b.type === "text");
-  const raw = textBlocks[textBlocks.length - 1]?.text || "";
-  const match = raw.replace(/```json|```/g, "").trim().match(/\{[\s\S]*\}/);
+// Parse a JSON object out of an LLM's text response.
+function extractJson(raw) {
+  const clean = (raw || "").replace(/```json|```/g, "").trim();
+  const match = clean.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("No JSON in response");
   return JSON.parse(match[0]);
 }
 
-// Read a coffee package photo and extract structured fields.
-export async function extractBeanFromImage(base64) {
-  const prompt = `You are a specialty coffee expert. Examine this coffee packaging image carefully.
-Extract everything visible on the package, then use web_search to look up this specific coffee to fill in details not visible on the package.
-${FIELD_SPEC}`;
-  return callExtraction({
-    tools: [{ type: "web_search_20250305", name: "web_search" }],
-    content: [
-      { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
-      { type: "text", text: prompt },
-    ],
+async function postJSON(url, headers, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...headers },
+    body: JSON.stringify(body),
   });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`API ${res.status}: ${t.slice(0, 200)}`);
+  }
+  return res.json();
 }
 
-// Read a roaster's product page URL and extract structured fields.
-export async function extractBeanFromUrl(url) {
-  const prompt = `You are a specialty coffee expert. Fetch the coffee product page at ${url} using web_fetch and read it carefully.
-Extract the coffee's details from the page. If anything important is missing, you may use web_search to fill gaps.
-${FIELD_SPEC}`;
-  return callExtraction({
-    maxTokens: 1500,
+// ── ANTHROPIC ──────────────────────────────────────────────
+async function anthropicImage(apiKey, base64, prompt) {
+  const data = await postJSON("https://api.anthropic.com/v1/messages", {
+    "x-api-key": apiKey,
+    "anthropic-version": "2023-06-01",
+    "anthropic-dangerous-direct-browser-access": "true",
+  }, {
+    model: "claude-sonnet-4-5", max_tokens: 1200,
+    tools: [{ type: "web_search_20250305", name: "web_search" }],
+    messages: [{
+      role: "user",
+      content: [
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
+        { type: "text", text: prompt },
+      ],
+    }],
+  });
+  const text = (data.content || []).filter((b) => b.type === "text").pop()?.text || "";
+  return extractJson(text);
+}
+
+async function anthropicUrl(apiKey, prompt) {
+  const data = await postJSON("https://api.anthropic.com/v1/messages", {
+    "x-api-key": apiKey,
+    "anthropic-version": "2023-06-01",
+    "anthropic-dangerous-direct-browser-access": "true",
+  }, {
+    model: "claude-sonnet-4-5", max_tokens: 1500,
     tools: [
       { type: "web_fetch_20250910", name: "web_fetch", max_uses: 3 },
       { type: "web_search_20250305", name: "web_search", max_uses: 3 },
     ],
-    content: prompt,
+    messages: [{ role: "user", content: prompt }],
   });
+  const text = (data.content || []).filter((b) => b.type === "text").pop()?.text || "";
+  return extractJson(text);
+}
+
+// ── OPENAI ─────────────────────────────────────────────────
+async function openaiImage(apiKey, base64, prompt) {
+  const data = await postJSON("https://api.openai.com/v1/chat/completions", {
+    Authorization: `Bearer ${apiKey}`,
+  }, {
+    model: "gpt-4o",
+    response_format: { type: "json_object" },
+    messages: [{
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}` } },
+      ],
+    }],
+  });
+  const text = data.choices?.[0]?.message?.content || "";
+  return extractJson(text);
+}
+
+async function openaiUrl(apiKey, prompt) {
+  // OpenAI's Responses API + web_search tool: equivalent of Anthropic's web_fetch.
+  const data = await postJSON("https://api.openai.com/v1/responses", {
+    Authorization: `Bearer ${apiKey}`,
+  }, {
+    model: "gpt-4o",
+    tools: [{ type: "web_search_preview" }],
+    input: prompt,
+  });
+  // Responses API: convenience field "output_text" concatenates all text outputs.
+  const text = data.output_text
+    || (data.output || []).flatMap((o) => (o.content || []).filter((c) => c.type === "output_text").map((c) => c.text)).join("\n");
+  return extractJson(text);
+}
+
+// ── Public extractors (provider-aware) ─────────────────────
+export async function extractBeanFromImage(base64) {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("NO_API_KEY");
+  const prompt = `You are a specialty coffee expert. Examine this coffee packaging image carefully.
+Extract everything visible on the package. If you can search the web, look up this specific coffee to fill in details not visible.
+${FIELD_SPEC}`;
+  return getProvider() === "openai"
+    ? openaiImage(apiKey, base64, prompt)
+    : anthropicImage(apiKey, base64, prompt);
+}
+
+export async function extractBeanFromUrl(url) {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("NO_API_KEY");
+  const prompt = `You are a specialty coffee expert. Fetch the coffee product page at ${url} and read it carefully.
+Extract the coffee's details from the page. If anything important is missing, you may also search the web to fill gaps.
+${FIELD_SPEC}`;
+  return getProvider() === "openai"
+    ? openaiUrl(apiKey, prompt)
+    : anthropicUrl(apiKey, prompt);
 }
 
 // Average + per-person breakdown for a coffee's tastings (array of {user, score, expand}).

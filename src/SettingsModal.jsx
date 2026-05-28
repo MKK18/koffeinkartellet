@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { getApiKey, setApiKey } from "./settings.js";
+import { getApiKey, setApiKey, getProvider, setProvider as writeProvider } from "./settings.js";
 import { updateProfile, changePassword, requestEmailChange, currentUser } from "./pb.js";
 import { useAuth } from "./auth.jsx";
 import { compressImage } from "./lib.js";
@@ -42,8 +42,13 @@ export default function SettingsModal({ onClose }) {
 
   // api key
   const [key, setKey] = useState(getApiKey());
+  const [aiProvider, setAiProvider] = useState(getProvider());
   const [showKey, setShowKey] = useState(false);
   const [keyMsg, setKeyMsg] = useState(null);
+  const providerInfo = {
+    anthropic: { placeholder: "sk-ant-...", helper: "Get a key at console.anthropic.com → API Keys." },
+    openai:    { placeholder: "sk-...",     helper: "Get a key at platform.openai.com → API Keys." },
+  };
 
   const [busy, setBusy] = useState("");
 
@@ -84,7 +89,11 @@ export default function SettingsModal({ onClose }) {
     finally { setBusy(""); }
   };
 
-  const saveKey = () => { setApiKey(key.trim()); setKeyMsg({ ok: true, t: "Saved." }); };
+  const saveKey = () => {
+    setApiKey(key.trim());
+    writeProvider(aiProvider);
+    setKeyMsg({ ok: true, t: "Saved." });
+  };
 
   return (
     <Sheet onClose={onClose} maxWidth={480}>
@@ -142,13 +151,31 @@ export default function SettingsModal({ onClose }) {
       </div>
       <Note ok={emailMsg?.ok}>{emailMsg?.t}</Note>
 
-      {/* API key */}
-      <SectionHead title="Anthropic API key" />
-      <div style={{ fontSize: 12, color: C.muted, fontFamily: sans, marginBottom: 8 }}>Enables photo &amp; link scanning. Stored in this browser only.</div>
+      {/* AI provider key */}
+      <SectionHead title="AI provider key" />
+      <div style={{ fontSize: 12, color: C.muted, fontFamily: sans, marginBottom: 10 }}>Enables photo &amp; link scanning. Stored in this browser only.</div>
+
+      <label style={labelStyle}>Provider</label>
+      <div style={{ display: "flex", gap: 6, background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, padding: 4, marginBottom: 12 }}>
+        {[["anthropic", "Anthropic"], ["openai", "OpenAI"]].map(([id, label]) => {
+          const active = aiProvider === id;
+          return (
+            <button key={id} type="button" onClick={() => setAiProvider(id)} style={{
+              flex: 1, padding: "9px 4px", borderRadius: 9, border: "none", cursor: "pointer",
+              fontFamily: sans, fontSize: 13, fontWeight: active ? 600 : 500,
+              background: active ? C.card : "transparent", color: active ? C.brown : C.muted,
+              boxShadow: active ? "0 1px 4px rgba(100,70,40,0.12)" : "none",
+            }}>{label}</button>
+          );
+        })}
+      </div>
+
+      <label style={labelStyle}>API key</label>
       <div style={{ position: "relative" }}>
-        <input type={showKey ? "text" : "password"} value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-ant-..." style={{ ...inputStyle, paddingRight: 64 }} />
+        <input type={showKey ? "text" : "password"} value={key} onChange={(e) => setKey(e.target.value)} placeholder={providerInfo[aiProvider].placeholder} style={{ ...inputStyle, paddingRight: 64 }} />
         <button onClick={() => setShowKey((s) => !s)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.muted, fontFamily: sans, fontSize: 12, cursor: "pointer", padding: "4px 8px" }}>{showKey ? "Hide" : "Show"}</button>
       </div>
+      <div style={{ fontSize: 11, color: C.faint, fontFamily: sans, marginTop: 6 }}>{providerInfo[aiProvider].helper}</div>
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 10 }}>
         <button onClick={() => { setApiKey(""); setKey(""); setKeyMsg({ ok: true, t: "Removed." }); }} style={{ ...ghostBtn, color: "#b07060", borderColor: "#e0c0b0" }}>Remove</button>
         <button onClick={saveKey} style={primaryBtn(true)}>Save key</button>
