@@ -59,7 +59,7 @@ routerAdd("POST", "/api/ai/scan", (e) => {
     const palate = body.palate || {};
     const head = mode === "verdict_image"
       ? "You are a specialty coffee expert evaluating a bag for a friend. Examine this coffee packaging image carefully and extract its details. Use web_search if useful."
-      : `You are a specialty coffee expert evaluating a coffee at ${body.url} for a friend. Fetch the page; ALSO web_search by name + roaster since most roaster sites are JS-rendered.`;
+      : `You are a specialty coffee expert evaluating a coffee at ${body.url} for a friend. Fetch the page; ALSO web_search by name + roaster since most roaster sites are JS-rendered. ALWAYS populate "image_url" with the absolute URL of the og:image / twitter:image / JSON-LD product image when the page exposes one.`;
     prompt = `${head}
 
 process / varietal can be free-text — do NOT restrict to common values; capture the bag's exact words (e.g. "Lactic Anaerobic Natural", "Udaini").

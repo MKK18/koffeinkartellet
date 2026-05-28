@@ -242,13 +242,15 @@ export async function extractBeanFromUrl(url) {
 
 You MUST use BOTH tools (do not skip step 2):
 
-Step 1 — Fetch ${url} and extract whatever the static HTML provides: <title>, meta tags, og: tags, <script type="application/ld+json"> blocks, any visible text. The product image URL is usually in og:image or JSON-LD.
+Step 1 — Fetch ${url} and extract whatever the static HTML provides: <title>, meta tags, og: tags, <script type="application/ld+json"> blocks, any visible text.
 
 Step 2 — ALSO run at least one web_search. This is mandatory, even if step 1 looked okay. Most modern roaster sites (Shopify, custom SPAs) are JavaScript-rendered, so the static HTML is nearly empty — but the same coffee is almost always listed on retailer / importer / blog / coffee-database pages (search for the coffee name + roaster name + words like "origin process varietal"). Pull origin, region, producer, varietal, process, altitude, harvest, and tasting notes from there.
 
 Step 3 — Combine information from both. Prefer the richer, more authoritative source for each field. If sources conflict, prefer the roaster's own description.
 
-Be diligent. A response missing origin/process/varietal/notes when those exist online is a failure.
+** IMAGE: This is critical. ALWAYS populate "image_url" if the page (or any search result page) exposes an og:image, twitter:image, or a JSON-LD product image. Use the absolute URL exactly as written. If multiple candidate images exist, prefer the largest / the product image (not a logo or background). Only leave it empty if you genuinely cannot find any. **
+
+Be diligent. A response missing origin/process/varietal/notes/image_url when those exist online is a failure.
 
 ${FIELD_SPEC}`;
   return withFallback(
@@ -403,24 +405,37 @@ export async function verdictFromUrl(url, palate) {
 // if that fails, goes through our server proxy.
 export async function fetchExternalImage(url) {
   if (!url) return null;
+  // Upgrade http:// → https:// to avoid mixed-content blocking when we're on
+  // HTTPS. Most CDNs (Shopify, Cloudflare, etc.) serve both, so this is safe.
+  const safeUrl = url.startsWith("http://") ? "https://" + url.slice(7) : url;
+  console.log("[fetchExternalImage] trying:", safeUrl);
   // 1) direct browser fetch
   try {
-    const r = await fetch(url, { mode: "cors" });
+    const r = await fetch(safeUrl, { mode: "cors" });
     if (r.ok) {
       const blob = await r.blob();
-      if (blob.type.startsWith("image/")) return blob;
+      if (blob.type.startsWith("image/")) {
+        console.log("[fetchExternalImage] direct OK", blob.type, blob.size);
+        return blob;
+      }
     }
-  } catch { /* CORS / network — fall through to server proxy */ }
-  // 2) server proxy
+  } catch (e) {
+    console.log("[fetchExternalImage] direct failed:", e?.message || e);
+  }
+  // 2) server proxy (handles CORS-blocked CDNs and bad TLS)
   try {
-    const res = await pb.send("/api/ai/fetch-image", { method: "POST", body: { url } });
+    const res = await pb.send("/api/ai/fetch-image", { method: "POST", body: { url: safeUrl } });
     if (res?.base64) {
       const bin = atob(res.base64);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      return new Blob([bytes], { type: res.contentType || "image/jpeg" });
+      const blob = new Blob([bytes], { type: res.contentType || "image/jpeg" });
+      console.log("[fetchExternalImage] proxy OK", blob.type, blob.size);
+      return blob;
     }
-  } catch { /* ignore */ }
+  } catch (e) {
+    console.log("[fetchExternalImage] proxy failed:", e?.message || e);
+  }
   return null;
 }
 

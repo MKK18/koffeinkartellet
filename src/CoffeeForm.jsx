@@ -138,11 +138,13 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
     setFetchingUrl(true); setUrlMsg(""); setError("");
     try {
       const x = await extractBeanFromUrl(link);
+      console.log("[fetchFromUrl] extracted:", x);
       applyExtracted(x);
       setFilledFrom("link");
       setTab("manual");
       // If the page exposed a product image, pull it down and stash as the coffee's photo.
       if (x.image_url && !imageBlob && !preview) {
+        console.log("[fetchFromUrl] trying image_url:", x.image_url);
         try {
           const blob = await fetchExternalImage(x.image_url);
           if (blob) {
@@ -151,8 +153,15 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
             const { blob: compressed } = await compressImage(file);
             setImageBlob(compressed);
             setPreview(URL.createObjectURL(compressed));
+            console.log("[fetchFromUrl] image attached");
+          } else {
+            console.warn("[fetchFromUrl] fetchExternalImage returned null for", x.image_url);
           }
-        } catch { /* image-grab is best-effort; ignore */ }
+        } catch (e) {
+          console.warn("[fetchFromUrl] image-grab failed:", e);
+        }
+      } else if (!x.image_url) {
+        console.warn("[fetchFromUrl] AI returned no image_url");
       }
     } catch (err) {
       setUrlMsg(err?.message === "NO_API_KEY"
