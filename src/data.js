@@ -56,9 +56,6 @@ function buildCoffeeBody(fields, imageBlob) {
     importer: fields.importer || "",
     tags: fields.tags || [],
     bag_notes: fields.notes || "",
-    acidity: fields.acidity ? Number(fields.acidity) : null,
-    body: fields.body ? Number(fields.body) : null,
-    sweetness: fields.sweetness ? Number(fields.sweetness) : null,
     added_by: fields.added_by || currentUser()?.id,
   };
   if (imageBlob || fields._clearImage) {

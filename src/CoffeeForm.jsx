@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
-import { Sheet, SectionHead, Spinner, CountryCombobox, FlavorPicker, ScaleSlider } from "./components.jsx";
+import { Sheet, SectionHead, Spinner, CountryCombobox, FlavorPicker } from "./components.jsx";
 import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, compressImage, extractBeanFromImage, extractBeanFromUrl, fetchExternalImage } from "./lib.js";
 import { createCoffee, updateCoffee, deleteCoffee, searchCoffeesByName, coffeeImageUrl } from "./data.js";
 import { useAuth } from "./auth.jsx";
@@ -9,7 +9,6 @@ import { useNav } from "./nav.jsx";
 const EMPTY = {
   name: "", roaster: "", origin: "", region: "", producer: "", varietal: "",
   process: "", roastLevel: "", altitude: "", harvest: "", importer: "", tags: [], notes: "",
-  acidity: 0, body: 0, sweetness: 0,
 };
 
 // Stable, module-level field components (defining these inside the form would
@@ -53,7 +52,6 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
       region: coffee.region || "", producer: coffee.producer || "", varietal: coffee.varietal || "",
       process: coffee.process || "", roastLevel: coffee.roast_level || "", altitude: coffee.altitude || "",
       harvest: coffee.harvest || "", importer: coffee.importer || "", tags: coffee.tags || [], notes: coffee.bag_notes || "",
-      acidity: coffee.acidity || 0, body: coffee.body || 0, sweetness: coffee.sweetness || 0,
     } : { ...EMPTY }
   );
   const [imageBlob, setImageBlob] = useState(null);
@@ -314,11 +312,6 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
             <Field label="Altitude (masl)" value={form.altitude} onChange={(v) => set("altitude", v)} placeholder="e.g. 1900–2200" />
             <Field label="Harvest" value={form.harvest} onChange={(v) => set("harvest", v)} placeholder="e.g. Nov 2024" full />
           </div>
-
-          <SectionHead title="Flavour profile" />
-          <ScaleSlider label="Acidity" value={form.acidity} onChange={(v) => set("acidity", v)} />
-          <ScaleSlider label="Body" value={form.body} onChange={(v) => set("body", v)} />
-          <ScaleSlider label="Sweetness" value={form.sweetness} onChange={(v) => set("sweetness", v)} />
 
           <SectionHead title="Flavour notes" />
           <FlavorPicker value={form.tags} onChange={(v) => set("tags", v)} />

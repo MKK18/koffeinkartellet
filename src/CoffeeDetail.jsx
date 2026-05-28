@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
-import { Sheet, SectionHead, Pill, Spinner, FlavorProfile } from "./components.jsx";
+import { Sheet, SectionHead, Pill, Spinner } from "./components.jsx";
 import { TAG_EMOJI } from "./lib.js";
 import { useAuth } from "./auth.jsx";
 import { useNav } from "./nav.jsx";
@@ -97,13 +97,6 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
       )}
       {coffee.bag_notes && (
         <div style={{ fontSize: 13, color: "#5a4030", fontFamily: sans, lineHeight: 1.55, fontStyle: "italic", padding: "12px 14px", background: C.tint, borderRadius: 10, borderLeft: "3px solid #d4b896", marginTop: 14 }}>{coffee.bag_notes}</div>
-      )}
-
-      {(coffee.roast_level || coffee.acidity || coffee.body || coffee.sweetness) && (
-        <>
-          <SectionHead title="Flavour profile" />
-          <FlavorProfile roast={coffee.roast_level} acidity={coffee.acidity} body={coffee.body} sweetness={coffee.sweetness} />
-        </>
       )}
 
       <SectionHead title="Tastings" />
