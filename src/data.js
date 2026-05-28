@@ -61,12 +61,13 @@ function buildCoffeeBody(fields, imageBlob) {
     sweetness: fields.sweetness ? Number(fields.sweetness) : null,
     added_by: fields.added_by || currentUser()?.id,
   };
-  if (imageBlob) {
+  if (imageBlob || fields._clearImage) {
     const fd = new FormData();
     Object.entries(base).forEach(([k, v]) => {
-      fd.append(k, k === "tags" ? JSON.stringify(v) : v);
+      fd.append(k, k === "tags" ? JSON.stringify(v) : (v == null ? "" : v));
     });
-    fd.append("image", imageBlob, "package.jpg");
+    if (imageBlob) fd.append("image", imageBlob, "package.jpg");
+    else fd.append("image", ""); // explicit clear
     return fd;
   }
   return base;

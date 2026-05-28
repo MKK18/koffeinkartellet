@@ -62,7 +62,8 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
   const [filledFrom, setFilledFrom] = useState("");   // "photo" | "link" — shown on Manual tab
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const fileRef = useRef();
+  const fileRef = useRef();        // Photo-tab dropzone (scans on select)
+  const uploadRef = useRef();      // Manual-tab upload (no scan)
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -90,22 +91,25 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
     return () => { cancelled = true; clearTimeout(t); };
   }, [form.name, editing]);
 
-  const handleImageFile = async (file) => {
+  // scan=true: Photo-tab flow (compress + AI scan + autofill).
+  // scan=false: plain attach (Manual upload, no AI).
+  const handleImageFile = async (file, { scan = true } = {}) => {
     if (!file || !file.type.startsWith("image/")) return;
     setError(""); setScanMsg("");
     try {
       const { blob, base64 } = await compressImage(file);
       setImageBlob(blob);
       setPreview(URL.createObjectURL(blob));
+      if (!scan) return;
       setScanning(true);
       try {
         const x = await extractBeanFromImage(base64);
         applyExtracted(x);
         setFilledFrom("photo");
-        setTab("manual");           // hand off to review
+        setTab("manual");
       } catch (err) {
         setScanMsg(err?.message === "NO_API_KEY"
-          ? "Add your Anthropic API key in Settings to enable photo scanning."
+          ? "Add an API key in Settings (or enable the shared one) to enable photo scanning."
           : "Couldn't read the photo — switch to Manual and fill it in.");
       } finally {
         setScanning(false);
@@ -113,6 +117,12 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
     } catch {
       setError("That image couldn't be processed.");
     }
+  };
+
+  const [clearExistingImage, setClearExistingImage] = useState(false);
+  const removeImage = () => {
+    setImageBlob(null); setPreview("");
+    if (editing && coffee?.image) setClearExistingImage(true);
   };
 
   const fetchFromUrl = async () => {
@@ -150,7 +160,8 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
     if (!form.name.trim()) { setError("Give the coffee a name."); setTab("manual"); return; }
     setSaving(true); setError("");
     try {
-      const saved = editing ? await updateCoffee(coffee.id, form, imageBlob) : await createCoffee(form, imageBlob);
+      const fields = { ...form, _clearImage: clearExistingImage && !imageBlob };
+      const saved = editing ? await updateCoffee(coffee.id, fields, imageBlob) : await createCoffee(fields, imageBlob);
       onSaved(saved);
     } catch (err) {
       setError(err?.message || "Couldn't save. Try again."); setSaving(false);
@@ -229,11 +240,24 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
       {tab === "manual" && (
         <>
           {filledFrom && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#eef3ec", border: "1px solid #d7e3d2", borderRadius: 10, padding: "10px 12px", marginBottom: 14 }}>
-              {preview && <img src={preview} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />}
-              <span style={{ fontFamily: sans, fontSize: 13, color: "#3a6040" }}>Filled in from the {filledFrom === "photo" ? "photo" : "link"} — check &amp; adjust below.</span>
+            <div style={{ background: "#eef3ec", border: "1px solid #d7e3d2", borderRadius: 10, padding: "10px 12px", marginBottom: 14, fontFamily: sans, fontSize: 13, color: "#3a6040" }}>
+              ✓ Filled in from the {filledFrom === "photo" ? "photo" : "link"} — check &amp; adjust below.
             </div>
           )}
+
+          <SectionHead title="Photo" />
+          <input ref={uploadRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleImageFile(e.target.files[0], { scan: false })} />
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 4 }}>
+            {preview ? (
+              <img src={preview} alt="package" style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 12, border: `1.5px solid ${C.border}` }} />
+            ) : (
+              <div style={{ width: 72, height: 72, borderRadius: 12, background: C.tint, border: `1.5px dashed ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>📷</div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <button onClick={() => uploadRef.current?.click()} style={{ ...ghostBtn, padding: "8px 14px", fontSize: 13 }}>{preview ? "Replace photo" : "Upload photo"}</button>
+              {preview && <button onClick={removeImage} style={{ ...ghostBtn, padding: "8px 14px", fontSize: 13, color: "#b07060", borderColor: "#e0c0b0" }}>Remove</button>}
+            </div>
+          </div>
 
           <SectionHead title="Basics" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
