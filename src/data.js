@@ -118,6 +118,51 @@ export async function listTastingsExpanded() {
   return pb.collection("tastings").getFullList({ expand: "user,coffee", sort: "-tasted_on" });
 }
 
+// Compact palate signature for "should I buy?" verdicts — per-attribute averages
+// for the user and (if in a household) the household combined.
+// Returns: { me: { count, avg, tags, origins, processes, varietals, roasts },
+//            household: same shape (only if memberIds.length > 1) }
+function _statsFor(tastings) {
+  const acc = { count: 0, scores: [], tags: {}, origins: {}, processes: {}, varietals: {}, roasts: {} };
+  tastings.forEach((t) => {
+    const s = Number(t.score);
+    const c = t.expand?.coffee;
+    if (!s || !c) return;
+    acc.count++;
+    acc.scores.push(s);
+    (c.tags || []).forEach((tag) => { (acc.tags[tag] ||= []).push(s); });
+    if (c.origin) (acc.origins[c.origin] ||= []).push(s);
+    if (c.process) (acc.processes[c.process] ||= []).push(s);
+    if (c.varietal) (acc.varietals[c.varietal] ||= []).push(s);
+    if (c.roast_level) (acc.roasts[c.roast_level] ||= []).push(s);
+  });
+  const avg = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+  const toMap = (obj) => Object.fromEntries(
+    Object.entries(obj)
+      .map(([k, arr]) => [k, { avg: Number(avg(arr).toFixed(2)), n: arr.length }])
+      .sort((a, b) => b[1].n - a[1].n)
+      .slice(0, 12)
+  );
+  return {
+    count: acc.count,
+    avg: avg(acc.scores) ? Number(avg(acc.scores).toFixed(2)) : null,
+    tags: toMap(acc.tags),
+    origins: toMap(acc.origins),
+    processes: toMap(acc.processes),
+    varietals: toMap(acc.varietals),
+    roasts: toMap(acc.roasts),
+  };
+}
+
+export async function palateSummary({ userId, memberIds }) {
+  const ids = memberIds && memberIds.length ? memberIds : [userId];
+  const filter = ids.map((id) => `user = "${id}"`).join(" || ");
+  const tastings = await pb.collection("tastings").getFullList({ filter, expand: "coffee" });
+  const me = _statsFor(tastings.filter((t) => t.user === userId));
+  const household = ids.length > 1 ? _statsFor(tastings) : null;
+  return { me, household };
+}
+
 // Return the current user's household, creating one if they don't have it yet.
 export async function ensureMyHousehold() {
   const existing = await getMyHousehold();

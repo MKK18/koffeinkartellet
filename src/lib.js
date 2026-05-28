@@ -248,6 +248,130 @@ ${FIELD_SPEC}`;
   );
 }
 
+// ── "Should I buy this?" verdict ───────────────────────────
+// One combined call: extract the coffee's attributes AND give a buy/skip
+// verdict against the user's palate. Returns { coffee, verdict, confidence,
+// reasoning, image_url? }.
+
+const VERDICT_TAIL = (palate) => `
+
+After extracting the coffee, decide whether the user should buy it. Use their tasting history:
+${JSON.stringify(palate, null, 2)}
+
+Be grounded in their actual numbers — reference specific tags, origins, processes, or roasters from the data above. If the household stats are present and differ meaningfully from the user's own, mention that.
+
+Respond ONLY with valid JSON, no markdown, no commentary, in this exact shape:
+{
+  "coffee": {
+    "name": "...", "roaster": "...", "origin": "...", "region": "...",
+    "producer": "...", "varietal": "...", "process": "...",
+    "roastLevel": "...", "altitude": "...", "harvest": "...", "importer": "...",
+    "tags": [], "notes": "...", "image_url": ""
+  },
+  "verdict": "buy" | "maybe" | "skip",
+  "confidence": "high" | "medium" | "low",
+  "reasoning": "1-2 sentence verdict grounded in their palate numbers"
+}
+
+Confidence: "low" if the user has fewer than ~10 tastings OR no overlap with this coffee's attributes. "high" with many tastings + strong overlap. "medium" otherwise.`;
+
+async function anthropicImageVerdict(apiKey, base64, palate) {
+  const prompt = `You are a specialty coffee expert evaluating a bag for a friend.
+Step 1: Examine this coffee packaging image carefully and extract its details. Use web_search if useful.
+${FIELD_SPEC}${VERDICT_TAIL(palate)}`;
+  const data = await postJSON("https://api.anthropic.com/v1/messages", {
+    "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true",
+  }, {
+    model: "claude-sonnet-4-5", max_tokens: 1500,
+    tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }],
+    messages: [{
+      role: "user",
+      content: [
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
+        { type: "text", text: prompt },
+      ],
+    }],
+  });
+  const text = (data.content || []).filter((b) => b.type === "text").pop()?.text || "";
+  return extractJson(text);
+}
+
+async function anthropicUrlVerdict(apiKey, url, palate) {
+  const prompt = `You are a specialty coffee expert evaluating a coffee at ${url} for a friend.
+Step 1: Fetch the page and ALSO web_search the coffee's name + roaster (most roaster sites are JS-rendered; resellers and importers carry the same data). Combine sources.
+${FIELD_SPEC}${VERDICT_TAIL(palate)}`;
+  const data = await postJSON("https://api.anthropic.com/v1/messages", {
+    "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true",
+  }, {
+    model: "claude-sonnet-4-5", max_tokens: 2000,
+    tools: [
+      { type: "web_fetch_20250910", name: "web_fetch", max_uses: 5 },
+      { type: "web_search_20250305", name: "web_search", max_uses: 5 },
+    ],
+    messages: [{ role: "user", content: prompt }],
+  });
+  const text = (data.content || []).filter((b) => b.type === "text").pop()?.text || "";
+  return extractJson(text);
+}
+
+async function openaiImageVerdict(apiKey, base64, palate) {
+  const prompt = `You are a specialty coffee expert evaluating a bag for a friend.
+Examine this coffee packaging image and extract its details.
+${FIELD_SPEC}${VERDICT_TAIL(palate)}`;
+  const data = await postJSON("https://api.openai.com/v1/chat/completions", {
+    Authorization: `Bearer ${apiKey}`,
+  }, {
+    model: "gpt-4o",
+    response_format: { type: "json_object" },
+    messages: [{
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}` } },
+      ],
+    }],
+  });
+  return extractJson(data.choices?.[0]?.message?.content || "");
+}
+
+async function openaiUrlVerdict(apiKey, url, palate) {
+  const prompt = `You are a specialty coffee expert evaluating a coffee at ${url} for a friend.
+Fetch and read the page; use web_search to fill gaps.
+${FIELD_SPEC}${VERDICT_TAIL(palate)}`;
+  const data = await postJSON("https://api.openai.com/v1/responses", {
+    Authorization: `Bearer ${apiKey}`,
+  }, {
+    model: "gpt-4o",
+    tools: [{ type: "web_search_preview" }],
+    input: prompt,
+  });
+  const text = data.output_text
+    || (data.output || []).flatMap((o) => (o.content || []).filter((c) => c.type === "output_text").map((c) => c.text)).join("\n");
+  return extractJson(text);
+}
+
+export async function verdictFromImage(base64, palate) {
+  return withFallback(
+    () => globalScan("verdict_image", { base64, palate }),
+    () => {
+      const apiKey = getApiKey();
+      if (!apiKey) throw new Error("NO_API_KEY");
+      return getProvider() === "openai" ? openaiImageVerdict(apiKey, base64, palate) : anthropicImageVerdict(apiKey, base64, palate);
+    },
+  );
+}
+
+export async function verdictFromUrl(url, palate) {
+  return withFallback(
+    () => globalScan("verdict_url", { url, palate }),
+    () => {
+      const apiKey = getApiKey();
+      if (!apiKey) throw new Error("NO_API_KEY");
+      return getProvider() === "openai" ? openaiUrlVerdict(apiKey, url, palate) : anthropicUrlVerdict(apiKey, url, palate);
+    },
+  );
+}
+
 // Fetch an external image (a roaster's product photo) and return a Blob suitable
 // for upload as a coffee's avatar. Tries the browser first (most CDNs are CORS-OK);
 // if that fails, goes through our server proxy.

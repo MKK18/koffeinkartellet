@@ -11,6 +11,7 @@ import CoffeeForm from "./CoffeeForm.jsx";
 import SettingsModal from "./SettingsModal.jsx";
 import AccountMenu from "./AccountMenu.jsx";
 import InstallPrompt from "./InstallPrompt.jsx";
+import BuyVerdict from "./BuyVerdict.jsx";
 
 const TABS = [
   { id: "catalog", label: "Catalog", icon: "☕" },
@@ -26,6 +27,7 @@ export default function AppShell() {
   const [profileId, setProfileId] = useState(null);
   const [settings, setSettings] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [verdictOpen, setVerdictOpen] = useState(false);
   const [dataVersion, setDataVersion] = useState(0);
 
   const bumpData = useCallback(() => setDataVersion((v) => v + 1), []);
@@ -35,6 +37,7 @@ export default function AppShell() {
     bumpData,
     openCoffee: (c) => { setProfileId(null); setCoffeeView(c); },
     addCoffee: () => setForm({ mode: "add" }),
+    openBuyVerdict: () => setVerdictOpen(true),
     editCoffee: (c) => { setCoffeeView(null); setForm({ mode: "edit", coffee: c }); },
     openProfile: (id) => { setCoffeeView(null); setProfileId(id); },
     openSettings: () => setSettings(true),
@@ -117,6 +120,7 @@ export default function AppShell() {
         )}
         {settings && <SettingsModal onClose={() => setSettings(false)} />}
         {accountOpen && <AccountMenu onClose={() => setAccountOpen(false)} onOpenSettings={() => setSettings(true)} />}
+        {verdictOpen && <BuyVerdict onClose={() => setVerdictOpen(false)} />}
         <InstallPrompt />
       </div>
     </NavProvider>

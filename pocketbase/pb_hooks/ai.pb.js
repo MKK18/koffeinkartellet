@@ -51,8 +51,31 @@ routerAdd("POST", "/api/ai/scan", (e) => {
     throw new ForbiddenError("Sign in required");
   }
   const body = e.requestInfo().body || {};
-  const mode = body.mode === "url" ? "url" : "image";
-  const prompt = String(body.prompt || "");
+  const mode = ["url", "image", "verdict_image", "verdict_url"].includes(body.mode) ? body.mode : "image";
+  // Build the prompt server-side for verdict modes (which carry a palate
+  // object), so the client doesn't have to duplicate the prompt templates.
+  let prompt = String(body.prompt || "");
+  if (mode === "verdict_image" || mode === "verdict_url") {
+    const palate = body.palate || {};
+    const head = mode === "verdict_image"
+      ? "You are a specialty coffee expert evaluating a bag for a friend. Examine this coffee packaging image carefully and extract its details. Use web_search if useful."
+      : `You are a specialty coffee expert evaluating a coffee at ${body.url} for a friend. Fetch the page; ALSO web_search by name + roaster since most roaster sites are JS-rendered.`;
+    prompt = `${head}
+
+Respond ONLY with valid JSON, no markdown:
+{
+  "coffee": { "name": "...", "roaster": "...", "origin": "...", "region": "...", "producer": "...", "varietal": "...", "process": "...", "roastLevel": "...", "altitude": "...", "harvest": "...", "importer": "...", "tags": [], "notes": "...", "image_url": "" },
+  "verdict": "buy" | "maybe" | "skip",
+  "confidence": "high" | "medium" | "low",
+  "reasoning": "1-2 sentences grounded in the palate numbers"
+}
+
+Use the user's palate (tags/origins/processes/etc with avg score and count) to give the verdict. Reference specific numbers in your reasoning.
+Palate:
+${JSON.stringify(palate, null, 2)}
+
+Confidence: "low" if <10 tastings or no overlap; "high" if lots of overlap; "medium" otherwise.`;
+  }
   if (!prompt) throw new BadRequestError("Missing prompt");
 
   const anthropicKey = $os.getenv("ANTHROPIC_API_KEY");
@@ -72,7 +95,7 @@ routerAdd("POST", "/api/ai/scan", (e) => {
       "x-api-key": anthropicKey,
       "anthropic-version": "2023-06-01",
     };
-    if (mode === "image") {
+    if (mode === "image" || mode === "verdict_image") {
       const base64 = String(body.base64 || "");
       if (!base64) throw new BadRequestError("Missing base64");
       payload = {

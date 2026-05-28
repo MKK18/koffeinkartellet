@@ -37,7 +37,7 @@ function CoffeeCard({ coffee, avg, count, onClick }) {
 
 export default function Catalog() {
   const wide = useIsWide();
-  const { openCoffee, addCoffee, dataVersion } = useNav();
+  const { openCoffee, addCoffee, openBuyVerdict, dataVersion } = useNav();
   const [coffees, setCoffees] = useState(null);
   const [aggregates, setAggregates] = useState({});
   const [search, setSearch] = useState("");
@@ -56,7 +56,14 @@ export default function Catalog() {
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "16px" }}>
-      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search coffees, roasters, origins…" style={{ ...inputStyle, marginBottom: 16, fontSize: 15, padding: "12px 16px" }} />
+      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search coffees, roasters, origins…" style={{ ...inputStyle, marginBottom: 10, fontSize: 15, padding: "12px 16px" }} />
+
+      <button onClick={openBuyVerdict} style={{
+        width: "100%", marginBottom: 16, padding: "10px 14px", borderRadius: 999,
+        border: `1.5px dashed ${C.brown}`, background: "transparent", color: C.brown,
+        fontFamily: sans, fontSize: 13, fontWeight: 600, cursor: "pointer",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+      }}>🔮 Should I buy this coffee?</button>
 
       {coffees === null ? (
         <div style={{ textAlign: "center", padding: 40, color: C.muted, fontFamily: sans }}>Loading…</div>
