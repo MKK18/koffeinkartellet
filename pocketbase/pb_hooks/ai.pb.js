@@ -12,21 +12,41 @@ routerAdd("GET", "/api/ai/status", (e) => {
   });
 });
 
-// Base64 encoder that works on any byte-as-string input (no btoa dependency).
-function bytesToBase64(s) {
+// Base64 encoder. Accepts either a binary-safe string (older PocketBase) or
+// an Array<number> of byte values (PocketBase 0.20+, per the JSVM types).
+function bytesToBase64(input) {
   const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const isArr = Array.isArray(input);
+  const len = isArr ? input.length : (input ? input.length : 0);
+  const at = isArr ? (i) => input[i] & 0xff : (i) => input.charCodeAt(i) & 0xff;
   let out = "";
-  const len = s.length;
   for (let i = 0; i < len; i += 3) {
-    const a = s.charCodeAt(i) & 0xff;
-    const b = (i + 1 < len) ? s.charCodeAt(i + 1) & 0xff : 0;
-    const c = (i + 2 < len) ? s.charCodeAt(i + 2) & 0xff : 0;
+    const a = at(i);
+    const b = (i + 1 < len) ? at(i + 1) : 0;
+    const c = (i + 2 < len) ? at(i + 2) : 0;
     const t = (a << 16) | (b << 8) | c;
     out += ABC[(t >> 18) & 63] + ABC[(t >> 12) & 63];
     out += (i + 1 < len) ? ABC[(t >> 6) & 63] : "=";
     out += (i + 2 < len) ? ABC[t & 63] : "=";
   }
   return out;
+}
+
+// Read $http.send result body as a UTF-8 string. PocketBase 0.20+ returns
+// body as Array<number>; older versions returned a string. The deprecated
+// `raw` field still holds the string form on current versions.
+function bodyToString(res) {
+  if (!res) return "";
+  if (typeof res.raw === "string" && res.raw.length) return res.raw;
+  if (typeof res.body === "string") return res.body;
+  if (Array.isArray(res.body)) {
+    // Build a string from byte values (works for ASCII/UTF-8 latin range,
+    // which covers everything we regex against — meta tags, JSON-LD).
+    let s = "";
+    for (let i = 0; i < res.body.length; i++) s += String.fromCharCode(res.body[i] & 0xff);
+    return s;
+  }
+  return "";
 }
 
 // Authed: server-side image fetcher. Used when the browser can't cross-fetch a
@@ -36,12 +56,17 @@ routerAdd("POST", "/api/ai/fetch-image", (e) => {
   const body = e.requestInfo().body || {};
   const url = String(body.url || "");
   if (!/^https?:\/\//i.test(url)) throw new BadRequestError("Invalid URL");
-  const res = $http.send({ url: url, method: "GET", timeout: 30 });
+  const res = $http.send({
+    url: url,
+    method: "GET",
+    timeout: 30,
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; koffeinkartellet/1.0)" },
+  });
   if (res.statusCode >= 400) throw new BadRequestError("Image fetch failed: " + res.statusCode);
   const ct = (res.headers && res.headers["Content-Type"] && res.headers["Content-Type"][0]) || "application/octet-stream";
   if (!ct.startsWith("image/")) throw new BadRequestError("Not an image (" + ct + ")");
-  // res.body is the raw response string (bytes as a binary-safe string in JSVM).
-  return e.json(200, { base64: bytesToBase64(res.body || ""), contentType: ct });
+  // res.body is Array<number> on PB 0.20+; bytesToBase64 handles both shapes.
+  return e.json(200, { base64: bytesToBase64(res.body || []), contentType: ct });
 });
 
 // Authed: server-side page-meta scraper. Fetches a page's HTML and extracts
@@ -63,7 +88,7 @@ routerAdd("POST", "/api/ai/page-meta", (e) => {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; koffeinkartellet/1.0)" },
     });
     if (res.statusCode >= 400) return e.json(200, { image_url: "" });
-    html = String(res.body || "");
+    html = bodyToString(res);
   } catch (err) {
     return e.json(200, { image_url: "" });
   }
