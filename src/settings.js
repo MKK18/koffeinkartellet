@@ -1,6 +1,7 @@
 // AI provider settings (for photo + URL scanning). Stored in this browser only.
 const KEY_STORAGE = "ai-api-key";
 const PROVIDER_STORAGE = "ai-provider"; // "anthropic" | "openai"
+const USE_GLOBAL_STORAGE = "ai-use-global";
 const LEGACY_ANTHROPIC = "anthropic-api-key"; // backward compat
 
 export const getApiKey = () => {
@@ -21,19 +22,34 @@ export const setApiKey = (k) => {
   } catch { /* ignore */ }
 };
 
+// "anthropic" | "openai" — the personal provider, always selected.
+// Old "global" stored as provider migrates to useGlobal=true + anthropic default.
 export const getProvider = () => {
-  try { return localStorage.getItem(PROVIDER_STORAGE) || "anthropic"; } catch { return "anthropic"; }
+  try {
+    const v = localStorage.getItem(PROVIDER_STORAGE);
+    if (v === "global") {
+      localStorage.setItem(PROVIDER_STORAGE, "anthropic");
+      localStorage.setItem(USE_GLOBAL_STORAGE, "true");
+      return "anthropic";
+    }
+    return v === "openai" ? "openai" : "anthropic";
+  } catch { return "anthropic"; }
 };
 
 export const setProvider = (p) => {
-  try {
-    const v = (p === "openai" || p === "global") ? p : "anthropic";
-    localStorage.setItem(PROVIDER_STORAGE, v);
-  } catch { /* ignore */ }
+  try { localStorage.setItem(PROVIDER_STORAGE, p === "openai" ? "openai" : "anthropic"); } catch { /* ignore */ }
 };
 
-// Global mode uses a server-side shared key — no per-user key needed.
-export const hasApiKey = () => {
-  if (getProvider() === "global") return true; // server holds it
-  return !!getApiKey();
+// Independent "prefer the server's shared key when it's available" preference.
+// If the global call fails for any reason, the app falls back to the personal key.
+export const getUseGlobal = () => {
+  try { return localStorage.getItem(USE_GLOBAL_STORAGE) === "true"; } catch { return false; }
 };
+export const setUseGlobal = (b) => {
+  try { localStorage.setItem(USE_GLOBAL_STORAGE, b ? "true" : "false"); } catch { /* ignore */ }
+};
+
+// True if AI features will work — either a personal key, or "use global" enabled.
+// (We can't know from here whether the server actually has a global key, but the
+// scan path falls back to personal, so this is a best-effort check.)
+export const hasApiKey = () => getUseGlobal() || !!getApiKey();

@@ -1,4 +1,4 @@
-import { getApiKey, getProvider } from "./settings.js";
+import { getApiKey, getProvider, getUseGlobal } from "./settings.js";
 import { pb } from "./pb.js";
 
 // Ask the server which global providers are configured (env vars present).
@@ -95,7 +95,8 @@ const FIELD_SPEC = `Respond ONLY with a valid JSON object — no markdown, no ex
   "harvest": "harvest season e.g. Nov 2024",
   "importer": "importer name if known",
   "tags": ["from this list only: ${FLAVOR_TAGS.join(", ")}"],
-  "notes": "tasting notes from the bag/page or from your search"
+  "notes": "tasting notes from the bag/page or from your search",
+  "image_url": "absolute URL of the main coffee bag/package image on the page, or empty"
 }
 Use empty string "" for unknown string fields. Use [] for unknown tags.`;
 
@@ -198,31 +199,78 @@ async function globalScan(mode, payload) {
   return extractJson(res.text || "");
 }
 
-// ── Public extractors (provider-aware) ─────────────────────
+// Try the server's shared key first if the user opted in; on any failure fall
+// back to the personal provider+key so they're not stranded.
+async function withFallback(globalCall, personalCall) {
+  if (getUseGlobal()) {
+    try { return await globalCall(); }
+    catch (err) { console.warn("Global AI scan failed, falling back to personal:", err?.message); }
+  }
+  return personalCall();
+}
+
+// ── Public extractors (provider-aware, global-first when opted in) ─────────
 export async function extractBeanFromImage(base64) {
-  const provider = getProvider();
   const prompt = `You are a specialty coffee expert. Examine this coffee packaging image carefully.
 Extract everything visible on the package. If you can search the web, look up this specific coffee to fill in details not visible.
 ${FIELD_SPEC}`;
-  if (provider === "global") return globalScan("image", { base64, prompt });
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error("NO_API_KEY");
-  return provider === "openai"
-    ? openaiImage(apiKey, base64, prompt)
-    : anthropicImage(apiKey, base64, prompt);
+  return withFallback(
+    () => globalScan("image", { base64, prompt }),
+    () => {
+      const apiKey = getApiKey();
+      if (!apiKey) throw new Error("NO_API_KEY");
+      return getProvider() === "openai" ? openaiImage(apiKey, base64, prompt) : anthropicImage(apiKey, base64, prompt);
+    },
+  );
 }
 
 export async function extractBeanFromUrl(url) {
-  const provider = getProvider();
-  const prompt = `You are a specialty coffee expert. Fetch the coffee product page at ${url} and read it carefully.
-Extract the coffee's details from the page. If anything important is missing, you may also search the web to fill gaps.
+  const prompt = `You are a specialty coffee expert. Extract a coffee's details from a roaster product page.
+
+Step 1: Fetch ${url} and read the page carefully.
+Step 2: If the fetched HTML looks sparse (e.g. a JavaScript-rendered storefront like Shopify with little visible text), do ALL of the following before giving up:
+  • check for <script type="application/ld+json"> structured product data in the HTML — this often contains name, description, image, brand
+  • check Open Graph meta tags (og:title, og:image, og:description)
+  • use web_search to find this coffee by name + roaster on the roaster's other pages, importer sites, or coffee databases
+  • piece information together from multiple sources
+
+Be diligent: most modern roaster pages list origin, region, producer/farm, varietal, process, altitude, harvest, and tasting notes — even if the front-end hides them initially. The product image URL is usually in the JSON-LD or og:image.
+
 ${FIELD_SPEC}`;
-  if (provider === "global") return globalScan("url", { url, prompt });
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error("NO_API_KEY");
-  return provider === "openai"
-    ? openaiUrl(apiKey, prompt)
-    : anthropicUrl(apiKey, prompt);
+  return withFallback(
+    () => globalScan("url", { url, prompt }),
+    () => {
+      const apiKey = getApiKey();
+      if (!apiKey) throw new Error("NO_API_KEY");
+      return getProvider() === "openai" ? openaiUrl(apiKey, prompt) : anthropicUrl(apiKey, prompt);
+    },
+  );
+}
+
+// Fetch an external image (a roaster's product photo) and return a Blob suitable
+// for upload as a coffee's avatar. Tries the browser first (most CDNs are CORS-OK);
+// if that fails, goes through our server proxy.
+export async function fetchExternalImage(url) {
+  if (!url) return null;
+  // 1) direct browser fetch
+  try {
+    const r = await fetch(url, { mode: "cors" });
+    if (r.ok) {
+      const blob = await r.blob();
+      if (blob.type.startsWith("image/")) return blob;
+    }
+  } catch { /* CORS / network — fall through to server proxy */ }
+  // 2) server proxy
+  try {
+    const res = await pb.send("/api/ai/fetch-image", { method: "POST", body: { url } });
+    if (res?.base64) {
+      const bin = atob(res.base64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new Blob([bytes], { type: res.contentType || "image/jpeg" });
+    }
+  } catch { /* ignore */ }
+  return null;
 }
 
 // Average + per-person breakdown for a coffee's tastings (array of {user, score, expand}).

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
 import { Sheet, SectionHead, Spinner, CountryCombobox, FlavorPicker, ScaleSlider } from "./components.jsx";
-import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, compressImage, extractBeanFromImage, extractBeanFromUrl } from "./lib.js";
+import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, compressImage, extractBeanFromImage, extractBeanFromUrl, fetchExternalImage } from "./lib.js";
 import { createCoffee, updateCoffee, searchCoffeesByName, coffeeImageUrl } from "./data.js";
 
 const EMPTY = {
@@ -124,9 +124,22 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
       applyExtracted(x);
       setFilledFrom("link");
       setTab("manual");
+      // If the page exposed a product image, pull it down and stash as the coffee's photo.
+      if (x.image_url && !imageBlob && !preview) {
+        try {
+          const blob = await fetchExternalImage(x.image_url);
+          if (blob) {
+            // Re-compress to our standard max-1024 JPEG for consistency.
+            const file = new File([blob], "from-link.jpg", { type: blob.type || "image/jpeg" });
+            const { blob: compressed } = await compressImage(file);
+            setImageBlob(compressed);
+            setPreview(URL.createObjectURL(compressed));
+          }
+        } catch { /* image-grab is best-effort; ignore */ }
+      }
     } catch (err) {
       setUrlMsg(err?.message === "NO_API_KEY"
-        ? "Add your Anthropic API key in Settings to import from a link."
+        ? "Add an API key in Settings (or enable the shared one) to import from a link."
         : "Couldn't read that page — try the photo, or switch to Manual.");
     } finally {
       setFetchingUrl(false);

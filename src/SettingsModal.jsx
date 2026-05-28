@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { getApiKey, setApiKey, getProvider, setProvider as writeProvider } from "./settings.js";
+import { getApiKey, setApiKey, getProvider, setProvider as writeProvider, getUseGlobal, setUseGlobal as writeUseGlobal } from "./settings.js";
 import { updateProfile, changePassword, requestEmailChange, currentUser } from "./pb.js";
 import { useAuth } from "./auth.jsx";
 import { compressImage, aiStatus } from "./lib.js";
@@ -43,6 +43,7 @@ export default function SettingsModal({ onClose }) {
   // api key
   const [key, setKey] = useState(getApiKey());
   const [aiProvider, setAiProvider] = useState(getProvider());
+  const [useGlobal, setUseGlobalLocal] = useState(getUseGlobal());
   const [showKey, setShowKey] = useState(false);
   const [keyMsg, setKeyMsg] = useState(null);
   const [globalAvail, setGlobalAvail] = useState({ anthropic: false, openai: false });
@@ -95,6 +96,7 @@ export default function SettingsModal({ onClose }) {
   const saveKey = () => {
     setApiKey(key.trim());
     writeProvider(aiProvider);
+    writeUseGlobal(useGlobal && (globalAvail.anthropic || globalAvail.openai));
     setKeyMsg({ ok: true, t: "Saved." });
   };
 
@@ -158,54 +160,44 @@ export default function SettingsModal({ onClose }) {
       <SectionHead title="AI provider key" />
       <div style={{ fontSize: 12, color: C.muted, fontFamily: sans, marginBottom: 10 }}>Enables photo &amp; link scanning. Stored in this browser only.</div>
 
-      <label style={labelStyle}>Provider</label>
-      <div style={{ display: "flex", gap: 6, background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, padding: 4, marginBottom: 12, flexWrap: "wrap" }}>
-        {[
-          ["anthropic", "Anthropic", true],
-          ["openai", "OpenAI", true],
-          ["global", "Global (shared)", globalReady],
-        ].map(([id, label, enabled]) => {
+      {/* Use shared server key (with fallback to personal) */}
+      <label style={{ ...labelStyle, marginBottom: 8 }}>Shared (global) key</label>
+      <label style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, cursor: globalReady ? "pointer" : "not-allowed", marginBottom: 12, opacity: globalReady ? 1 : 0.6 }}>
+        <input type="checkbox" checked={useGlobal && globalReady} disabled={!globalReady} onChange={(e) => setUseGlobalLocal(e.target.checked)} style={{ marginTop: 2 }} />
+        <div style={{ flex: 1, fontFamily: sans, fontSize: 13, color: C.ink, lineHeight: 1.5 }}>
+          <strong>Use the shared key on the server when available</strong>
+          <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
+            {globalReady
+              ? <>Server has{globalAvail.anthropic && <strong> Anthropic</strong>}{globalAvail.anthropic && globalAvail.openai && " +"}{globalAvail.openai && <strong> OpenAI</strong>} configured. Your personal key below is used as a fallback if the shared one fails.</>
+              : <>No shared key configured on the server yet. Set <code>ANTHROPIC_API_KEY</code> or <code>OPENAI_API_KEY</code> on Railway to enable.</>}
+          </div>
+        </div>
+      </label>
+
+      {/* Personal provider + key (always present, used directly or as fallback) */}
+      <label style={labelStyle}>Personal provider</label>
+      <div style={{ display: "flex", gap: 6, background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, padding: 4, marginBottom: 12 }}>
+        {[["anthropic", "Anthropic"], ["openai", "OpenAI"]].map(([id, label]) => {
           const active = aiProvider === id;
           return (
-            <button key={id} type="button" disabled={!enabled} onClick={() => enabled && setAiProvider(id)} title={enabled ? "" : "No global key configured on the server yet"} style={{
-              flex: 1, minWidth: 100, padding: "9px 4px", borderRadius: 9, border: "none",
-              cursor: enabled ? "pointer" : "not-allowed",
+            <button key={id} type="button" onClick={() => setAiProvider(id)} style={{
+              flex: 1, padding: "9px 4px", borderRadius: 9, border: "none", cursor: "pointer",
               fontFamily: sans, fontSize: 13, fontWeight: active ? 600 : 500,
-              background: active ? C.card : "transparent",
-              color: active ? C.brown : (enabled ? C.muted : "#c5b5a5"),
+              background: active ? C.card : "transparent", color: active ? C.brown : C.muted,
               boxShadow: active ? "0 1px 4px rgba(100,70,40,0.12)" : "none",
             }}>{label}</button>
           );
         })}
       </div>
 
-      {aiProvider === "global" ? (
-        <div style={{ background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, padding: "12px 14px", fontSize: 13, fontFamily: sans, color: C.ink, lineHeight: 1.5 }}>
-          Using the shared key on the server — no personal key needed. Available:
-          {globalAvail.anthropic && <strong> Anthropic</strong>}
-          {globalAvail.anthropic && globalAvail.openai && " + "}
-          {globalAvail.openai && <strong> OpenAI</strong>}
-          .
-        </div>
-      ) : (
-        <>
-          <label style={labelStyle}>API key</label>
-          <div style={{ position: "relative" }}>
-            <input type={showKey ? "text" : "password"} value={key} onChange={(e) => setKey(e.target.value)} placeholder={providerInfo[aiProvider].placeholder} style={{ ...inputStyle, paddingRight: 64 }} />
-            <button onClick={() => setShowKey((s) => !s)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.muted, fontFamily: sans, fontSize: 12, cursor: "pointer", padding: "4px 8px" }}>{showKey ? "Hide" : "Show"}</button>
-          </div>
-          <div style={{ fontSize: 11, color: C.faint, fontFamily: sans, marginTop: 6 }}>{providerInfo[aiProvider].helper}</div>
-        </>
-      )}
-      {!globalReady && (
-        <div style={{ fontSize: 11, color: C.faint, fontFamily: sans, marginTop: 8, fontStyle: "italic" }}>
-          (Admin tip: set <code>ANTHROPIC_API_KEY</code> or <code>OPENAI_API_KEY</code> on the server to enable Global mode for everyone.)
-        </div>
-      )}
+      <label style={labelStyle}>Personal API key {useGlobal && globalReady && <span style={{ textTransform: "none", color: C.faint, letterSpacing: 0 }}>(fallback)</span>}</label>
+      <div style={{ position: "relative" }}>
+        <input type={showKey ? "text" : "password"} value={key} onChange={(e) => setKey(e.target.value)} placeholder={providerInfo[aiProvider].placeholder} style={{ ...inputStyle, paddingRight: 64 }} />
+        <button onClick={() => setShowKey((s) => !s)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.muted, fontFamily: sans, fontSize: 12, cursor: "pointer", padding: "4px 8px" }}>{showKey ? "Hide" : "Show"}</button>
+      </div>
+      <div style={{ fontSize: 11, color: C.faint, fontFamily: sans, marginTop: 6 }}>{providerInfo[aiProvider].helper}</div>
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 10 }}>
-        {aiProvider !== "global" && (
-          <button onClick={() => { setApiKey(""); setKey(""); setKeyMsg({ ok: true, t: "Removed." }); }} style={{ ...ghostBtn, color: "#b07060", borderColor: "#e0c0b0" }}>Remove</button>
-        )}
+        <button onClick={() => { setApiKey(""); setKey(""); setKeyMsg({ ok: true, t: "Removed." }); }} style={{ ...ghostBtn, color: "#b07060", borderColor: "#e0c0b0" }}>Remove key</button>
         <button onClick={saveKey} style={primaryBtn(true)}>Save</button>
       </div>
       <Note ok={keyMsg?.ok}>{keyMsg?.t}</Note>

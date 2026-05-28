@@ -12,6 +12,38 @@ routerAdd("GET", "/api/ai/status", (e) => {
   });
 });
 
+// Base64 encoder that works on any byte-as-string input (no btoa dependency).
+function bytesToBase64(s) {
+  const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  let out = "";
+  const len = s.length;
+  for (let i = 0; i < len; i += 3) {
+    const a = s.charCodeAt(i) & 0xff;
+    const b = (i + 1 < len) ? s.charCodeAt(i + 1) & 0xff : 0;
+    const c = (i + 2 < len) ? s.charCodeAt(i + 2) & 0xff : 0;
+    const t = (a << 16) | (b << 8) | c;
+    out += ABC[(t >> 18) & 63] + ABC[(t >> 12) & 63];
+    out += (i + 1 < len) ? ABC[(t >> 6) & 63] : "=";
+    out += (i + 2 < len) ? ABC[t & 63] : "=";
+  }
+  return out;
+}
+
+// Authed: server-side image fetcher. Used when the browser can't cross-fetch a
+// roaster's product image (CORS). Body: { url }. Returns { base64, contentType }.
+routerAdd("POST", "/api/ai/fetch-image", (e) => {
+  if (!e.auth || !e.auth.id) throw new ForbiddenError("Sign in required");
+  const body = e.requestInfo().body || {};
+  const url = String(body.url || "");
+  if (!/^https?:\/\//i.test(url)) throw new BadRequestError("Invalid URL");
+  const res = $http.send({ url: url, method: "GET", timeout: 30 });
+  if (res.statusCode >= 400) throw new BadRequestError("Image fetch failed: " + res.statusCode);
+  const ct = (res.headers && res.headers["Content-Type"] && res.headers["Content-Type"][0]) || "application/octet-stream";
+  if (!ct.startsWith("image/")) throw new BadRequestError("Not an image (" + ct + ")");
+  // res.body is the raw response string (bytes as a binary-safe string in JSVM).
+  return e.json(200, { base64: bytesToBase64(res.body || ""), contentType: ct });
+});
+
 // Authed: scan an image or a URL using the configured global key.
 // Body: { mode: "image" | "url", prompt: string, base64?: string, url?: string, provider?: "anthropic" | "openai" }
 routerAdd("POST", "/api/ai/scan", (e) => {
