@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
-import { Sheet, SectionHead, Spinner, CountryCombobox, FlavorPicker } from "./components.jsx";
+import { Sheet, SectionHead, Spinner, CountryCombobox, Combobox, FlavorPicker } from "./components.jsx";
 import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, compressImage, extractBeanFromImage, extractBeanFromUrl, fetchExternalImage } from "./lib.js";
 import { createCoffee, updateCoffee, deleteCoffee, searchCoffeesByName, coffeeImageUrl } from "./data.js";
 import { useAuth } from "./auth.jsx";
@@ -75,9 +75,12 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
     ...f,
     name: x.name || f.name, roaster: x.roaster || f.roaster, origin: x.origin || f.origin,
     region: x.region || f.region, producer: x.producer || f.producer,
-    varietal: VARIETALS.includes(x.varietal) ? x.varietal : f.varietal,
-    process: PROCESSES.includes(x.process) ? x.process : f.process,
-    roastLevel: ROAST_LEVELS.includes(x.roastLevel) ? x.roastLevel : f.roastLevel,
+    // Free-text-friendly: keep the AI's value verbatim even if it's outside
+    // our suggestion lists — exotic processes / varietals like "Lactic
+    // Anaerobic" or "Udaini" survive instead of being silently dropped.
+    varietal: x.varietal || f.varietal,
+    process: x.process || f.process,
+    roastLevel: x.roastLevel || f.roastLevel,
     altitude: x.altitude || f.altitude, harvest: x.harvest || f.harvest, importer: x.importer || f.importer,
     tags: x.tags?.filter((t) => FLAVOR_TAGS.includes(t))?.length ? x.tags.filter((t) => FLAVOR_TAGS.includes(t)) : f.tags,
     notes: x.notes || f.notes,
@@ -306,9 +309,18 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
 
           <SectionHead title="Bean details" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Select label="Varietal" value={form.varietal} onChange={(v) => set("varietal", v)} options={VARIETALS} />
-            <Select label="Process" value={form.process} onChange={(v) => set("process", v)} options={PROCESSES} />
-            <Select label="Roast level" value={form.roastLevel} onChange={(v) => set("roastLevel", v)} options={ROAST_LEVELS} />
+            <div>
+              <label style={labelStyle}>Varietal</label>
+              <Combobox value={form.varietal} onChange={(v) => set("varietal", v)} options={VARIETALS} placeholder="e.g. Gesha, Udaini, Pink Bourbon" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Process</label>
+              <Combobox value={form.process} onChange={(v) => set("process", v)} options={PROCESSES} placeholder="e.g. Lactic Anaerobic" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Roast level</label>
+              <Combobox value={form.roastLevel} onChange={(v) => set("roastLevel", v)} options={ROAST_LEVELS} placeholder="Light / Medium / Dark" style={inputStyle} />
+            </div>
             <Field label="Altitude (masl)" value={form.altitude} onChange={(v) => set("altitude", v)} placeholder="e.g. 1900–2200" />
             <Field label="Harvest" value={form.harvest} onChange={(v) => set("harvest", v)} placeholder="e.g. Nov 2024" full />
           </div>

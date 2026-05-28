@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useId } from "react";
 import { C, sans, serif } from "./ui.jsx";
 import { useIsWide } from "./useMediaQuery.js";
 import { COFFEE_COUNTRIES, FLAVOR_CATEGORIES, TAG_EMOJI, ROAST_INTENSITY } from "./lib.js";
@@ -90,6 +90,28 @@ export function Sheet({ children, onClose, maxWidth = 580 }) {
         {children}
       </div>
     </div>
+  );
+}
+
+// Generic combobox: a text input that suggests from `options` but accepts any
+// value the user types. Uses the browser's native <datalist> — small,
+// accessible, free text allowed.
+export function Combobox({ value, onChange, options, placeholder, style }) {
+  const id = useId();
+  return (
+    <>
+      <input
+        type="text"
+        list={id}
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder || ""}
+        style={style}
+      />
+      <datalist id={id}>
+        {options.map((o) => <option key={o} value={o} />)}
+      </datalist>
+    </>
   );
 }
 

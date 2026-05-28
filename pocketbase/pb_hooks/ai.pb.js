@@ -62,19 +62,22 @@ routerAdd("POST", "/api/ai/scan", (e) => {
       : `You are a specialty coffee expert evaluating a coffee at ${body.url} for a friend. Fetch the page; ALSO web_search by name + roaster since most roaster sites are JS-rendered.`;
     prompt = `${head}
 
+process / varietal can be free-text — do NOT restrict to common values; capture the bag's exact words (e.g. "Lactic Anaerobic Natural", "Udaini").
+
 Respond ONLY with valid JSON, no markdown:
 {
   "coffee": { "name": "...", "roaster": "...", "origin": "...", "region": "...", "producer": "...", "varietal": "...", "process": "...", "roastLevel": "...", "altitude": "...", "harvest": "...", "importer": "...", "tags": [], "notes": "...", "image_url": "" },
   "verdict": "buy" | "maybe" | "skip",
   "confidence": "high" | "medium" | "low",
-  "reasoning": "1-2 sentences grounded in the palate numbers"
+  "reasoning": "1-2 sentences grounded in the palate numbers",
+  "matches":    [ { "attr": "Process"|"Origin"|"Varietal"|"Roast"|"Tag"|"Roaster", "value": "<from this coffee>", "yourAvg": <0-10>, "n": <count> } ],
+  "mismatches": [ { "attr": "...", "value": "...", "note": "no history" | "you average X.X" } ]
 }
 
-Use the user's palate (tags/origins/processes/etc with avg score and count) to give the verdict. Reference specific numbers in your reasoning.
-Palate:
+The user's palate (tags/origins/processes/varietals/roasts, each with avg score and count):
 ${JSON.stringify(palate, null, 2)}
 
-Confidence: "low" if <10 tastings or no overlap; "high" if lots of overlap; "medium" otherwise.`;
+matches: up to 4 attrs where their avg ≥ 7. mismatches: up to 3 attrs where avg < 6 or no history. If zero tastings, empty arrays. Confidence: low (<10 tastings or no overlap), high (lots), medium (otherwise).`;
   }
   if (!prompt) throw new BadRequestError("Missing prompt");
 

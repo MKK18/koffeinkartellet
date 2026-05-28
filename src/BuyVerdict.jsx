@@ -180,6 +180,30 @@ export default function BuyVerdict({ onClose }) {
           </div>
           <div style={{ fontFamily: sans, fontSize: 14, color: v.ink, lineHeight: 1.5 }}>{result.reasoning}</div>
 
+          {/* Overlap with the palate */}
+          {(result.matches?.length > 0 || result.mismatches?.length > 0) && (
+            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+              {result.matches?.map((m, i) => (
+                <div key={`m${i}`} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: sans, fontSize: 13, color: v.ink }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", background: "#a8c898", color: "#fff8f0", fontSize: 11 }}>✓</span>
+                  <span style={{ flex: 1 }}><strong>{m.attr}:</strong> {m.value}</span>
+                  {typeof m.yourAvg === "number" && (
+                    <span style={{ opacity: 0.85, fontFamily: serif, fontWeight: 700 }}>
+                      {Number(m.yourAvg).toFixed(1)}<span style={{ fontSize: 10, fontFamily: sans, opacity: 0.7, marginLeft: 3 }}>({m.n || 0})</span>
+                    </span>
+                  )}
+                </div>
+              ))}
+              {result.mismatches?.map((m, i) => (
+                <div key={`x${i}`} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: sans, fontSize: 13, color: v.ink, opacity: 0.75 }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", background: "#d1a0a0", color: "#fff8f0", fontSize: 11 }}>!</span>
+                  <span style={{ flex: 1 }}><strong>{m.attr}:</strong> {m.value}</span>
+                  <span style={{ fontSize: 11, fontStyle: "italic" }}>{m.note}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Compact extracted info */}
           {result.coffee?.name && (
             <details style={{ marginTop: 12 }}>

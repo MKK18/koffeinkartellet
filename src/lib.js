@@ -7,9 +7,22 @@ export async function aiStatus() {
   catch { return { anthropic: false, openai: false }; }
 }
 
-export const PROCESSES = ["Washed", "Natural", "Anaerobic", "Honey", "Wet-Hulled", "Carbonic Maceration", "Other"];
+export const PROCESSES = [
+  "Washed", "Natural", "Honey",
+  "Anaerobic", "Anaerobic Natural", "Anaerobic Washed",
+  "Carbonic Maceration", "Lactic Anaerobic", "Thermal Shock",
+  "Co-Fermentation", "Yeast Inoculated", "Double Fermented",
+  "Wet-Hulled", "Black Honey", "White Honey", "Other",
+];
 export const ROAST_LEVELS = ["Light", "Light-Medium", "Medium", "Medium-Dark", "Dark"];
-export const VARIETALS = ["Gesha/Geisha", "Bourbon", "Typica", "SL28", "SL34", "Caturra", "Catuai", "Heirloom / Ethiopian Landraces", "Pacamara", "Maragogipe", "Mundo Novo", "74110", "74112", "Other"];
+export const VARIETALS = [
+  "Gesha/Geisha", "Bourbon", "Red Bourbon", "Yellow Bourbon", "Pink Bourbon",
+  "Typica", "SL28", "SL34", "Caturra", "Catuai", "Pacas",
+  "Heirloom / Ethiopian Landraces", "Pacamara", "Maragogipe", "Maracaturra",
+  "Mundo Novo", "Java", "Sidra", "Wush Wush", "Chiroso",
+  "Udaini", "Dawairi", "Yemen Heirloom",
+  "74110", "74112", "Other",
+];
 export const FLAVOR_TAGS = ["Fruity", "Floral", "Chocolatey", "Nutty", "Caramel", "Spicy", "Earthy", "Bright", "Funky", "Smoky", "Citrus", "Berry", "Stone Fruit", "Herbal", "Jasmine", "Rose", "Tropical", "Winey", "Juicy", "Clean", "Complex", "Savory"];
 
 // Flavour tags organised into SCAA-flavor-wheel-ish categories, each with a
@@ -255,12 +268,12 @@ ${FIELD_SPEC}`;
 
 const VERDICT_TAIL = (palate) => `
 
-After extracting the coffee, decide whether the user should buy it. Use their tasting history:
+After extracting the coffee, decide whether the user should buy it. Use their tasting history (palate signature):
 ${JSON.stringify(palate, null, 2)}
 
-Be grounded in their actual numbers — reference specific tags, origins, processes, or roasters from the data above. If the household stats are present and differ meaningfully from the user's own, mention that.
+Be grounded in their actual numbers. process / varietal can be free-text — do NOT restrict to common values; capture the bag's exact words (e.g. "Lactic Anaerobic Natural", "Udaini").
 
-Respond ONLY with valid JSON, no markdown, no commentary, in this exact shape:
+Respond ONLY with valid JSON, no markdown, no commentary:
 {
   "coffee": {
     "name": "...", "roaster": "...", "origin": "...", "region": "...",
@@ -270,10 +283,23 @@ Respond ONLY with valid JSON, no markdown, no commentary, in this exact shape:
   },
   "verdict": "buy" | "maybe" | "skip",
   "confidence": "high" | "medium" | "low",
-  "reasoning": "1-2 sentence verdict grounded in their palate numbers"
+  "reasoning": "1-2 sentence verdict grounded in the palate numbers",
+  "matches": [
+    { "attr": "Process" | "Origin" | "Varietal" | "Roast" | "Tag" | "Roaster",
+      "value": "<specific value from this coffee>",
+      "yourAvg": <number 0-10>,
+      "n": <count of tastings backing it> }
+  ],
+  "mismatches": [
+    { "attr": "...", "value": "...",
+      "note": "no history" | "you average X.X" }
+  ]
 }
 
-Confidence: "low" if the user has fewer than ~10 tastings OR no overlap with this coffee's attributes. "high" with many tastings + strong overlap. "medium" otherwise.`;
+For "matches": include up to 4 attributes where their avg score is ≥ 7. Use the value AS APPEARS ON THIS COFFEE (e.g. value="Anaerobic Natural" from a coffee with that process, matched against their general "Anaerobic" / "Natural" averages).
+For "mismatches": include up to 3 attributes where they have a low avg (< 6) or no history at all on the coffee's origin/process/varietal.
+If they have ZERO tastings, leave both arrays empty.
+Confidence: "low" if <10 tastings or no overlap; "high" if many tastings + strong overlap; "medium" otherwise.`;
 
 async function anthropicImageVerdict(apiKey, base64, palate) {
   const prompt = `You are a specialty coffee expert evaluating a bag for a friend.
