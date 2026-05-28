@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useId } from "react";
+import { useState, useEffect, useRef } from "react";
 import { C, sans, serif } from "./ui.jsx";
 import { useIsWide } from "./useMediaQuery.js";
 import { COFFEE_COUNTRIES, FLAVOR_CATEGORIES, TAG_EMOJI, ROAST_INTENSITY } from "./lib.js";
@@ -94,24 +94,48 @@ export function Sheet({ children, onClose, maxWidth = 580 }) {
 }
 
 // Generic combobox: a text input that suggests from `options` but accepts any
-// value the user types. Uses the browser's native <datalist> — small,
-// accessible, free text allowed.
+// value the user types. Uses a custom popup (not native <datalist>) so the
+// dropdown positions reliably below the input across browsers.
 export function Combobox({ value, onChange, options, placeholder, style }) {
-  const id = useId();
+  const [open, setOpen] = useState(false);
+  const wrap = useRef();
+  useEffect(() => {
+    const onDocDown = (e) => { if (wrap.current && !wrap.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", onDocDown);
+    return () => document.removeEventListener("mousedown", onDocDown);
+  }, []);
+
+  const q = (value || "").toLowerCase().trim();
+  const filtered = q ? options.filter((o) => o.toLowerCase().includes(q)) : options;
+  const exactMatch = filtered.length === 1 && filtered[0].toLowerCase() === q;
+
   return (
-    <>
+    <div ref={wrap} style={{ position: "relative" }}>
       <input
         type="text"
-        list={id}
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || ""}
+        onFocus={() => setOpen(true)}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setOpen(false);
+          else if (e.key === "Enter" && filtered.length > 0 && !exactMatch) { e.preventDefault(); onChange(filtered[0]); setOpen(false); }
+        }}
         style={style}
       />
-      <datalist id={id}>
-        {options.map((o) => <option key={o} value={o} />)}
-      </datalist>
-    </>
+      {open && filtered.length > 0 && !exactMatch && (
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 10, maxHeight: 220, overflowY: "auto", zIndex: 20, boxShadow: "0 8px 20px rgba(100,70,40,0.14)" }}>
+          {filtered.map((o) => (
+            <div key={o}
+              onMouseDown={(e) => { e.preventDefault(); onChange(o); setOpen(false); }}
+              style={{ padding: "10px 14px", fontSize: 14, fontFamily: sans, color: C.ink, cursor: "pointer" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = C.tint)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >{o}</div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
