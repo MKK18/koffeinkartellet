@@ -3,8 +3,76 @@ import { C, sans, serif } from "./ui.jsx";
 import { useAuth } from "./auth.jsx";
 import { useNav } from "./nav.jsx";
 import { Avatar } from "./components.jsx";
-import { getUser, listTastingsByUser } from "./data.js";
+import { getUser, listTastingsByUser, coffeeImageUrl } from "./data.js";
 import TasteProfile from "./TasteProfile.jsx";
+
+function timeAgo(iso) {
+  if (!iso) return "";
+  const d = new Date(iso.replace(" ", "T"));
+  const mins = Math.round((Date.now() - d.getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return d.toLocaleDateString();
+}
+
+function CoffeeWall({ items, color, onOpen }) {
+  if (!items.length) return null;
+  return (
+    <div style={{ marginBottom: 22 }}>
+      <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: C.faint, fontFamily: sans, marginBottom: 10 }}>Coffee wall</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+        {items.slice(0, 9).map((e) => {
+          const img = coffeeImageUrl(e.coffee, "300x300");
+          return (
+            <div key={e.coffee.id} onClick={() => onOpen(e.coffee)} style={{ position: "relative", aspectRatio: "1 / 1", borderRadius: 12, overflow: "hidden", background: img ? "transparent" : "#f0e6da", cursor: "pointer", border: `1px solid ${C.borderSoft}` }}>
+              {img ? <img src={img} alt={e.coffee.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 30 }}>☕</div>}
+              {e.count > 1 && (
+                <span style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.7)", color: "#fff8f0", fontFamily: sans, fontSize: 10, padding: "2px 7px", borderRadius: 999 }}>×{e.count}</span>
+              )}
+              <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "16px 8px 6px", background: "linear-gradient(transparent, rgba(0,0,0,0.65))", color: "#fff8f0", fontFamily: sans, fontSize: 11, lineHeight: 1.2 }}>
+                {e.coffee.name}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function RecentTastings({ tastings, color, onOpen }) {
+  if (!tastings.length) return null;
+  return (
+    <div style={{ marginBottom: 22 }}>
+      <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: C.faint, fontFamily: sans, marginBottom: 10 }}>Recent tastings</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {tastings.slice(0, 5).map((t) => {
+          const c = t.expand?.coffee || {};
+          const img = coffeeImageUrl(c, "100x100");
+          return (
+            <div key={t.id} onClick={() => c.id && onOpen(c)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: C.card, border: `1px solid ${C.borderSoft}`, borderRadius: 12, cursor: "pointer" }}>
+              <div style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0, background: img ? "transparent" : "#f0e6da", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                {img ? <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span>☕</span>}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: sans, fontSize: 14, color: C.ink, fontWeight: 600 }}>{c.name || "a coffee"}</div>
+                {c.roaster && <div style={{ fontFamily: sans, fontSize: 11, color: C.muted }}>{c.roaster}</div>}
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 18, color }}>{Number(t.score).toFixed(1)}</div>
+                <div style={{ fontFamily: sans, fontSize: 10, color: C.faint }}>{timeAgo(t.created)}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function Stat({ value, label, color = C.brown }) {
   return (
@@ -69,6 +137,20 @@ export default function Profile({ userId, onClose }) {
   const avg = avgOf(scores);
   const distinctCoffees = new Set((tastings || []).map((t) => t.coffee)).size;
   const topPicks = [...(tastings || [])].sort((a, b) => b.score - a.score).slice(0, 3);
+
+  // Distinct coffees the user has rated, with tasting count + avg, sorted by frequency.
+  const tastedCoffees = (() => {
+    const m = new Map();
+    (tastings || []).forEach((t) => {
+      const c = t.expand?.coffee; if (!c) return;
+      const e = m.get(c.id) || { coffee: c, count: 0, scores: [] };
+      e.count++; e.scores.push(Number(t.score));
+      m.set(c.id, e);
+    });
+    return [...m.values()]
+      .map((e) => ({ ...e, avg: e.scores.reduce((a, x) => a + x, 0) / e.scores.length }))
+      .sort((a, b) => b.count - a.count || b.avg - a.avg);
+  })();
 
   // comparison: coffees both have rated
   let comparison = null;
@@ -146,6 +228,9 @@ export default function Profile({ userId, onClose }) {
           })}
         </div>
       )}
+
+      <CoffeeWall items={tastedCoffees} color={color} onOpen={openCoffee} />
+      <RecentTastings tastings={tastings || []} color={color} onOpen={openCoffee} />
 
       {topPicks.length > 0 && (
         <div style={{ marginBottom: 22 }}>
