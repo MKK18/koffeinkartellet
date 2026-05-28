@@ -94,7 +94,22 @@ routerAdd("POST", "/api/ai/page-meta", (e) => {
     });
     debug.status = res.statusCode;
     if (res.statusCode >= 400) return e.json(200, { image_url: "", debug: debug });
-    html = bodyToString(res);
+    // Inline body→string decode (file-scope helpers don't appear to be visible
+    // inside this route handler's goja VM — keep it self-contained).
+    if (res && typeof res.raw === "string" && res.raw.length) {
+      html = res.raw;
+    } else if (typeof res.body === "string") {
+      html = res.body;
+    } else if (Array.isArray(res.body)) {
+      const parts = [];
+      const b = res.body;
+      for (let i = 0; i < b.length; i++) parts.push(String.fromCharCode(b[i] & 0xff));
+      html = parts.join("");
+    } else {
+      html = "";
+    }
+    debug.bodyType = typeof res.body + (Array.isArray(res.body) ? "[]" : "");
+    debug.hasRaw = !!(res && typeof res.raw === "string" && res.raw.length);
     debug.htmlLen = html.length;
     debug.sample = html.substring(0, 400);
   } catch (err) {
