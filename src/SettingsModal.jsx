@@ -59,23 +59,24 @@ export default function SettingsModal({ onClose }) {
   const saveProfile = async () => {
     setBusy("profile"); setProfileMsg(null);
     try {
-      let patch;
-      if (avatarBlob || removeAvatar) {
-        patch = new FormData();
-        patch.append("name", name.trim());
-        patch.append("color", color);
-        patch.append("bio", bio.trim());
-        if (avatarBlob) patch.append("avatar", avatarBlob, "avatar.jpg");
-        else patch.append("avatar", ""); // explicit clear (no filename arg)
-      } else {
-        patch = { name: name.trim(), color, bio: bio.trim() };
-      }
-      await updateProfile(patch);
+      // Always send FormData — uniform path, easier to debug, and the only
+      // shape that handles file fields reliably across browsers.
+      const fd = new FormData();
+      fd.append("name", name.trim());
+      fd.append("color", color);
+      fd.append("bio", bio.trim());
+      if (avatarBlob) fd.append("avatar", avatarBlob, "avatar.jpg");
+      else if (removeAvatar) fd.append("avatar", ""); // explicit clear
+      await updateProfile(fd);
       refresh();
       setAvatarBlob(null); setAvatarPreview(""); setRemoveAvatar(false);
       setProfileMsg({ ok: true, t: "Profile saved." });
-    } catch (e) { setProfileMsg({ ok: false, t: e?.message || "Couldn't save." }); }
-    finally { setBusy(""); }
+    } catch (e) {
+      // Surface PocketBase's real error response if there is one.
+      const detail = e?.data?.data ? Object.entries(e.data.data).map(([k, v]) => `${k}: ${v?.message || v}`).join("; ") : "";
+      console.error("saveProfile failed:", e?.data || e);
+      setProfileMsg({ ok: false, t: detail ? `Couldn't save — ${detail}` : (e?.message || "Couldn't save.") });
+    } finally { setBusy(""); }
   };
 
   const savePassword = async () => {

@@ -96,7 +96,7 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
         </div>
       )}
       {coffee.bag_notes && (
-        <div style={{ fontSize: 13, color: "#5a4030", fontFamily: sans, lineHeight: 1.55, fontStyle: "italic", padding: "12px 14px", background: C.tint, borderRadius: 10, borderLeft: "3px solid #d4b896", marginTop: 14 }}>{coffee.bag_notes}</div>
+        <div style={{ fontSize: 13, color: "#5a4030", fontFamily: sans, lineHeight: 1.55, fontStyle: "italic", padding: "12px 14px", background: C.tint, borderRadius: 10, marginTop: 14 }}>{coffee.bag_notes}</div>
       )}
 
       <SectionHead title="Tastings" />
@@ -104,7 +104,7 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
         <div style={{ color: C.muted, fontFamily: sans, fontSize: 13, padding: 12 }}><Spinner /> Loading…</div>
       ) : (
         <>
-          <div style={{ display: "flex", alignItems: "center", gap: 18, background: C.tint, borderRadius: 14, padding: "14px 18px", border: "1.5px solid #f0e0d0", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "4px 4px 14px", marginBottom: 14 }}>
             <div style={{ textAlign: "center", minWidth: 60 }}>
               <div style={{ fontSize: 38, fontFamily: serif, fontWeight: 700, color: avg ? C.brown : "#d4c5b5", lineHeight: 1 }}>{avg || "—"}</div>
               <div style={{ fontSize: 9, color: C.brown, opacity: 0.7, fontFamily: sans, letterSpacing: "0.1em" }}>{avg ? "AVG" : ""}</div>
@@ -128,7 +128,7 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
               const u = t.expand?.user || {};
               const mine = u.id === user?.id;
               return (
-                <div key={t.id} style={{ background: "#fdf4ee", border: "1px solid #f0e0d0", borderLeft: `4px solid ${u.color || C.brown}`, borderRadius: 10, padding: "12px 14px" }}>
+                <div key={t.id} style={{ background: "#fdf4ee", border: "1px solid #f0e0d0", borderRadius: 10, padding: "12px 14px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: sans }}>
                     <span onClick={() => u.id && openProfile(u.id)} style={{ color: u.color || C.brown, fontWeight: 700, fontSize: 13, cursor: u.id ? "pointer" : "default" }}>{u.name || "Someone"}</span>
                     <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 18, color: u.color || C.brown }}>{Number(t.score).toFixed(1)}</span>
