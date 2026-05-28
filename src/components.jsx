@@ -139,6 +139,97 @@ export function Combobox({ value, onChange, options, placeholder, style }) {
   );
 }
 
+// Multi-value combobox: stores an array, displays each value as a chip,
+// autocompletes from `options`, but accepts any free-text the user types.
+// Used for Varietal (most coffees have 1-3) and Origin (blends span many).
+// Enter or comma adds the current text. Backspace on empty input removes
+// the last chip.
+export function MultiCombobox({ values = [], onChange, options = [], placeholder, style }) {
+  const [input, setInput] = useState("");
+  const [open, setOpen] = useState(false);
+  const wrap = useRef();
+  const inputRef = useRef();
+  useEffect(() => {
+    const onDocDown = (e) => { if (wrap.current && !wrap.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", onDocDown);
+    return () => document.removeEventListener("mousedown", onDocDown);
+  }, []);
+
+  const add = (v) => {
+    const t = (v || "").trim();
+    if (!t) return;
+    if (values.some((x) => x.toLowerCase() === t.toLowerCase())) { setInput(""); return; }
+    onChange([...values, t]);
+    setInput("");
+  };
+  const removeAt = (i) => onChange(values.filter((_, j) => j !== i));
+
+  const q = input.toLowerCase().trim();
+  const filtered = (q ? options.filter((o) => o.toLowerCase().includes(q)) : options)
+    .filter((o) => !values.some((v) => v.toLowerCase() === o.toLowerCase()));
+
+  // Treat the host `style` as the *outer* box style (matching inputStyle), but
+  // override padding so chips have breathing room and the inner <input> stays
+  // borderless.
+  const outerStyle = { ...style, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", cursor: "text", padding: "8px 10px" };
+
+  return (
+    <div ref={wrap} style={{ position: "relative" }}>
+      <div onClick={() => inputRef.current?.focus()} style={outerStyle}>
+        {values.map((v, i) => (
+          <span key={`${v}-${i}`} style={{
+            display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 4px 3px 10px",
+            background: C.tint, border: `1px solid ${C.border}`, borderRadius: 999,
+            fontSize: 13, fontFamily: sans, color: C.ink,
+          }}>
+            {v}
+            <button type="button" onClick={(e) => { e.stopPropagation(); removeAt(i); }} style={{
+              background: "none", border: "none", color: C.muted, cursor: "pointer", padding: "0 6px", lineHeight: 1, fontSize: 16,
+            }}>×</button>
+          </span>
+        ))}
+        <input
+          ref={inputRef}
+          type="text"
+          value={input}
+          placeholder={values.length === 0 ? (placeholder || "") : ""}
+          onFocus={() => setOpen(true)}
+          onChange={(e) => { setInput(e.target.value); setOpen(true); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (filtered.length > 0 && q && filtered[0].toLowerCase().startsWith(q)) add(filtered[0]);
+              else if (input.trim()) add(input);
+            } else if (e.key === ",") {
+              e.preventDefault();
+              if (input.trim()) add(input);
+            } else if (e.key === "Backspace" && !input && values.length > 0) {
+              e.preventDefault();
+              removeAt(values.length - 1);
+            } else if (e.key === "Escape") {
+              setOpen(false);
+            }
+          }}
+          onBlur={() => { if (input.trim()) add(input); }}
+          style={{ flex: 1, minWidth: 80, border: "none", outline: "none", background: "transparent", fontFamily: sans, fontSize: 14, color: C.ink, padding: "2px 0" }}
+        />
+      </div>
+      {open && filtered.length > 0 && (
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 10, maxHeight: 220, overflowY: "auto", zIndex: 20, boxShadow: "0 8px 20px rgba(100,70,40,0.14)" }}>
+          {filtered.map((o) => (
+            <div key={o}
+              onMouseDown={(e) => { e.preventDefault(); add(o); }}
+              style={{ padding: "10px 14px", fontSize: 14, fontFamily: sans, color: C.ink, cursor: "pointer" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = C.tint)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >{o}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Country autocomplete (free text allowed) — ported from the original.
 export function CountryCombobox({ value, onChange, placeholder, style }) {
   const [open, setOpen] = useState(false);

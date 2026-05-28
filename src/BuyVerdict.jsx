@@ -84,9 +84,12 @@ export default function BuyVerdict({ onClose }) {
     setSaving(true);
     try {
       const c = result.coffee;
+      // origin and varietal can come back as arrays (new prompt) or strings
+      // (legacy). Flatten to comma-separated strings for storage.
+      const flat = (v) => Array.isArray(v) ? v.filter(Boolean).join(", ") : (v || "");
       const saved = await createCoffee({
-        name: c.name || "", roaster: c.roaster || "", origin: c.origin || "",
-        region: c.region || "", producer: c.producer || "", varietal: c.varietal || "",
+        name: c.name || "", roaster: c.roaster || "", origin: flat(c.origin),
+        region: c.region || "", producer: c.producer || "", varietal: flat(c.varietal),
         process: c.process || "", roastLevel: c.roastLevel || "", altitude: c.altitude || "",
         harvest: c.harvest || "", importer: c.importer || "", tags: c.tags || [], notes: c.notes || "",
       }, imageBlob);
@@ -209,13 +212,24 @@ export default function BuyVerdict({ onClose }) {
             <details style={{ marginTop: 12 }}>
               <summary style={{ cursor: "pointer", fontFamily: sans, fontSize: 12, color: v.ink, opacity: 0.85 }}>What I read on the bag</summary>
               <div style={{ marginTop: 8, fontSize: 13, fontFamily: sans, color: C.ink, lineHeight: 1.6 }}>
-                <div><strong>{result.coffee.name}</strong>{result.coffee.roaster ? ` · ${result.coffee.roaster}` : ""}</div>
-                {[result.coffee.origin, result.coffee.region].filter(Boolean).length > 0 && (
-                  <div style={{ color: C.muted }}>{[result.coffee.origin, result.coffee.region].filter(Boolean).join(", ")}</div>
-                )}
-                {[result.coffee.varietal, result.coffee.process, result.coffee.roastLevel, result.coffee.altitude ? `${result.coffee.altitude} masl` : null].filter(Boolean).length > 0 && (
-                  <div style={{ color: C.muted, marginTop: 2 }}>{[result.coffee.varietal, result.coffee.process, result.coffee.roastLevel, result.coffee.altitude ? `${result.coffee.altitude} masl` : null].filter(Boolean).join(" · ")}</div>
-                )}
+                {(() => {
+                  const flat = (v) => Array.isArray(v) ? v.filter(Boolean).join(", ") : (v || "");
+                  const origin = flat(result.coffee.origin);
+                  const varietal = flat(result.coffee.varietal);
+                  const region = result.coffee.region || "";
+                  const facts = [varietal, result.coffee.process, result.coffee.roastLevel, result.coffee.altitude ? `${result.coffee.altitude} masl` : null].filter(Boolean);
+                  return (
+                    <>
+                      <div><strong>{result.coffee.name}</strong>{result.coffee.roaster ? ` · ${result.coffee.roaster}` : ""}</div>
+                      {(origin || region) && (
+                        <div style={{ color: C.muted }}>{[origin, region].filter(Boolean).join(" · ")}</div>
+                      )}
+                      {facts.length > 0 && (
+                        <div style={{ color: C.muted, marginTop: 2 }}>{facts.join(" · ")}</div>
+                      )}
+                    </>
+                  );
+                })()}
                 {result.coffee.tags?.length > 0 && (
                   <div style={{ color: C.muted, marginTop: 4 }}>{result.coffee.tags.join(" · ")}</div>
                 )}

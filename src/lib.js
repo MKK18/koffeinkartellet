@@ -98,11 +98,11 @@ const FIELD_SPEC = `Respond ONLY with a valid JSON object — no markdown, no ex
 {
   "name": "the coffee's name",
   "roaster": "roaster name",
-  "origin": "country",
-  "region": "specific region/area",
+  "origin": ["country", "additional countries if this is a blend — empty array if unknown"],
+  "region": "specific region/area (single string; leave empty for multi-origin blends)",
   "producer": "farm or producer name",
-  "varietal": "one of: ${VARIETALS.join(", ")}",
-  "process": "one of: ${PROCESSES.join(", ")}",
+  "varietal": ["each varietal as a separate array item — most coffees have 1-3; blends have more. Use bag's exact words, e.g. \\"Pink Bourbon\\", \\"Udaini\\", \\"Heirloom\\". Empty array if unknown."],
+  "process": "the SINGLE most specific process. Never combine — \\"Anaerobic Natural\\" is ONE value, not two. Suggestions: ${PROCESSES.join(", ")}",
   "roastLevel": "one of: ${ROAST_LEVELS.join(", ")}",
   "altitude": "altitude range e.g. 1800-2200",
   "harvest": "harvest season e.g. Nov 2024",
@@ -111,7 +111,7 @@ const FIELD_SPEC = `Respond ONLY with a valid JSON object — no markdown, no ex
   "notes": "tasting notes from the bag/page or from your search",
   "image_url": "absolute URL of the main coffee bag/package image on the page, or empty"
 }
-Use empty string "" for unknown string fields. Use [] for unknown tags.`;
+Use empty string "" for unknown string fields. Use [] for unknown arrays. ALWAYS return arrays for "origin" and "varietal" — never comma-joined strings.`;
 
 // Parse a JSON object out of an LLM's text response.
 function extractJson(raw) {
@@ -278,8 +278,8 @@ Be grounded in their actual numbers. process / varietal can be free-text — do 
 Respond ONLY with valid JSON, no markdown, no commentary:
 {
   "coffee": {
-    "name": "...", "roaster": "...", "origin": "...", "region": "...",
-    "producer": "...", "varietal": "...", "process": "...",
+    "name": "...", "roaster": "...", "origin": ["..."], "region": "...",
+    "producer": "...", "varietal": ["..."], "process": "...",
     "roastLevel": "...", "altitude": "...", "harvest": "...", "importer": "...",
     "tags": [], "notes": "...", "image_url": ""
   },

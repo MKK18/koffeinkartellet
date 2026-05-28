@@ -134,10 +134,11 @@ routerAdd("POST", "/api/ai/scan", (e) => {
     prompt = `${head}
 
 process / varietal can be free-text — do NOT restrict to common values; capture the bag's exact words (e.g. "Lactic Anaerobic Natural", "Udaini").
+origin and varietal MUST be arrays (one item per origin / per varietal). process is a SINGLE string — never combine values like "WashedNatural".
 
 Respond ONLY with valid JSON, no markdown:
 {
-  "coffee": { "name": "...", "roaster": "...", "origin": "...", "region": "...", "producer": "...", "varietal": "...", "process": "...", "roastLevel": "...", "altitude": "...", "harvest": "...", "importer": "...", "tags": [], "notes": "...", "image_url": "" },
+  "coffee": { "name": "...", "roaster": "...", "origin": ["..."], "region": "...", "producer": "...", "varietal": ["..."], "process": "...", "roastLevel": "...", "altitude": "...", "harvest": "...", "importer": "...", "tags": [], "notes": "...", "image_url": "" },
   "verdict": "buy" | "maybe" | "skip",
   "confidence": "high" | "medium" | "low",
   "reasoning": "1-2 sentences grounded in the palate numbers",

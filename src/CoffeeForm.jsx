@@ -1,14 +1,23 @@
 import { useState, useRef, useEffect } from "react";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
-import { Sheet, SectionHead, Spinner, CountryCombobox, Combobox, FlavorPicker } from "./components.jsx";
-import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, compressImage, extractBeanFromImage, extractBeanFromUrl, fetchExternalImage, scrapePageImage } from "./lib.js";
+import { Sheet, SectionHead, Spinner, Combobox, MultiCombobox, FlavorPicker } from "./components.jsx";
+import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, COFFEE_COUNTRIES, compressImage, extractBeanFromImage, extractBeanFromUrl, fetchExternalImage, scrapePageImage } from "./lib.js";
 import { createCoffee, updateCoffee, deleteCoffee, searchCoffeesByName, coffeeImageUrl } from "./data.js";
 import { useAuth } from "./auth.jsx";
 import { useNav } from "./nav.jsx";
 
 const EMPTY = {
-  name: "", roaster: "", origin: "", region: "", producer: "", varietal: "",
+  name: "", roaster: "", origin: [], region: "", producer: "", varietal: [],
   process: "", roastLevel: "", altitude: "", harvest: "", importer: "", tags: [], notes: "",
+};
+
+// Origin and varietal can come back from the DB as comma-joined strings
+// (legacy records), as arrays (new records from the AI), or as a single
+// string. Normalize to array for the form.
+const toArr = (v) => {
+  if (Array.isArray(v)) return v.map((x) => String(x).trim()).filter(Boolean);
+  if (typeof v === "string") return v.split(/\s*,\s*/).map((s) => s.trim()).filter(Boolean);
+  return [];
 };
 
 // Stable, module-level field components (defining these inside the form would
@@ -48,8 +57,8 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
   const [tab, setTab] = useState(editing ? "manual" : "photo");
   const [form, setForm] = useState(() =>
     coffee ? {
-      name: coffee.name || "", roaster: coffee.roaster || "", origin: coffee.origin || "",
-      region: coffee.region || "", producer: coffee.producer || "", varietal: coffee.varietal || "",
+      name: coffee.name || "", roaster: coffee.roaster || "", origin: toArr(coffee.origin),
+      region: coffee.region || "", producer: coffee.producer || "", varietal: toArr(coffee.varietal),
       process: coffee.process || "", roastLevel: coffee.roast_level || "", altitude: coffee.altitude || "",
       harvest: coffee.harvest || "", importer: coffee.importer || "", tags: coffee.tags || [], notes: coffee.bag_notes || "",
     } : { ...EMPTY }
@@ -71,20 +80,27 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const applyExtracted = (x) => setForm((f) => ({
-    ...f,
-    name: x.name || f.name, roaster: x.roaster || f.roaster, origin: x.origin || f.origin,
-    region: x.region || f.region, producer: x.producer || f.producer,
-    // Free-text-friendly: keep the AI's value verbatim even if it's outside
-    // our suggestion lists — exotic processes / varietals like "Lactic
-    // Anaerobic" or "Udaini" survive instead of being silently dropped.
-    varietal: x.varietal || f.varietal,
-    process: x.process || f.process,
-    roastLevel: x.roastLevel || f.roastLevel,
-    altitude: x.altitude || f.altitude, harvest: x.harvest || f.harvest, importer: x.importer || f.importer,
-    tags: x.tags?.filter((t) => FLAVOR_TAGS.includes(t))?.length ? x.tags.filter((t) => FLAVOR_TAGS.includes(t)) : f.tags,
-    notes: x.notes || f.notes,
-  }));
+  const applyExtracted = (x) => setForm((f) => {
+    // origin and varietal are arrays now; tolerate string responses from
+    // older AI calls or odd model output.
+    const origins = toArr(x.origin);
+    const varietals = toArr(x.varietal);
+    return {
+      ...f,
+      name: x.name || f.name, roaster: x.roaster || f.roaster,
+      origin: origins.length ? origins : f.origin,
+      region: x.region || f.region, producer: x.producer || f.producer,
+      // Free-text-friendly: keep the AI's value verbatim even if it's outside
+      // our suggestion lists — exotic processes / varietals like "Lactic
+      // Anaerobic" or "Udaini" survive instead of being silently dropped.
+      varietal: varietals.length ? varietals : f.varietal,
+      process: x.process || f.process,
+      roastLevel: x.roastLevel || f.roastLevel,
+      altitude: x.altitude || f.altitude, harvest: x.harvest || f.harvest, importer: x.importer || f.importer,
+      tags: x.tags?.filter((t) => FLAVOR_TAGS.includes(t))?.length ? x.tags.filter((t) => FLAVOR_TAGS.includes(t)) : f.tags,
+      notes: x.notes || f.notes,
+    };
+  });
 
   // Dedupe: warn about likely matches as the name is typed (new coffees only).
   useEffect(() => {
@@ -205,7 +221,14 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
     if (!form.name.trim()) { setError("Give the coffee a name."); setTab("manual"); return; }
     setSaving(true); setError("");
     try {
-      const fields = { ...form, _clearImage: clearExistingImage && !imageBlob };
+      // Flatten array fields back to comma-separated strings for storage
+      // (existing PB schema columns are text, no migration needed).
+      const fields = {
+        ...form,
+        origin: Array.isArray(form.origin) ? form.origin.join(", ") : form.origin,
+        varietal: Array.isArray(form.varietal) ? form.varietal.join(", ") : form.varietal,
+        _clearImage: clearExistingImage && !imageBlob,
+      };
       const saved = editing ? await updateCoffee(coffee.id, fields, imageBlob) : await createCoffee(fields, imageBlob);
       onSaved(saved);
     } catch (err) {
@@ -324,7 +347,7 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
               <label style={labelStyle}>Country</label>
-              <CountryCombobox value={form.origin} onChange={(v) => set("origin", v)} placeholder="e.g. Ethiopia" style={inputStyle} />
+              <MultiCombobox values={form.origin} onChange={(v) => set("origin", v)} options={COFFEE_COUNTRIES} placeholder="e.g. Ethiopia (add more for blends)" style={inputStyle} />
             </div>
             <Field label="Region" value={form.region} onChange={(v) => set("region", v)} placeholder="e.g. Yirgacheffe" />
             <Field label="Producer / farm" value={form.producer} onChange={(v) => set("producer", v)} placeholder="e.g. Daye Bensa" />
@@ -335,7 +358,7 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
               <label style={labelStyle}>Varietal</label>
-              <Combobox value={form.varietal} onChange={(v) => set("varietal", v)} options={VARIETALS} placeholder="e.g. Gesha, Udaini, Pink Bourbon" style={inputStyle} />
+              <MultiCombobox values={form.varietal} onChange={(v) => set("varietal", v)} options={VARIETALS} placeholder="e.g. Gesha, Udaini, Pink Bourbon" style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Process</label>
