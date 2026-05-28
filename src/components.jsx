@@ -79,14 +79,24 @@ export function Sheet({ children, onClose, maxWidth = 580 }) {
         padding: wide ? 16 : 0,
       }}
     >
-      <div style={{
+      <div className="sheet-scroll" style={{
         background: C.card,
         borderRadius: wide ? 20 : "20px 20px 0 0",
         padding: wide ? 28 : "20px 18px calc(20px + env(safe-area-inset-bottom))",
         width: "100%", maxWidth: wide ? maxWidth : "100%",
         maxHeight: wide ? "92vh" : "94vh", overflowY: "auto",
         boxShadow: "0 -8px 40px rgba(60,20,0,0.25)",
+        // Thin warm-toned scrollbar (Firefox + WebKit handled below).
+        scrollbarWidth: "thin",
+        scrollbarColor: "#d4c5b5 transparent",
+        scrollbarGutter: "stable",
       }}>
+        <style>{`
+          .sheet-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+          .sheet-scroll::-webkit-scrollbar-track { background: transparent; margin: 12px 0; }
+          .sheet-scroll::-webkit-scrollbar-thumb { background: #d4c5b5; border-radius: 999px; }
+          .sheet-scroll::-webkit-scrollbar-thumb:hover { background: #c0a890; }
+        `}</style>
         {children}
       </div>
     </div>
