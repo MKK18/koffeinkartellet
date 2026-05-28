@@ -2,7 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
 import { Sheet, SectionHead, Spinner, CountryCombobox, FlavorPicker, ScaleSlider } from "./components.jsx";
 import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, compressImage, extractBeanFromImage, extractBeanFromUrl, fetchExternalImage } from "./lib.js";
-import { createCoffee, updateCoffee, searchCoffeesByName, coffeeImageUrl } from "./data.js";
+import { createCoffee, updateCoffee, deleteCoffee, searchCoffeesByName, coffeeImageUrl } from "./data.js";
+import { useAuth } from "./auth.jsx";
+import { useNav } from "./nav.jsx";
 
 const EMPTY = {
   name: "", roaster: "", origin: "", region: "", producer: "", varietal: "",
@@ -41,6 +43,9 @@ const TABS = [
 // coffee: existing record to edit, or null to add new.
 export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting }) {
   const editing = !!coffee?.id;
+  const { user } = useAuth();
+  const { bumpData } = useNav();
+  const canDelete = editing && (user?.is_admin || coffee?.added_by === user?.id);
   const [tab, setTab] = useState(editing ? "manual" : "photo");
   const [form, setForm] = useState(() =>
     coffee ? {
@@ -61,6 +66,7 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
   const [urlMsg, setUrlMsg] = useState("");
   const [filledFrom, setFilledFrom] = useState("");   // "photo" | "link" — shown on Manual tab
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef();        // Photo-tab dropzone (scans on select)
   const uploadRef = useRef();      // Manual-tab upload (no scan)
@@ -153,6 +159,20 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
         : "Couldn't read that page — try the photo, or switch to Manual.");
     } finally {
       setFetchingUrl(false);
+    }
+  };
+
+  const remove = async () => {
+    if (!editing) return;
+    if (!confirm(`Delete "${coffee.name}"? This removes it and all its tastings from everyone's catalog.`)) return;
+    setDeleting(true); setError("");
+    try {
+      await deleteCoffee(coffee.id);
+      bumpData();
+      onClose();
+    } catch (err) {
+      setError(err?.message?.includes("403") ? "You don't have permission to delete this coffee." : (err?.message || "Couldn't delete."));
+      setDeleting(false);
     }
   };
 
@@ -311,9 +331,14 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
       {error && <div style={{ background: "#f7e4dc", color: "#a05040", borderRadius: 10, padding: "9px 12px", fontSize: 13, fontFamily: sans, marginTop: 16 }}>{error}</div>}
 
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", alignItems: "center", marginTop: 20, paddingTop: 16, borderTop: "1px solid #ecddd0" }}>
-        {tab !== "manual" && <span style={{ flex: 1, fontFamily: sans, fontSize: 12, color: C.faint }}>or fill it in on Manual →</span>}
+        {canDelete && (
+          <button onClick={remove} disabled={deleting} style={{ ...ghostBtn, color: "#b07060", borderColor: "#e0c0b0", marginRight: "auto" }}>
+            {deleting ? "Deleting…" : "Delete"}
+          </button>
+        )}
+        {tab !== "manual" && !canDelete && <span style={{ flex: 1, fontFamily: sans, fontSize: 12, color: C.faint }}>or fill it in on Manual →</span>}
         <button onClick={onClose} style={ghostBtn}>Cancel</button>
-        <button onClick={save} disabled={saving || scanning} style={primaryBtn(!saving && !scanning)}>
+        <button onClick={save} disabled={saving || scanning || deleting} style={primaryBtn(!saving && !scanning && !deleting)}>
           {saving ? "Saving…" : editing ? "Save changes" : "Add to catalog"}
         </button>
       </div>
