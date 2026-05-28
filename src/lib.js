@@ -148,10 +148,10 @@ async function anthropicUrl(apiKey, prompt) {
     "anthropic-version": "2023-06-01",
     "anthropic-dangerous-direct-browser-access": "true",
   }, {
-    model: "claude-sonnet-4-5", max_tokens: 1500,
+    model: "claude-sonnet-4-5", max_tokens: 2000,
     tools: [
-      { type: "web_fetch_20250910", name: "web_fetch", max_uses: 3 },
-      { type: "web_search_20250305", name: "web_search", max_uses: 3 },
+      { type: "web_fetch_20250910", name: "web_fetch", max_uses: 5 },
+      { type: "web_search_20250305", name: "web_search", max_uses: 5 },
     ],
     messages: [{ role: "user", content: prompt }],
   });
@@ -225,16 +225,17 @@ ${FIELD_SPEC}`;
 }
 
 export async function extractBeanFromUrl(url) {
-  const prompt = `You are a specialty coffee expert. Extract a coffee's details from a roaster product page.
+  const prompt = `You are a specialty coffee expert. Your job: gather AS MUCH accurate detail as possible about the coffee at this URL: ${url}
 
-Step 1: Fetch ${url} and read the page carefully.
-Step 2: If the fetched HTML looks sparse (e.g. a JavaScript-rendered storefront like Shopify with little visible text), do ALL of the following before giving up:
-  • check for <script type="application/ld+json"> structured product data in the HTML — this often contains name, description, image, brand
-  • check Open Graph meta tags (og:title, og:image, og:description)
-  • use web_search to find this coffee by name + roaster on the roaster's other pages, importer sites, or coffee databases
-  • piece information together from multiple sources
+You MUST use BOTH tools (do not skip step 2):
 
-Be diligent: most modern roaster pages list origin, region, producer/farm, varietal, process, altitude, harvest, and tasting notes — even if the front-end hides them initially. The product image URL is usually in the JSON-LD or og:image.
+Step 1 — Fetch ${url} and extract whatever the static HTML provides: <title>, meta tags, og: tags, <script type="application/ld+json"> blocks, any visible text. The product image URL is usually in og:image or JSON-LD.
+
+Step 2 — ALSO run at least one web_search. This is mandatory, even if step 1 looked okay. Most modern roaster sites (Shopify, custom SPAs) are JavaScript-rendered, so the static HTML is nearly empty — but the same coffee is almost always listed on retailer / importer / blog / coffee-database pages (search for the coffee name + roaster name + words like "origin process varietal"). Pull origin, region, producer, varietal, process, altitude, harvest, and tasting notes from there.
+
+Step 3 — Combine information from both. Prefer the richer, more authoritative source for each field. If sources conflict, prefer the roaster's own description.
+
+Be diligent. A response missing origin/process/varietal/notes when those exist online is a failure.
 
 ${FIELD_SPEC}`;
   return withFallback(

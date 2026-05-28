@@ -88,10 +88,10 @@ routerAdd("POST", "/api/ai/scan", (e) => {
       };
     } else {
       payload = {
-        model: "claude-sonnet-4-5", max_tokens: 1500,
+        model: "claude-sonnet-4-5", max_tokens: 2000,
         tools: [
-          { type: "web_fetch_20250910", name: "web_fetch", max_uses: 3 },
-          { type: "web_search_20250305", name: "web_search", max_uses: 3 },
+          { type: "web_fetch_20250910", name: "web_fetch", max_uses: 5 },
+          { type: "web_search_20250305", name: "web_search", max_uses: 5 },
         ],
         messages: [{ role: "user", content: prompt }],
       };
