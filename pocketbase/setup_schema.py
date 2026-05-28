@@ -115,6 +115,7 @@ coffees = create({
         txt("varietal", maxlen=100), txt("process", maxlen=60), txt("roast_level", maxlen=40),
         txt("altitude", maxlen=60), txt("harvest", maxlen=80), txt("importer", maxlen=200),
         jsonf("tags"), txt("bag_notes", maxlen=2000), filef("image"),
+        num("acidity", 0, 5), num("body", 0, 5), num("sweetness", 0, 5),
         rel("added_by", users_id), autocreated(), autoupdated(),
     ],
     "listRule": AUTH_OK, "viewRule": AUTH_OK, "createRule": AUTH_OK,

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { C, sans, serif } from "./ui.jsx";
 import { useIsWide } from "./useMediaQuery.js";
-import { COFFEE_COUNTRIES } from "./lib.js";
+import { COFFEE_COUNTRIES, FLAVOR_CATEGORIES, TAG_EMOJI, ROAST_INTENSITY } from "./lib.js";
 import { avatarUrl } from "./pb.js";
 
 // Round avatar: shows the uploaded photo if there is one, else a colored circle
@@ -132,6 +132,112 @@ export function CountryCombobox({ value, onChange, placeholder, style }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// Category-grouped flavour picker (Coffi-inspired). Replaces the flat tag list.
+export function FlavorPicker({ value = [], onChange }) {
+  const toggle = (t) => onChange(value.includes(t) ? value.filter((x) => x !== t) : [...value, t]);
+  return (
+    <div>
+      {value.length > 0 && (
+        <div style={{ marginBottom: 16, padding: 12, background: C.tint, borderRadius: 14, border: `1px solid ${C.borderSoft}` }}>
+          <div style={{ fontSize: 11, color: C.muted, fontFamily: sans, marginBottom: 8, letterSpacing: "0.06em" }}>SELECTED ({value.length})</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {value.map((t) => (
+              <button key={t} type="button" onClick={() => toggle(t)} style={{
+                display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px",
+                borderRadius: 999, border: "none", background: C.brown, color: "#fff8f0",
+                fontFamily: sans, fontSize: 13, cursor: "pointer",
+              }}>
+                <span>{TAG_EMOJI[t] || ""}</span>{t}<span style={{ opacity: 0.75, marginLeft: 2 }}>×</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {FLAVOR_CATEGORIES.map((cat) => (
+        <div key={cat.name} style={{ marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: cat.color, display: "inline-block" }} />
+            <span style={{ fontFamily: sans, fontSize: 13, fontWeight: 600, color: C.ink }}>{cat.name}</span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {cat.tags.map((t) => {
+              const active = value.includes(t);
+              return (
+                <button key={t} type="button" onClick={() => toggle(t)} style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "8px 14px", borderRadius: 999, cursor: "pointer",
+                  border: `1.5px solid ${active ? cat.color : C.border}`,
+                  background: active ? cat.color : "transparent",
+                  color: active ? "#fff8f0" : C.muted,
+                  fontFamily: sans, fontSize: 13, transition: "all 0.15s",
+                }}>
+                  <span>{TAG_EMOJI[t] || ""}</span>{t}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Filled-square scale (1-5).
+const SCALE_LABEL = ["—", "Low", "Med-Low", "Medium", "Med-High", "High"];
+function ScaleBars({ value, color = C.ink }) {
+  const v = Math.round(Number(value) || 0);
+  return (
+    <div style={{ display: "flex", gap: 5 }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} style={{ width: 18, height: 18, borderRadius: 3, background: i <= v ? color : C.borderSoft, display: "inline-block" }} />
+      ))}
+    </div>
+  );
+}
+
+// Coffi-style flavour profile: roast (from text), acidity, body, sweetness.
+export function FlavorProfile({ roast, acidity, body, sweetness }) {
+  const roastVal = ROAST_INTENSITY[roast] || 0;
+  const rows = [
+    { label: "Roast", val: roastVal, text: roast || "—" },
+    { label: "Acidity", val: Number(acidity) || 0, text: SCALE_LABEL[Number(acidity) || 0] },
+    { label: "Body", val: Number(body) || 0, text: SCALE_LABEL[Number(body) || 0] },
+    { label: "Sweetness", val: Number(sweetness) || 0, text: SCALE_LABEL[Number(sweetness) || 0] },
+  ];
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      {rows.map((r) => (
+        <div key={r.label} style={{ background: C.card, border: `1px solid ${C.borderSoft}`, borderRadius: 14, padding: 14 }}>
+          <div style={{ fontFamily: sans, fontSize: 12, color: C.muted, marginBottom: 10 }}>{r.label}</div>
+          <ScaleBars value={r.val} />
+          <div style={{ fontFamily: sans, fontStyle: "italic", fontSize: 13, color: C.ink, marginTop: 10 }}>{r.text}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Small slider used inside the form (acidity/body/sweetness).
+export function ScaleSlider({ label, value, onChange, color = C.brown }) {
+  const v = Number(value) || 0;
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+        <span style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, fontFamily: sans }}>{label}</span>
+        <span style={{ fontFamily: sans, fontSize: 13, color: C.ink }}>{v > 0 ? SCALE_LABEL[v] : "—"}</span>
+      </div>
+      <div style={{ display: "flex", gap: 6 }}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <button key={i} type="button" onClick={() => onChange(i === v ? 0 : i)} style={{
+            flex: 1, height: 32, borderRadius: 8, border: "none", cursor: "pointer",
+            background: i <= v ? color : C.borderSoft,
+          }} />
+        ))}
+      </div>
     </div>
   );
 }

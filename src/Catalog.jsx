@@ -3,6 +3,7 @@ import { C, sans, serif, inputStyle } from "./ui.jsx";
 import { useIsWide } from "./useMediaQuery.js";
 import { useNav } from "./nav.jsx";
 import { Pill } from "./components.jsx";
+import { TAG_EMOJI } from "./lib.js";
 import { listCoffees, listAllTastings, coffeeImageUrl } from "./data.js";
 
 function CoffeeCard({ coffee, avg, count, onClick }) {
@@ -21,7 +22,7 @@ function CoffeeCard({ coffee, avg, count, onClick }) {
             </div>
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 8 }}>
               {coffee.process && <Pill>{coffee.process}</Pill>}
-              {coffee.tags?.slice(0, 2).map((t) => <Pill key={t} green>{t}</Pill>)}
+              {coffee.tags?.slice(0, 2).map((t) => <Pill key={t} green>{TAG_EMOJI[t] ? `${TAG_EMOJI[t]} ${t}` : t}</Pill>)}
             </div>
           </div>
           <div style={{ textAlign: "center", flexShrink: 0 }}>

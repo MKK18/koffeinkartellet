@@ -4,6 +4,35 @@ export const PROCESSES = ["Washed", "Natural", "Anaerobic", "Honey", "Wet-Hulled
 export const ROAST_LEVELS = ["Light", "Light-Medium", "Medium", "Medium-Dark", "Dark"];
 export const VARIETALS = ["Gesha/Geisha", "Bourbon", "Typica", "SL28", "SL34", "Caturra", "Catuai", "Heirloom / Ethiopian Landraces", "Pacamara", "Maragogipe", "Mundo Novo", "74110", "74112", "Other"];
 export const FLAVOR_TAGS = ["Fruity", "Floral", "Chocolatey", "Nutty", "Caramel", "Spicy", "Earthy", "Bright", "Funky", "Smoky", "Citrus", "Berry", "Stone Fruit", "Herbal", "Jasmine", "Rose", "Tropical", "Winey", "Juicy", "Clean", "Complex", "Savory"];
+
+// Flavour tags organised into SCAA-flavor-wheel-ish categories, each with a
+// soft category color (the little dot) and per-tag emoji.
+export const FLAVOR_CATEGORIES = [
+  { name: "Fruity", color: "#d97670", tags: ["Fruity", "Berry", "Citrus", "Stone Fruit", "Tropical"] },
+  { name: "Floral", color: "#e08fb0", tags: ["Floral", "Jasmine", "Rose"] },
+  { name: "Cocoa & Sweet", color: "#a87148", tags: ["Chocolatey", "Caramel"] },
+  { name: "Nutty", color: "#c8a878", tags: ["Nutty"] },
+  { name: "Spice", color: "#d8884a", tags: ["Spicy"] },
+  { name: "Earthy & Herbal", color: "#7a9468", tags: ["Earthy", "Herbal", "Smoky"] },
+  { name: "Fermented", color: "#9c7ab0", tags: ["Funky", "Winey"] },
+  { name: "Other", color: "#a89878", tags: ["Bright", "Juicy", "Clean", "Complex", "Savory"] },
+];
+
+export const TAG_EMOJI = {
+  Fruity: "🍓", Berry: "🫐", Citrus: "🍊", "Stone Fruit": "🍑", Tropical: "🥭",
+  Floral: "🌸", Jasmine: "🌼", Rose: "🌹",
+  Chocolatey: "🍫", Caramel: "🍯",
+  Nutty: "🌰",
+  Spicy: "🌶️",
+  Earthy: "🌍", Herbal: "🌿", Smoky: "💨",
+  Funky: "🍺", Winey: "🍷",
+  Bright: "✨", Juicy: "💧", Clean: "💎", Complex: "🎭", Savory: "🧂",
+};
+
+// Map our existing roast_level string to a 1-5 intensity for the flavor-profile bars.
+export const ROAST_INTENSITY = {
+  "Light": 1, "Light-Medium": 2, "Medium": 3, "Medium-Dark": 4, "Dark": 5,
+};
 export const COFFEE_COUNTRIES = [
   "Angola", "Bolivia", "Brazil", "Burundi", "Cameroon", "China", "Colombia",
   "Costa Rica", "Cuba", "Democratic Republic of the Congo", "Dominican Republic",

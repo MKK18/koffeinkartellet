@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
-import { Sheet, SectionHead, Tag, Spinner, CountryCombobox } from "./components.jsx";
+import { Sheet, SectionHead, Spinner, CountryCombobox, FlavorPicker, ScaleSlider } from "./components.jsx";
 import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, compressImage, extractBeanFromImage, extractBeanFromUrl } from "./lib.js";
 import { createCoffee, updateCoffee, searchCoffeesByName, coffeeImageUrl } from "./data.js";
 
 const EMPTY = {
   name: "", roaster: "", origin: "", region: "", producer: "", varietal: "",
   process: "", roastLevel: "", altitude: "", harvest: "", importer: "", tags: [], notes: "",
+  acidity: 0, body: 0, sweetness: 0,
 };
 
 // Stable, module-level field components (defining these inside the form would
@@ -47,6 +48,7 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
       region: coffee.region || "", producer: coffee.producer || "", varietal: coffee.varietal || "",
       process: coffee.process || "", roastLevel: coffee.roast_level || "", altitude: coffee.altitude || "",
       harvest: coffee.harvest || "", importer: coffee.importer || "", tags: coffee.tags || [], notes: coffee.bag_notes || "",
+      acidity: coffee.acidity || 0, body: coffee.body || 0, sweetness: coffee.sweetness || 0,
     } : { ...EMPTY }
   );
   const [imageBlob, setImageBlob] = useState(null);
@@ -63,7 +65,6 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
   const fileRef = useRef();
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  const toggleTag = (t) => set("tags", form.tags.includes(t) ? form.tags.filter((x) => x !== t) : [...form.tags, t]);
 
   const applyExtracted = (x) => setForm((f) => ({
     ...f,
@@ -257,10 +258,13 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
             <Field label="Harvest" value={form.harvest} onChange={(v) => set("harvest", v)} placeholder="e.g. Nov 2024" full />
           </div>
 
-          <SectionHead title="Flavour tags" />
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {FLAVOR_TAGS.map((t) => <Tag key={t} label={t} active={form.tags.includes(t)} onClick={() => toggleTag(t)} />)}
-          </div>
+          <SectionHead title="Flavour profile" />
+          <ScaleSlider label="Acidity" value={form.acidity} onChange={(v) => set("acidity", v)} />
+          <ScaleSlider label="Body" value={form.body} onChange={(v) => set("body", v)} />
+          <ScaleSlider label="Sweetness" value={form.sweetness} onChange={(v) => set("sweetness", v)} />
+
+          <SectionHead title="Flavour notes" />
+          <FlavorPicker value={form.tags} onChange={(v) => set("tags", v)} />
 
           <SectionHead title="From the bag" />
           <textarea style={{ ...inputStyle, minHeight: 70, resize: "vertical" }} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Roaster's tasting notes, origin story…" />

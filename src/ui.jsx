@@ -26,7 +26,7 @@ export const sans = "'DM Sans', sans-serif";
 export const RATER_COLORS = ["#C0704A", "#4A7A90", "#5E8C61", "#9A6FB0", "#C99846", "#6B4226"];
 
 export const inputStyle = {
-  width: "100%", padding: "10px 14px", borderRadius: 10, border: `1.5px solid ${C.border}`,
+  width: "100%", padding: "12px 16px", borderRadius: 14, border: `1.5px solid ${C.border}`,
   background: C.card, fontSize: 14, fontFamily: sans, color: C.ink, outline: "none",
   boxSizing: "border-box",
 };
@@ -36,16 +36,24 @@ export const labelStyle = {
   fontFamily: sans, marginBottom: 6, display: "block",
 };
 
+// Pill-shaped buttons — fully rounded, generous padding (Coffi-inspired airy feel).
 export const primaryBtn = (enabled = true) => ({
-  padding: "11px 22px", borderRadius: 10, border: "none",
+  padding: "12px 24px", borderRadius: 999, border: "none",
   background: enabled ? C.brown : "#d4c5b5", color: "#fff8f0",
   fontFamily: sans, fontSize: 14, fontWeight: 600,
   cursor: enabled ? "pointer" : "not-allowed",
 });
 
 export const ghostBtn = {
-  padding: "10px 18px", borderRadius: 10, border: `1.5px solid ${C.border}`,
+  padding: "10px 20px", borderRadius: 999, border: `1.5px solid ${C.border}`,
   background: "transparent", color: C.muted, fontFamily: sans, fontSize: 13, cursor: "pointer",
+};
+
+// A dark pill, for emphasis (e.g. active segmented-control tab) — Coffi uses this.
+export const darkPillBtn = {
+  padding: "10px 20px", borderRadius: 999, border: "none",
+  background: C.ink, color: "#fff8f0",
+  fontFamily: sans, fontSize: 13, fontWeight: 600, cursor: "pointer",
 };
 
 export function FontLink() {
