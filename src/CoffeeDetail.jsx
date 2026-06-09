@@ -72,7 +72,20 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
 
   return (
     <Sheet onClose={onClose}>
-      {/* ── Hero image ─────────────────────────────────────── */}
+      {/* ---- Close button (absolute, top-right) ---- */}
+      <button
+        onClick={onClose}
+        style={{
+          position: "absolute", top: 16, right: 16, zIndex: 3,
+          width: 36, height: 36, borderRadius: "50%",
+          background: "rgba(255,250,242,0.85)", border: "none",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 22, color: C.muted, cursor: "pointer", lineHeight: 1,
+          backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+        }}
+      >&times;</button>
+
+      {/* ---- Hero image ---- */}
       <div style={{ margin: "-28px -28px 0", borderRadius: "20px 20px 0 0", overflow: "hidden" }}>
         {img ? (
           <div style={{ position: "relative", width: "100%", height: 200, background: C.tint }}>
@@ -84,128 +97,75 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
               }}
             />
             <div style={{
-              position: "absolute", bottom: 0, left: 0, right: 0, height: 60,
-              background: "linear-gradient(to top, rgba(255,250,242,0.95), transparent)",
+              position: "absolute", bottom: 0, left: 0, right: 0, height: 80,
+              background: "linear-gradient(to top, rgba(255,250,242,1) 0%, rgba(255,250,242,0.6) 50%, transparent 100%)",
             }} />
           </div>
         ) : (
           <div style={{
-            width: "100%", height: 180,
-            background: "linear-gradient(135deg, #f0e0cc 0%, #e8d0b8 40%, #dcc0a8 100%)",
+            width: "100%", height: 120,
+            background: "#ece3d5",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <span style={{ fontSize: 64, opacity: 0.5 }}>☕</span>
+            <span style={{ fontSize: 56, opacity: 0.25, filter: "grayscale(0.3)" }}>☕</span>
           </div>
         )}
       </div>
 
-      {/* ── Title section ──────────────────────────────────── */}
-      <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-        gap: 12, marginTop: img ? -8 : 16, position: "relative", zIndex: 1,
-        paddingBottom: 4,
-      }}>
-        <div style={{ flex: 1 }}>
-          <h2 style={{
-            margin: 0, fontFamily: serif, fontSize: 26, fontWeight: 700,
-            color: C.ink, lineHeight: 1.15, letterSpacing: "-0.01em",
-          }}>{coffee.name}</h2>
-          {coffee.roaster && (
-            <div style={{
-              fontSize: 14, color: C.muted, marginTop: 5, fontFamily: sans,
-            }}>{coffee.roaster}</div>
-          )}
-        </div>
-        <button
-          onClick={onClose}
-          style={{
-            background: C.tint, border: `1px solid ${C.borderSoft}`,
-            width: 34, height: 34, borderRadius: "50%",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 20, color: C.muted, cursor: "pointer", lineHeight: 1,
-            flexShrink: 0, marginTop: 2,
-          }}
-        >&times;</button>
+      {/* ---- Title section ---- */}
+      <div style={{ marginTop: img ? -4 : 20, position: "relative", zIndex: 1 }}>
+        <h2 style={{
+          margin: 0, fontFamily: serif, fontSize: 26, fontWeight: 700,
+          color: C.ink, lineHeight: 1.15, letterSpacing: "-0.01em",
+        }}>{coffee.name}</h2>
+        {coffee.roaster && (
+          <div style={{
+            fontSize: 14, color: C.muted, marginTop: 5, fontFamily: sans,
+          }}>{coffee.roaster}</div>
+        )}
       </div>
 
-      {/* ── Score panel (Vivino-inspired) ──────────────────── */}
+      {/* ---- Score section ---- */}
       {tastings !== null && (
-        <div style={{
-          background: C.tint, border: `1px solid ${C.borderSoft}`,
-          borderRadius: 16, padding: "18px 20px", marginTop: 16,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            {/* Large average score */}
-            <div style={{ textAlign: "center", minWidth: 68, flexShrink: 0 }}>
-              <div style={{
-                fontSize: 48, fontFamily: serif, fontWeight: 800,
-                color: avg ? C.accent : "#d4c5b5", lineHeight: 1,
-                letterSpacing: "-0.02em",
-              }}>{avg || "—"}</div>
-              {avg && (
-                <div style={{
-                  fontSize: 11, color: C.accent, fontFamily: sans,
-                  letterSpacing: "0.08em", marginTop: 4, fontWeight: 600,
-                }}>/ 10</div>
-              )}
-            </div>
-
-            {/* Separator */}
+        <div style={{ textAlign: "center", margin: "24px 0" }}>
+          <div style={{
+            fontSize: 52, fontFamily: serif, fontWeight: 800,
+            color: avg ? C.accent : "#d4c5b5", lineHeight: 1,
+            letterSpacing: "-0.03em",
+          }}>{avg || "—"}</div>
+          {avg ? (
             <div style={{
-              width: 1, alignSelf: "stretch", background: C.border,
-              margin: "4px 0", flexShrink: 0,
-            }} />
+              fontSize: 13, color: C.faint, fontFamily: sans, marginTop: 4,
+            }}>/ 10</div>
+          ) : (
+            <div style={{
+              fontSize: 13, color: C.muted, fontFamily: sans, marginTop: 6,
+            }}>No tastings yet</div>
+          )}
 
-            {/* Per-person breakdown */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {tastings.length === 0 ? (
-                <span style={{
-                  color: C.muted, fontFamily: sans, fontSize: 13, lineHeight: 1.5,
-                }}>No tastings yet — brew a cup and log the first one below</span>
-              ) : (
-                <>
-                  <div style={{
-                    display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 8,
+          {/* Per-person breakdown */}
+          {personList.length > 0 && (
+            <div style={{
+              display: "flex", flexDirection: "column", alignItems: "center",
+              gap: 4, marginTop: 14,
+            }}>
+              {personList.map((p) => {
+                const pAvg = (p.scores.reduce((a, x) => a + x, 0) / p.scores.length).toFixed(1);
+                return (
+                  <div key={p.name} style={{
+                    fontFamily: sans, fontSize: 13, color: p.color, lineHeight: 1.5,
                   }}>
-                    {personList.map((p) => {
-                      const pAvg = (p.scores.reduce((a, x) => a + x, 0) / p.scores.length).toFixed(1);
-                      return (
-                        <div key={p.name} style={{
-                          display: "flex", alignItems: "center", gap: 7,
-                        }}>
-                          <div style={{
-                            width: 32, height: 32, borderRadius: "50%",
-                            background: p.color, display: "flex",
-                            alignItems: "center", justifyContent: "center",
-                            color: "#fff8f0", fontFamily: serif, fontWeight: 700,
-                            fontSize: 14, lineHeight: 1,
-                          }}>{pAvg}</div>
-                          <div style={{
-                            fontFamily: sans, fontSize: 12, color: p.color,
-                            fontWeight: 600, lineHeight: 1.2,
-                          }}>
-                            {p.name}
-                            <span style={{
-                              color: C.faint, fontWeight: 400, marginLeft: 3,
-                            }}>({p.scores.length})</span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {p.name} <span style={{ fontWeight: 600 }}>{"·"} {pAvg}</span>
+                    <span style={{ color: C.faint, fontWeight: 400 }}> ({p.scores.length})</span>
                   </div>
-                  <div style={{
-                    fontSize: 12, color: C.muted, fontFamily: sans,
-                  }}>
-                    {tastings.length} {tastings.length === 1 ? "tasting" : "tastings"} total
-                  </div>
-                </>
-              )}
+                );
+              })}
             </div>
-          </div>
+          )}
         </div>
       )}
 
-      {/* ── Metadata grid ──────────────────────────────────── */}
+      {/* ---- Metadata ---- */}
       {(() => {
         const facts = [
           { label: "Origin", value: [coffee.origin, coffee.region].filter(Boolean).join(", ") },
@@ -217,42 +177,50 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
         ].filter((f) => f.value);
         if (facts.length === 0) return null;
         return (
-          <div style={{
-            display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 20px",
-            marginTop: 20, padding: "16px 18px",
-            background: C.card, border: `1px solid ${C.borderSoft}`,
-            borderRadius: 14,
-          }}>
-            {facts.map((f) => <Fact key={f.label} label={f.label} value={f.value} />)}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {facts.map((f, i) => (
+              <div key={f.label} style={{
+                padding: "14px 0",
+                borderTop: i === 0 ? `1px solid ${C.border}` : "none",
+                borderBottom: `1px solid ${C.border}`,
+              }}>
+                <Fact label={f.label} value={f.value} />
+              </div>
+            ))}
           </div>
         );
       })()}
 
-      {/* ── Flavor tags ────────────────────────────────────── */}
+      {/* ---- Flavor tags ---- */}
       {coffee.tags?.length > 0 && (
         <div style={{
-          display: "flex", flexWrap: "wrap", gap: 7, marginTop: 16,
+          display: "flex", flexWrap: "wrap", gap: 8, marginTop: 20,
         }}>
           {coffee.tags.map((t) => (
-            <Pill key={t} green>{TAG_EMOJI[t] ? `${TAG_EMOJI[t]} ${t}` : t}</Pill>
+            <span key={t} style={{
+              fontSize: 12, padding: "4px 12px", borderRadius: 999,
+              fontFamily: sans, color: C.muted,
+              border: `1px solid ${C.border}`, background: "transparent",
+              lineHeight: 1.5,
+            }}>{TAG_EMOJI[t] ? `${TAG_EMOJI[t]} ${t}` : t}</span>
           ))}
         </div>
       )}
 
-      {/* ── Bag notes ──────────────────────────────────────── */}
+      {/* ---- Bag notes ---- */}
       {coffee.bag_notes && (
         <div style={{
-          marginTop: 16, padding: "14px 18px",
-          borderLeft: `3px solid ${C.accent}`,
-          background: C.tint, borderRadius: "0 12px 12px 0",
-          fontFamily: sans, fontSize: 14, color: "#5a4030",
-          lineHeight: 1.6, fontStyle: "italic",
+          margin: "24px 0",
+          borderLeft: `2px solid ${C.accent}`,
+          paddingLeft: 16,
+          fontFamily: sans, fontSize: 15, color: "#5a4030",
+          lineHeight: 1.65, fontStyle: "italic",
         }}>
           {coffee.bag_notes}
         </div>
       )}
 
-      {/* ── Tastings section ───────────────────────────────── */}
+      {/* ---- Tastings section ---- */}
       <SectionHead title="Tastings" />
 
       {tastings === null ? (
@@ -264,121 +232,96 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
         </div>
       ) : (
         <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {tastings.map((t) => {
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {tastings.map((t, idx) => {
               const u = t.expand?.user || {};
               const mine = u.id === user?.id;
               const userColor = u.color || C.brown;
               return (
                 <div key={t.id} style={{
-                  background: C.card, border: `1px solid ${C.borderSoft}`,
-                  borderRadius: 14, overflow: "hidden",
-                  display: "flex",
+                  padding: "16px 0",
+                  borderBottom: idx < tastings.length - 1 ? `1px solid #ece3d5` : "none",
                 }}>
-                  {/* Left color bar */}
+                  {/* Top line: star + score + name + date */}
                   <div style={{
-                    width: 3, flexShrink: 0, background: userColor,
-                  }} />
+                    display: "flex", alignItems: "center", gap: 6,
+                    fontFamily: sans,
+                  }}>
+                    <span style={{ color: "#D4A574", fontSize: 15, lineHeight: 1 }}>{"★"}</span>
+                    <span style={{
+                      fontFamily: serif, fontWeight: 700, fontSize: 16,
+                      color: C.ink, lineHeight: 1,
+                    }}>{Number(t.score).toFixed(1)}</span>
+                    <span
+                      onClick={() => u.id && openProfile(u.id)}
+                      style={{
+                        color: userColor, fontSize: 13, marginLeft: 4,
+                        cursor: u.id ? "pointer" : "default",
+                      }}
+                    >{u.name || "Someone"}</span>
 
-                  <div style={{ flex: 1, padding: "14px 16px" }}>
-                    {/* Top row: name, score, date */}
-                    <div style={{
-                      display: "flex", alignItems: "center", gap: 8,
-                      fontFamily: sans, marginBottom: 2,
-                    }}>
-                      <span
-                        onClick={() => u.id && openProfile(u.id)}
-                        style={{
-                          color: userColor, fontWeight: 700, fontSize: 14,
-                          cursor: u.id ? "pointer" : "default",
-                        }}
-                      >{u.name || "Someone"}</span>
+                    <span style={{ flex: 1 }} />
 
+                    {(t.tasted_on || "").split(" ")[0] && (
                       <span style={{
-                        fontFamily: serif, fontWeight: 700, fontSize: 22,
-                        color: userColor, lineHeight: 1, marginLeft: 2,
-                      }}>{Number(t.score).toFixed(1)}</span>
-                      <span style={{
-                        fontSize: 11, color: C.faint, alignSelf: "flex-end",
-                        marginBottom: 2,
-                      }}>/ 10</span>
-
-                      <span style={{ flex: 1 }} />
-
-                      {(t.tasted_on || "").split(" ")[0] && (
-                        <span style={{
-                          fontSize: 11, color: C.faint, fontFamily: sans,
-                        }}>{(t.tasted_on || "").split(" ")[0]}</span>
-                      )}
-                    </div>
-
-                    {/* Method tags */}
-                    {(t.grind || t.brew_method) && (
-                      <div style={{
-                        display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap",
-                      }}>
-                        {t.grind && (
-                          <span style={{
-                            fontSize: 11, padding: "2px 10px", borderRadius: 10,
-                            background: C.tint, color: C.muted,
-                            border: `1px solid ${C.borderSoft}`, fontFamily: sans,
-                          }}>Grind {t.grind}</span>
-                        )}
-                        {t.brew_method && (
-                          <span style={{
-                            fontSize: 11, padding: "2px 10px", borderRadius: 10,
-                            background: C.tint, color: C.muted,
-                            border: `1px solid ${C.borderSoft}`, fontFamily: sans,
-                          }}>{t.brew_method}</span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Notes */}
-                    {t.notes && (
-                      <div style={{
-                        fontSize: 13, color: "#5a4030", marginTop: 8,
-                        fontFamily: sans, lineHeight: 1.55, whiteSpace: "pre-wrap",
-                      }}>{t.notes}</div>
-                    )}
-
-                    {/* Edit / delete (own tastings only) */}
-                    {mine && (
-                      <div style={{
-                        display: "flex", gap: 4, marginTop: 8,
-                        justifyContent: "flex-end",
-                      }}>
-                        <button
-                          onClick={() => startEdit(t)}
-                          style={{
-                            background: "none", border: `1px solid ${C.borderSoft}`,
-                            borderRadius: 8, padding: "3px 12px",
-                            color: C.muted, cursor: "pointer", fontSize: 11,
-                            fontFamily: sans,
-                          }}
-                        >edit</button>
-                        <button
-                          onClick={() => remove(t.id)}
-                          style={{
-                            background: "none", border: `1px solid ${C.borderSoft}`,
-                            borderRadius: 8, padding: "3px 10px",
-                            color: C.faint, cursor: "pointer", fontSize: 14,
-                            lineHeight: 1,
-                          }}
-                        >&times;</button>
-                      </div>
+                        fontSize: 11, color: C.faint, fontFamily: sans,
+                      }}>{(t.tasted_on || "").split(" ")[0]}</span>
                     )}
                   </div>
+
+                  {/* Grind / brew method */}
+                  {(t.grind || t.brew_method) && (
+                    <div style={{
+                      fontSize: 12, color: C.muted, fontFamily: sans,
+                      marginTop: 6,
+                    }}>
+                      {[t.grind ? `Grind ${t.grind}` : null, t.brew_method].filter(Boolean).join(" · ")}
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  {t.notes && (
+                    <div style={{
+                      fontSize: 14, color: C.ink, marginTop: 8,
+                      fontFamily: sans, lineHeight: 1.55, whiteSpace: "pre-wrap",
+                    }}>{t.notes}</div>
+                  )}
+
+                  {/* Edit / delete (own tastings only) */}
+                  {mine && (
+                    <div style={{
+                      display: "flex", gap: 12, marginTop: 8,
+                      justifyContent: "flex-end",
+                    }}>
+                      <button
+                        onClick={() => startEdit(t)}
+                        style={{
+                          background: "none", border: "none", padding: 0,
+                          color: C.faint, cursor: "pointer", fontSize: 12,
+                          fontFamily: sans,
+                        }}
+                      >edit</button>
+                      <button
+                        onClick={() => remove(t.id)}
+                        style={{
+                          background: "none", border: "none", padding: 0,
+                          color: C.faint, cursor: "pointer", fontSize: 15,
+                          lineHeight: 1,
+                        }}
+                      >&times;</button>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
 
-          {/* ── Add / edit tasting form ──────────────────────── */}
+          {/* ---- Add / edit tasting form ---- */}
           {adding ? (
             <div style={{
-              background: C.card, border: `2px solid ${user?.color || C.brown}`,
-              borderRadius: 16, padding: 20, marginTop: 14,
+              marginTop: 16,
+              paddingTop: 16,
+              borderTop: `1px solid ${C.border}`,
             }}>
               {/* Score slider */}
               <div style={{ marginBottom: 18 }}>
@@ -389,7 +332,7 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
                   <label style={{ ...labelStyle, marginBottom: 0 }}>Score</label>
                   <span style={{
                     fontFamily: serif, fontSize: 28, fontWeight: 700,
-                    color: user?.color || C.brown, lineHeight: 1,
+                    color: C.accent, lineHeight: 1,
                   }}>{Number(draft.score).toFixed(1)}<span style={{
                     fontSize: 14, color: C.faint, fontWeight: 400, marginLeft: 3,
                   }}>/ 10</span></span>
@@ -398,7 +341,7 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
                   type="range" min="1" max="10" step="0.5"
                   value={draft.score}
                   onChange={(e) => setDraft((d) => ({ ...d, score: e.target.value }))}
-                  style={{ width: "100%", accentColor: user?.color || C.brown }}
+                  style={{ width: "100%", accentColor: C.accent }}
                 />
               </div>
 
@@ -457,20 +400,17 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
             <button
               onClick={startAdd}
               style={{
-                marginTop: 14, padding: "14px 18px", borderRadius: 14,
-                border: `1.5px dashed ${C.accent}`, background: "transparent",
+                marginTop: 14, padding: 14, borderRadius: 14,
+                border: `1.5px dashed ${C.border}`, background: "transparent",
                 color: C.accent, fontFamily: sans, fontSize: 14, fontWeight: 600,
                 cursor: "pointer", width: "100%",
-                transition: "background 0.15s ease",
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = C.tint}
-              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             >+ Add tasting</button>
           )}
         </>
       )}
 
-      {/* ── Edit coffee button ─────────────────────────────── */}
+      {/* ---- Edit coffee button ---- */}
       <div style={{
         display: "flex", justifyContent: "center",
         marginTop: 24, paddingTop: 18,

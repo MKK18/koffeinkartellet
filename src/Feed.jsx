@@ -23,7 +23,7 @@ export default function Feed() {
   useEffect(() => { listRecentTastings(60).then(setItems).catch(() => setItems([])); }, [dataVersion]);
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "16px 12px" }}>
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: "20px 16px" }}>
       {items === null ? (
         <div style={{
           textAlign: "center", padding: 60, color: C.muted, fontFamily: sans,
@@ -33,11 +33,9 @@ export default function Feed() {
         </div>
       ) : items.length === 0 ? (
         <div style={{
-          textAlign: "center", padding: "72px 24px", color: C.muted, fontFamily: sans,
-          background: C.card, borderRadius: 20, border: `1px solid ${C.borderSoft}`,
-          boxShadow: "0 2px 12px rgba(100,70,40,0.04)",
+          textAlign: "center", padding: "80px 24px", color: C.muted, fontFamily: sans,
         }}>
-          <div style={{ fontSize: 44, marginBottom: 16, lineHeight: 1 }}>📭</div>
+          <div style={{ fontSize: 48, marginBottom: 20, lineHeight: 1 }}>☕</div>
           <div style={{
             fontFamily: serif, fontSize: 22, fontWeight: 700, color: C.ink,
             marginBottom: 8, lineHeight: 1.3,
@@ -49,7 +47,7 @@ export default function Feed() {
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {items.map((t) => {
             const u = t.expand?.user || {};
             const c = t.expand?.coffee || {};
@@ -59,62 +57,69 @@ export default function Feed() {
             return (
               <div key={t.id} style={{
                 background: C.card,
-                border: `1px solid ${C.borderSoft}`,
                 borderRadius: 16,
-                padding: "16px 18px",
-                boxShadow: "0 1px 4px rgba(100,70,40,0.04), 0 4px 16px rgba(100,70,40,0.03)",
+                padding: 20,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 6px 16px rgba(0,0,0,0.03)",
               }}>
-                {/* Header: avatar + name ... time */}
+                {/* Score row */}
                 <div style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  fontFamily: sans, fontSize: 13,
+                  display: "flex", alignItems: "center", gap: 6,
+                  marginBottom: 14,
                 }}>
-                  <div
-                    onClick={() => u.id && openProfile(u.id)}
-                    style={{
-                      width: 30, height: 30, borderRadius: "50%",
-                      background: userColor,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#fff", fontSize: 13, fontWeight: 600, fontFamily: sans,
-                      cursor: u.id ? "pointer" : "default",
-                      flexShrink: 0,
-                      letterSpacing: "0.02em",
-                    }}
-                  >
-                    {(u.name || "?")[0].toUpperCase()}
-                  </div>
-                  <span
-                    onClick={() => u.id && openProfile(u.id)}
-                    style={{
-                      fontWeight: 700, color: userColor,
-                      cursor: u.id ? "pointer" : "default",
-                      fontSize: 14,
-                    }}
-                  >
-                    {u.name || "Someone"}
-                  </span>
-                  <span style={{ flex: 1 }} />
-                  <span style={{ color: C.faint, fontSize: 11, fontFamily: sans }}>
-                    {timeAgo(t.created)}
-                  </span>
-                </div>
-
-                {/* Score */}
-                <div style={{
-                  margin: "14px 0 12px",
-                  display: "flex", alignItems: "baseline", gap: 2,
-                }}>
+                  <span style={{ color: "#D4A574", fontSize: 16, lineHeight: 1 }}>★</span>
                   <span style={{
-                    fontFamily: serif, fontWeight: 800, fontSize: 32,
-                    color: userColor, lineHeight: 1, letterSpacing: "-0.02em",
+                    fontFamily: serif, fontWeight: 700, fontSize: 18,
+                    color: C.ink, lineHeight: 1,
                   }}>
                     {Number(t.score).toFixed(1)}
                   </span>
-                  <span style={{
-                    fontFamily: sans, fontSize: 13, fontWeight: 500,
-                    color: C.faint, marginLeft: 2,
+                </div>
+
+                {/* Tasting notes — the hero */}
+                {t.notes ? (
+                  <div style={{
+                    fontFamily: sans, fontSize: 15, color: C.ink,
+                    lineHeight: 1.6, whiteSpace: "pre-wrap",
                   }}>
-                    /10
+                    {t.notes}
+                  </div>
+                ) : (
+                  <div style={{
+                    fontFamily: sans, fontSize: 14, color: C.faint,
+                    fontStyle: "italic", lineHeight: 1.5,
+                  }}>
+                    Rated without notes
+                  </div>
+                )}
+
+                {/* User row */}
+                <div
+                  onClick={() => u.id && openProfile(u.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    marginTop: 16,
+                    cursor: u.id ? "pointer" : "default",
+                  }}
+                >
+                  <div style={{
+                    width: 24, height: 24, borderRadius: "50%",
+                    background: userColor,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#fff", fontSize: 11, fontWeight: 600, fontFamily: sans,
+                    flexShrink: 0,
+                  }}>
+                    {(u.name || "?")[0].toUpperCase()}
+                  </div>
+                  <span style={{
+                    fontFamily: sans, fontSize: 12, color: C.muted,
+                  }}>
+                    {u.name || "Someone"}
+                  </span>
+                  <span style={{ fontFamily: sans, fontSize: 12, color: C.faint }}>·</span>
+                  <span style={{
+                    fontFamily: sans, fontSize: 12, color: C.faint,
+                  }}>
+                    {timeAgo(t.created)}
                   </span>
                 </div>
 
@@ -122,68 +127,40 @@ export default function Feed() {
                 <div
                   onClick={() => c.id && openCoffee(c)}
                   style={{
-                    display: "flex", gap: 12, alignItems: "center",
+                    display: "flex", alignItems: "center", gap: 12,
+                    marginTop: 14, paddingTop: 14,
+                    borderTop: "1px solid #ece3d5",
                     cursor: c.id ? "pointer" : "default",
-                    padding: "10px 12px",
-                    background: C.tint,
-                    borderRadius: 12,
-                    border: `1px solid ${C.borderSoft}`,
                   }}
                 >
                   <div style={{
-                    width: 48, height: 48, borderRadius: 10, flexShrink: 0,
+                    width: 36, height: 36, borderRadius: 8, flexShrink: 0,
                     background: img ? "transparent" : "#f0e6da",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     overflow: "hidden",
                   }}>
                     {img
                       ? <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ fontSize: 22 }}>☕</span>}
+                      : <span style={{ fontSize: 18 }}>☕</span>}
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{
-                      fontFamily: serif, fontWeight: 700, color: C.ink,
-                      fontSize: 15, lineHeight: 1.25,
+                      fontFamily: sans, fontWeight: 500, fontSize: 13, color: C.ink,
+                      lineHeight: 1.3,
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}>
                       {c.name || "a coffee"}
                     </div>
-                    <div style={{
-                      display: "flex", alignItems: "center", gap: 8,
-                      marginTop: 2,
-                    }}>
-                      {c.roaster && (
-                        <span style={{ fontFamily: sans, fontSize: 12, color: C.muted, lineHeight: 1.3 }}>
-                          {c.roaster}
-                        </span>
-                      )}
-                      {t.brew_method && (
-                        <span style={{
-                          fontFamily: sans, fontSize: 10, fontWeight: 600,
-                          color: C.faint, textTransform: "uppercase",
-                          letterSpacing: "0.06em",
-                          background: C.card,
-                          border: `1px solid ${C.borderSoft}`,
-                          borderRadius: 6, padding: "2px 7px",
-                          lineHeight: 1.4,
-                        }}>
-                          {t.brew_method}
-                        </span>
-                      )}
-                    </div>
+                    {c.roaster && (
+                      <div style={{
+                        fontFamily: sans, fontSize: 12, color: C.faint,
+                        lineHeight: 1.3, marginTop: 1,
+                      }}>
+                        {c.roaster}
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {/* Notes */}
-                {t.notes && (
-                  <div style={{
-                    fontSize: 13, color: "#5a4030", lineHeight: 1.55,
-                    marginTop: 12, paddingLeft: 2,
-                    fontFamily: sans, whiteSpace: "pre-wrap",
-                  }}>
-                    {t.notes}
-                  </div>
-                )}
               </div>
             );
           })}
