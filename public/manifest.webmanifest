@@ -1,8 +1,8 @@
 {
-  "name": "Koffeinkartellet",
+  "name": "Koffeinkollektivet",
   "short_name": "Koffein",
   "description": "Coffee tasting journal — shared with your household.",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

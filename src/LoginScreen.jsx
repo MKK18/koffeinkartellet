@@ -2,6 +2,7 @@ import { useState } from "react";
 import { login, signUpWithInvite } from "./pb.js";
 import { useAuth } from "./auth.jsx";
 import { C, serif, sans, inputStyle, labelStyle, primaryBtn, RATER_COLORS, FontLink } from "./ui.jsx";
+import { navigate } from "./router.js";
 
 export default function LoginScreen() {
   const { refresh } = useAuth();
@@ -37,10 +38,16 @@ export default function LoginScreen() {
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <FontLink />
       <div style={{ width: "100%", maxWidth: 400 }}>
+        <div style={{ marginBottom: 16 }}>
+          <a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }}
+            style={{ fontSize: 13, color: C.muted, fontFamily: sans, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>&larr;</span> Back to home
+          </a>
+        </div>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: C.faint, fontFamily: sans }}>☕ Koffeinkartellet</div>
+          <div style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: C.faint, fontFamily: sans }}>☕ Koffeinkollektivet</div>
           <h1 style={{ margin: "8px 0 0", fontFamily: serif, fontSize: 36, color: C.ink, fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.02em", lineHeight: 0.95 }}>
-            {mode === "signin" ? "Welcome back" : "Join the cartel"}
+            {mode === "signin" ? "Welcome back" : "Join the kollektiv"}
           </h1>
           <div style={{ fontSize: 13, color: C.muted, fontFamily: sans, marginTop: 6 }}>
             {mode === "signin" ? "Sign in to your tasting journal" : "You'll need an invite code to sign up"}

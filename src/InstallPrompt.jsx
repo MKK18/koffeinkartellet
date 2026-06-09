@@ -76,7 +76,7 @@ export default function InstallPrompt() {
         <span style={{ fontSize: 28, lineHeight: 1 }}>☕</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, color: C.ink, fontWeight: 600 }}>Add to home screen</div>
-          <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>Open Koffeinkartellet like an app — full-screen, one tap.</div>
+          <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>Open Koffeinkollektivet like an app — full-screen, one tap.</div>
         </div>
         <button onClick={later} style={{ ...ghostBtn, padding: "8px 12px", fontSize: 12 }}>Later</button>
         <button onClick={install} style={{ ...primaryBtn(true), padding: "8px 14px", fontSize: 13 }}>Install</button>
