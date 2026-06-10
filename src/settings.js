@@ -1,7 +1,6 @@
 // AI provider settings (for photo + URL scanning). Stored in this browser only.
 const KEY_STORAGE = "ai-api-key";
 const PROVIDER_STORAGE = "ai-provider"; // "anthropic" | "openai"
-const USE_GLOBAL_STORAGE = "ai-use-global";
 const LEGACY_ANTHROPIC = "anthropic-api-key"; // backward compat
 
 export const getApiKey = () => {
@@ -40,16 +39,6 @@ export const setProvider = (p) => {
   try { localStorage.setItem(PROVIDER_STORAGE, p === "openai" ? "openai" : "anthropic"); } catch { /* ignore */ }
 };
 
-// Independent "prefer the server's shared key when it's available" preference.
-// If the global call fails for any reason, the app falls back to the personal key.
-export const getUseGlobal = () => {
-  try { return localStorage.getItem(USE_GLOBAL_STORAGE) === "true"; } catch { return false; }
-};
-export const setUseGlobal = (b) => {
-  try { localStorage.setItem(USE_GLOBAL_STORAGE, b ? "true" : "false"); } catch { /* ignore */ }
-};
-
-// True if AI features will work — either a personal key, or "use global" enabled.
-// (We can't know from here whether the server actually has a global key, but the
-// scan path falls back to personal, so this is a best-effort check.)
-export const hasApiKey = () => getUseGlobal() || !!getApiKey();
+// True if the user has a personal key set. The server's global key is always
+// tried automatically as a fallback, so AI features may work even without one.
+export const hasApiKey = () => !!getApiKey();

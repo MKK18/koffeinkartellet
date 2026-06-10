@@ -1,4 +1,4 @@
-import { getApiKey, getProvider, getUseGlobal } from "./settings.js";
+import { getApiKey, getProvider } from "./settings.js";
 import { pb } from "./pb.js";
 
 // Ask the server which global providers are configured (env vars present).
@@ -212,14 +212,10 @@ async function globalScan(mode, payload) {
   return extractJson(res.text || "");
 }
 
-// Try the server's shared key first if the user opted in; on any failure fall
-// back to the personal provider+key so they're not stranded.
+// Use personal key if set; otherwise fall back to the server's shared key.
 async function withFallback(globalCall, personalCall) {
-  if (getUseGlobal()) {
-    try { return await globalCall(); }
-    catch (err) { console.warn("Global AI scan failed, falling back to personal:", err?.message); }
-  }
-  return personalCall();
+  if (getApiKey()) return personalCall();
+  return globalCall();
 }
 
 // ── Public extractors (provider-aware, global-first when opted in) ─────────

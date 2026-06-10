@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
-import { getApiKey, setApiKey, getProvider, setProvider as writeProvider, getUseGlobal, setUseGlobal as writeUseGlobal } from "./settings.js";
+import { useState, useRef } from "react";
+import { getApiKey, setApiKey, getProvider, setProvider as writeProvider } from "./settings.js";
 import { updateProfile, changePassword, requestEmailChange, currentUser } from "./pb.js";
 import { useAuth } from "./auth.jsx";
-import { compressImage, aiStatus } from "./lib.js";
+import { compressImage } from "./lib.js";
 import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn, RATER_COLORS } from "./ui.jsx";
 import { Sheet, SectionHead, Avatar } from "./components.jsx";
 
@@ -43,12 +43,8 @@ export default function SettingsModal({ onClose }) {
   // api key
   const [key, setKey] = useState(getApiKey());
   const [aiProvider, setAiProvider] = useState(getProvider());
-  const [useGlobal, setUseGlobalLocal] = useState(getUseGlobal());
   const [showKey, setShowKey] = useState(false);
   const [keyMsg, setKeyMsg] = useState(null);
-  const [globalAvail, setGlobalAvail] = useState({ anthropic: false, openai: false });
-  useEffect(() => { aiStatus().then(setGlobalAvail); }, []);
-  const globalReady = globalAvail.anthropic || globalAvail.openai;
   const providerInfo = {
     anthropic: { placeholder: "sk-ant-...", helper: "Get a key at console.anthropic.com → API Keys." },
     openai:    { placeholder: "sk-...",     helper: "Get a key at platform.openai.com → API Keys." },
@@ -98,7 +94,6 @@ export default function SettingsModal({ onClose }) {
   const saveKey = () => {
     setApiKey(key.trim());
     writeProvider(aiProvider);
-    writeUseGlobal(useGlobal && (globalAvail.anthropic || globalAvail.openai));
     setKeyMsg({ ok: true, t: "Saved." });
   };
 
@@ -165,24 +160,9 @@ export default function SettingsModal({ onClose }) {
 
       {/* AI provider key */}
       <SectionHead title="AI provider key" />
-      <div style={{ fontSize: 12, color: C.muted, fontFamily: sans, marginBottom: 10 }}>Enables photo &amp; link scanning. Stored in this browser only.</div>
+      <div style={{ fontSize: 12, color: C.muted, fontFamily: sans, marginBottom: 10 }}>Enables photo &amp; link scanning. If set, your key is used; otherwise the server's shared key is used automatically.</div>
 
-      {/* Use shared server key (with fallback to personal) */}
-      <label style={{ ...labelStyle, marginBottom: 8 }}>Shared (global) key</label>
-      <label style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, cursor: globalReady ? "pointer" : "not-allowed", marginBottom: 12, opacity: globalReady ? 1 : 0.6 }}>
-        <input type="checkbox" checked={useGlobal && globalReady} disabled={!globalReady} onChange={(e) => setUseGlobalLocal(e.target.checked)} style={{ marginTop: 2 }} />
-        <div style={{ flex: 1, fontFamily: sans, fontSize: 13, color: C.ink, lineHeight: 1.5 }}>
-          <strong>Use the shared key on the server when available</strong>
-          <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
-            {globalReady
-              ? <>Server has{globalAvail.anthropic && <strong> Anthropic</strong>}{globalAvail.anthropic && globalAvail.openai && " +"}{globalAvail.openai && <strong> OpenAI</strong>} configured. Your personal key below is used as a fallback if the shared one fails.</>
-              : <>No shared key configured on the server yet. Set <code>ANTHROPIC_API_KEY</code> or <code>OPENAI_API_KEY</code> on Railway to enable.</>}
-          </div>
-        </div>
-      </label>
-
-      {/* Personal provider + key (always present, used directly or as fallback) */}
-      <label style={labelStyle}>Personal provider</label>
+      <label style={labelStyle}>Provider</label>
       <div style={{ display: "flex", gap: 6, background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, padding: 4, marginBottom: 12 }}>
         {[["anthropic", "Anthropic"], ["openai", "OpenAI"]].map(([id, label]) => {
           const active = aiProvider === id;
@@ -197,7 +177,7 @@ export default function SettingsModal({ onClose }) {
         })}
       </div>
 
-      <label style={labelStyle}>Personal API key {useGlobal && globalReady && <span style={{ textTransform: "none", color: C.faint, letterSpacing: 0 }}>(fallback)</span>}</label>
+      <label style={labelStyle}>API key <span style={{ textTransform: "none", color: C.faint, letterSpacing: 0, fontWeight: 400 }}>(optional)</span></label>
       <div style={{ position: "relative" }}>
         <input type={showKey ? "text" : "password"} value={key} onChange={(e) => setKey(e.target.value)} placeholder={providerInfo[aiProvider].placeholder} style={{ ...inputStyle, paddingRight: 64 }} />
         <button onClick={() => setShowKey((s) => !s)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.muted, fontFamily: sans, fontSize: 12, cursor: "pointer", padding: "4px 8px" }}>{showKey ? "Hide" : "Show"}</button>
