@@ -56,6 +56,29 @@ routerAdd("POST", "/api/ai/fetch-image", (e) => {
   const body = e.requestInfo().body || {};
   const url = String(body.url || "");
   if (!/^https?:\/\//i.test(url)) throw new BadRequestError("Invalid URL");
+  // SSRF guard: block loopback/private/link-local/cloud-metadata hosts so an
+  // authed user can't turn this fetcher into an internal-network proxy.
+  // (Inlined — file-scope helpers aren't reliably visible in this VM, see below.
+  // Residual risk: a public hostname that DNS-resolves to a private IP, or a
+  // redirect into one, since $http.send follows redirects.)
+  {
+    const hm = url.match(/^https?:\/\/([^\/:?#]+)/i);
+    let host = (hm ? hm[1] : "").toLowerCase().replace(/^\[|\]$/g, "");
+    const isV6 = host.indexOf(":") !== -1;
+    let blocked = !host
+      || host === "localhost" || host.endsWith(".localhost")
+      || host.endsWith(".local") || host.endsWith(".internal") || host.endsWith(".lan")
+      || host === "metadata" || host === "metadata.google.internal"
+      || (isV6 && (host === "::1" || host === "::" || host.indexOf("fe80:") === 0 || host.indexOf("fc") === 0 || host.indexOf("fd") === 0));
+    const ip = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ip) {
+      const a = +ip[1], b = +ip[2];
+      if (a === 0 || a === 10 || a === 127 || (a === 169 && b === 254)
+        || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)
+        || (a === 100 && b >= 64 && b <= 127) || a >= 224) blocked = true;
+    }
+    if (blocked) throw new BadRequestError("That URL isn't allowed.");
+  }
   let res;
   try {
     res = $http.send({
@@ -109,8 +132,26 @@ routerAdd("POST", "/api/ai/page-meta", (e) => {
   const body = e.requestInfo().body || {};
   const pageUrl = String(body.url || "");
   if (!/^https?:\/\//i.test(pageUrl)) throw new BadRequestError("Invalid URL");
+  // SSRF guard (see /api/ai/fetch-image for rationale + residual risk).
+  {
+    const hm = pageUrl.match(/^https?:\/\/([^\/:?#]+)/i);
+    let host = (hm ? hm[1] : "").toLowerCase().replace(/^\[|\]$/g, "");
+    const isV6 = host.indexOf(":") !== -1;
+    let blocked = !host
+      || host === "localhost" || host.endsWith(".localhost")
+      || host.endsWith(".local") || host.endsWith(".internal") || host.endsWith(".lan")
+      || host === "metadata" || host === "metadata.google.internal"
+      || (isV6 && (host === "::1" || host === "::" || host.indexOf("fe80:") === 0 || host.indexOf("fc") === 0 || host.indexOf("fd") === 0));
+    const ip = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ip) {
+      const a = +ip[1], b = +ip[2];
+      if (a === 0 || a === 10 || a === 127 || (a === 169 && b === 254)
+        || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)
+        || (a === 100 && b >= 64 && b <= 127) || a >= 224) blocked = true;
+    }
+    if (blocked) throw new BadRequestError("That URL isn't allowed.");
+  }
   let html = "";
-  let debug = { url: pageUrl, status: 0, htmlLen: 0, codeVersion: "v3-inlined" };
   try {
     const res = $http.send({
       url: pageUrl,
@@ -122,8 +163,7 @@ routerAdd("POST", "/api/ai/page-meta", (e) => {
         "Accept-Language": "en-US,en;q=0.9",
       },
     });
-    debug.status = res.statusCode;
-    if (res.statusCode >= 400) return e.json(200, { image_url: "", debug: debug });
+    if (res.statusCode >= 400) return e.json(200, { image_url: "" });
     // Inline body→string decode (file-scope helpers don't appear to be visible
     // inside this route handler's goja VM — keep it self-contained).
     if (res && typeof res.raw === "string" && res.raw.length) {
@@ -138,13 +178,9 @@ routerAdd("POST", "/api/ai/page-meta", (e) => {
     } else {
       html = "";
     }
-    debug.bodyType = typeof res.body + (Array.isArray(res.body) ? "[]" : "");
-    debug.hasRaw = !!(res && typeof res.raw === "string" && res.raw.length);
-    debug.htmlLen = html.length;
-    debug.sample = html.substring(0, 400);
   } catch (err) {
-    debug.error = String(err);
-    return e.json(200, { image_url: "", debug: debug });
+    // Don't echo fetched content or internal error detail back to the client.
+    return e.json(200, { image_url: "" });
   }
   // Try og:image, twitter:image, and JSON-LD image fields in that order.
   // Tolerate either attribute order (content="…" property="…" or vice versa).
@@ -157,19 +193,16 @@ routerAdd("POST", "/api/ai/page-meta", (e) => {
     /"image"\s*:\s*\[\s*"([^"]+)"/i,
   ];
   let found = "";
-  let matchedPattern = -1;
   for (let i = 0; i < patterns.length; i++) {
     const m = html.match(patterns[i]);
-    if (m && m[1]) { found = m[1]; matchedPattern = i; break; }
+    if (m && m[1]) { found = m[1]; break; }
   }
-  debug.matchedPattern = matchedPattern;
-  debug.ogImageInHtml = html.indexOf("og:image");
   if (found) {
     // Resolve protocol-relative + http→https, leave absolute paths alone.
     if (found.indexOf("//") === 0) found = "https:" + found;
     else if (found.indexOf("http://") === 0) found = "https://" + found.slice(7);
   }
-  return e.json(200, { image_url: found, debug: debug });
+  return e.json(200, { image_url: found });
 });
 
 // Authed: scan an image or a URL using the configured global key.
@@ -231,7 +264,7 @@ matches: up to 4 attrs where their avg ≥ 7. mismatches: up to 3 attrs where av
       const base64 = String(body.base64 || "");
       if (!base64) throw new BadRequestError("Missing base64");
       payload = {
-        model: "claude-sonnet-4-5", max_tokens: 1200,
+        model: "claude-sonnet-4-5", max_tokens: mode === "verdict_image" ? 2000 : 1200,
         tools: [{ type: "web_search_20250305", name: "web_search" }],
         messages: [{
           role: "user",
@@ -262,15 +295,16 @@ matches: up to 4 attrs where their avg ≥ 7. mismatches: up to 3 attrs where av
     // OpenAI
     if (!openaiKey) throw new BadRequestError("OpenAI key not configured");
     headers = { "Content-Type": "application/json", "Authorization": "Bearer " + openaiKey };
-    if (mode === "image" || mode === "verdict_image") {
+    if (mode === "image") {
+      // Basic catalog scan: vision only, no web search needed.
       const base64 = String(body.base64 || "");
       if (!base64) throw new BadRequestError("Missing base64");
       url = "https://api.openai.com/v1/chat/completions";
       payload = {
         model: "gpt-4o",
         max_tokens: 1200,
-        // Do NOT use response_format: json_object — it causes content: null on
-        // any refusal instead of a real error. The prompt already demands JSON.
+        // Do NOT use response_format: json_object — causes content:null on
+        // any refusal instead of a real error. Prompt already demands JSON.
         messages: [{
           role: "user",
           content: [
@@ -282,14 +316,37 @@ matches: up to 4 attrs where their avg ≥ 7. mismatches: up to 3 attrs where av
       parseText = (data) => {
         const choice = data && data.choices && data.choices[0];
         if (!choice) return "";
-        // If the model refused, surface the refusal as an error rather than
-        // silently returning "" (which produces "No JSON in response" on client).
-        if (choice.finish_reason === "content_filter" || choice.message && choice.message.refusal) {
+        if (choice.finish_reason === "content_filter" || (choice.message && choice.message.refusal)) {
           throw new BadRequestError("OpenAI content filter — try a clearer photo");
         }
         return (choice.message && choice.message.content) || "";
       };
+    } else if (mode === "verdict_image") {
+      // Buy-verdict scan: vision + web search to look up the coffee online.
+      const base64 = String(body.base64 || "");
+      if (!base64) throw new BadRequestError("Missing base64");
+      url = "https://api.openai.com/v1/responses";
+      payload = {
+        model: "gpt-4o",
+        tools: [{ type: "web_search_preview" }],
+        input: [{
+          role: "user",
+          content: [
+            { type: "input_image", image_url: "data:image/jpeg;base64," + base64 },
+            { type: "input_text", text: prompt },
+          ],
+        }],
+      };
+      parseText = (data) => {
+        if (data && data.output_text) return data.output_text;
+        const parts = [];
+        ((data && data.output) || []).forEach((o) => {
+          ((o && o.content) || []).forEach((c) => { if (c.type === "output_text" && c.text) parts.push(c.text); });
+        });
+        return parts.join("\n");
+      };
     } else {
+      // verdict_url and plain url: text prompt + web search.
       url = "https://api.openai.com/v1/responses";
       payload = { model: "gpt-4o", tools: [{ type: "web_search_preview" }], input: prompt };
       parseText = (data) => {
