@@ -94,12 +94,18 @@ for f in [txt("color", maxlen=20), boolean("is_admin"), txt("bio", maxlen=500)]:
         users["fields"].append(f)
 # logged-in users can view each other's public profile (email stays hidden
 # unless emailVisibility); needed for tasting attribution + profiles.
+# createRule locked to admins: public self-registration via the records API
+# would bypass the invite gate. Real signups go through the /api/signup hook
+# (runs with $app privileges, requires a valid invite). updateRule stays at the
+# PocketBase default (id = self) for profile edits; the users.pb.js hook stops
+# non-admins from setting is_admin on themselves (see pb_hooks/auth.pb.js).
 req("PATCH", f"/api/collections/{users['id']}", TOKEN, {
     "fields": users["fields"],
     "listRule": AUTH_OK,
     "viewRule": AUTH_OK,
+    "createRule": "@request.auth.is_admin = true",
 })
-print("extended 'users' with color, is_admin, bio + opened list/view to authed users")
+print("extended 'users' with color, is_admin, bio + opened list/view to authed users + locked createRule")
 
 # --- order matters for relations: delete dependents first ---
 for name in ["follows", "group_members", "invites", "tastings", "groups", "coffees"]:
@@ -159,7 +165,9 @@ group_members = create({
         sel("role", ["owner", "member"]), autocreated(),
     ],
     "listRule": AUTH_OK, "viewRule": AUTH_OK,
-    "createRule": AUTH_OK,
+    # You may only create a membership row for yourself. Invite-based joins go
+    # through the /api/signup hook (runs with $app privileges, bypasses rules).
+    "createRule": "@request.auth.id != '' && user = @request.auth.id",
     "updateRule": "@request.auth.is_admin = true",
     "deleteRule": "@request.auth.is_admin = true || user = @request.auth.id",
 })
@@ -176,9 +184,12 @@ invites = create({
         rel("used_by", users_id),
         datef("expires"), autocreated(),
     ],
-    # code must be checkable before login (signup), so view/list are public;
-    # only admins can create. Tighten later with a hook.
-    "listRule": "", "viewRule": "",
+    # Admins-only at the API level. Invite codes must NOT be world-readable
+    # (that leaks them and defeats the gated signup). Signup validates and
+    # consumes the code server-side via the /api/signup hook, which runs with
+    # $app privileges and bypasses these rules.
+    "listRule": "@request.auth.is_admin = true",
+    "viewRule": "@request.auth.is_admin = true",
     "createRule": "@request.auth.is_admin = true",
     "updateRule": "@request.auth.is_admin = true",
     "deleteRule": "@request.auth.is_admin = true",

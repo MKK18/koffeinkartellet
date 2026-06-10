@@ -35,70 +35,25 @@ export function logout() {
   pb.authStore.clear();
 }
 
-// Look up an invite by code (public read). Returns the invite record or throws.
-export async function findInvite(code) {
-  const clean = (code || "").trim();
-  if (!clean) throw new Error("Please enter your invite code.");
-  let invite;
-  try {
-    invite = await pb.collection("invites").getFirstListItem(`code = "${clean}"`);
-  } catch {
-    throw new Error("That invite code wasn't found.");
-  }
-  if (invite.used_by) throw new Error("That invite has already been used.");
-  if (invite.expires && new Date(invite.expires) < new Date())
-    throw new Error("That invite has expired.");
-  return invite;
-}
-
-// Sign up gated by an invite code, then log in, then consume the invite.
+// Sign up gated by an invite code, then log in.
+//
+// Everything security-sensitive happens server-side in the /api/signup hook:
+// the invite is validated + consumed, the user is created (is_admin is decided
+// by the server — first account becomes admin), and the household/group is set
+// up. Invites are admin-only at the API level, so the client never reads codes
+// or sets is_admin itself. We only collect the form data and log in afterwards.
 export async function signUpWithInvite({ email, password, name, color, code }) {
-  const invite = await findInvite(code);
-
-  await pb.collection("users").create({
-    email,
-    password,
-    passwordConfirm: password,
-    name,
-    color: color || "#8B5E3C",
-    is_admin: false,
-  });
-  await login(email, password);
-
-  // The first-ever account becomes the admin (the person who set up the platform).
-  // NOTE: Phase 2 hardens this with a server-side hook so is_admin can't be self-set.
   try {
-    const all = await pb.collection("users").getList(1, 1);
-    if (all.totalItems === 1) {
-      await pb.collection("users").update(currentUser().id, { is_admin: true });
-      await pb.collection("users").authRefresh();
-    }
-  } catch { /* non-fatal */ }
-
-  // Mark invite used (best-effort).
-  try {
-    await pb.collection("invites").update(invite.id, { used_by: currentUser().id });
-  } catch { /* non-fatal */ }
-
-  // If this invite created a new household, make the group and add the user as owner.
-  if (invite.kind === "new_household") {
-    try {
-      const group = await pb.collection("groups").create({
-        name: `${name}'s household`,
-        created_by: currentUser().id,
-      });
-      await pb.collection("group_members").create({
-        group: group.id, user: currentUser().id, role: "owner",
-      });
-    } catch { /* non-fatal for now */ }
-  } else if (invite.kind === "join_group" && invite.group) {
-    try {
-      await pb.collection("group_members").create({
-        group: invite.group, user: currentUser().id, role: "member",
-      });
-    } catch { /* non-fatal */ }
+    await pb.send("/api/signup", {
+      method: "POST",
+      body: { email, password, name, color: color || "#8B5E3C", code },
+    });
+  } catch (err) {
+    // Surface the server's friendly message (bad/used/expired code, etc.).
+    const msg = err?.response?.message || err?.message || "Couldn't create your account.";
+    throw new Error(msg);
   }
-
+  await login(email, password);
   return currentUser();
 }
 
