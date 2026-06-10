@@ -262,13 +262,15 @@ matches: up to 4 attrs where their avg ≥ 7. mismatches: up to 3 attrs where av
     // OpenAI
     if (!openaiKey) throw new BadRequestError("OpenAI key not configured");
     headers = { "Content-Type": "application/json", "Authorization": "Bearer " + openaiKey };
-    if (mode === "image") {
+    if (mode === "image" || mode === "verdict_image") {
       const base64 = String(body.base64 || "");
       if (!base64) throw new BadRequestError("Missing base64");
       url = "https://api.openai.com/v1/chat/completions";
       payload = {
         model: "gpt-4o",
-        response_format: { type: "json_object" },
+        max_tokens: 1200,
+        // Do NOT use response_format: json_object — it causes content: null on
+        // any refusal instead of a real error. The prompt already demands JSON.
         messages: [{
           role: "user",
           content: [
@@ -277,7 +279,16 @@ matches: up to 4 attrs where their avg ≥ 7. mismatches: up to 3 attrs where av
           ],
         }],
       };
-      parseText = (data) => (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+      parseText = (data) => {
+        const choice = data && data.choices && data.choices[0];
+        if (!choice) return "";
+        // If the model refused, surface the refusal as an error rather than
+        // silently returning "" (which produces "No JSON in response" on client).
+        if (choice.finish_reason === "content_filter" || choice.message && choice.message.refusal) {
+          throw new BadRequestError("OpenAI content filter — try a clearer photo");
+        }
+        return (choice.message && choice.message.content) || "";
+      };
     } else {
       url = "https://api.openai.com/v1/responses";
       payload = { model: "gpt-4o", tools: [{ type: "web_search_preview" }], input: prompt };
@@ -303,5 +314,9 @@ matches: up to 4 attrs where their avg ≥ 7. mismatches: up to 3 attrs where av
     throw new BadRequestError("Provider error " + res.statusCode);
   }
   const text = parseText(res.json);
+  if (!text) {
+    const finishReason = (res.json && res.json.choices && res.json.choices[0] && res.json.choices[0].finish_reason) || "unknown";
+    throw new BadRequestError("AI returned empty response (finish_reason=" + finishReason + ") — try again or use a clearer photo");
+  }
   return e.json(200, { text: text, provider: provider });
 });

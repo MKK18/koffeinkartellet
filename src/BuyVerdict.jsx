@@ -48,8 +48,10 @@ export default function BuyVerdict({ onClose }) {
       setResult(r);
     } catch (err) {
       setErrMsg(err?.message === "NO_API_KEY"
-        ? "Add an API key in Settings (or enable the shared one) to use this."
-        : `Couldn't read that photo — ${err?.message || "try another."}`);
+        ? "Add an API key in Settings to use this."
+        : err?.message?.includes("content filter")
+          ? "The AI couldn't read that photo — try a clearer, well-lit shot of the bag."
+          : "Couldn't read that photo — try again or use a different image.");
     } finally { setBusy(false); }
   };
 

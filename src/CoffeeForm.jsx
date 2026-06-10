@@ -132,8 +132,10 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
         setTab("manual");
       } catch (err) {
         setScanMsg(err?.message === "NO_API_KEY"
-          ? "Add an API key in Settings (or enable the shared one) to enable photo scanning."
-          : "Couldn't read the photo — switch to Manual and fill it in.");
+          ? "Add an API key in Settings to enable photo scanning."
+          : err?.message?.includes("content filter")
+            ? "The AI couldn't read that photo — try a clearer, well-lit shot of the bag."
+            : "Couldn't read the photo — try again or switch to Manual.");
       } finally {
         setScanning(false);
       }
