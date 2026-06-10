@@ -29,11 +29,11 @@ function Gate() {
   }
 
   if (path === "/" || path === "") {
-    // Installed (home-screen) apps should never land on the marketing page —
-    // PWAs installed before the app moved to /app still open with the old
-    // cached start_url of "/". Send them straight into the journal; the /app
-    // route handles auth from there.
-    if (isStandalone()) { navigate("/app", { replace: true }); return null; }
+    // The marketing page is for logged-out visitors in a browser tab.
+    // Signed-in users go straight to their journal, and installed
+    // (home-screen) apps always do — PWAs installed before the app moved to
+    // /app still open with the old cached start_url of "/".
+    if (user || isStandalone()) { navigate("/app", { replace: true }); return null; }
     return <LandingPage user={user} />;
   }
 

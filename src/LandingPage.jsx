@@ -121,7 +121,7 @@ function PhoneMockup() {
         <div style={{ background: C.ink, padding: "0 18px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 8, letterSpacing: "0.16em", textTransform: "uppercase", color: "#7a6050", fontFamily: sans }}>
-              Koffeinkollektivet
+              Koffeinkartellet
             </div>
             <div style={{ fontFamily: serif, fontSize: 14, fontWeight: 800, color: "#fff8f0", textTransform: "uppercase" }}>
               The catalog
@@ -254,7 +254,7 @@ export default function LandingPage({ user }) {
       }}>
         <div style={{ maxWidth: 1240, margin: "0 auto", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontFamily: serif, fontWeight: 900, fontSize: 16, letterSpacing: "-0.01em", textTransform: "uppercase" }}>
-            Koffeinkollektivet
+            Koffeinkartellet
           </div>
           <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
             {user ? (
@@ -352,7 +352,7 @@ export default function LandingPage({ user }) {
                 margin: 0, maxWidth: 380, fontFamily: sans, fontSize: 16,
                 lineHeight: 1.65, color: C.muted,
               }}>
-                Snap the bag, brew, and rate together. Koffeinkollektivet is the tasting
+                Snap the bag, brew, and rate together. Koffeinkartellet is the tasting
                 journal your household keeps coming back to — one cup at a time.
               </p>
               <div style={{
@@ -583,7 +583,7 @@ export default function LandingPage({ user }) {
       }}>
         <div style={{ maxWidth: 1240, margin: "0 auto", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
           <span style={{ fontFamily: serif, fontWeight: 800, textTransform: "uppercase", color: "#b89870" }}>
-            Koffeinkollektivet
+            Koffeinkartellet
           </span>
           <span style={{ fontFamily: fraunces, fontStyle: "italic" }}>every cup, remembered.</span>
         </div>

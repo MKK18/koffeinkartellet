@@ -45,9 +45,9 @@ export default function LoginScreen() {
           </a>
         </div>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: C.faint, fontFamily: sans }}>☕ Koffeinkollektivet</div>
+          <div style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: C.faint, fontFamily: sans }}>☕ Koffeinkartellet</div>
           <h1 style={{ margin: "8px 0 0", fontFamily: serif, fontSize: 36, color: C.ink, fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.02em", lineHeight: 0.95 }}>
-            {mode === "signin" ? "Welcome back" : "Join the kollektiv"}
+            {mode === "signin" ? "Welcome back" : "Join the cartel"}
           </h1>
           <div style={{ fontSize: 13, color: C.muted, fontFamily: sans, marginTop: 6 }}>
             {mode === "signin" ? "Sign in to your tasting journal" : "You'll need an invite code to sign up"}

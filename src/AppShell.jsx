@@ -55,7 +55,7 @@ export default function AppShell() {
         <div style={{ background: C.bg, padding: "18px 18px 14px", position: "sticky", top: 0, zIndex: 10, borderBottom: `1px solid ${C.ink}` }}>
           <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: C.muted, fontFamily: sans }}>Koffeinkollektivet</div>
+              <div style={{ fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: C.muted, fontFamily: sans }}>Koffeinkartellet</div>
               <h1 style={{ margin: "2px 0 0", fontFamily: serif, fontSize: 24, color: C.ink, fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.01em" }}>{title}</h1>
             </div>
             <Avatar user={user} size={36} onClick={() => setAccountOpen(true)} />
