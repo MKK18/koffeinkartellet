@@ -322,20 +322,39 @@ matches: up to 4 attrs where their avg ≥ 7. mismatches: up to 3 attrs where av
         return (choice.message && choice.message.content) || "";
       };
     } else if (mode === "verdict_image") {
-      // Buy-verdict scan: vision + web search to look up the coffee online.
+      // Buy-verdict scan: two-step approach.
+      // Step 1 — extract coffee details from the image (chat completions, vision).
+      // Step 2 — web-search verdict using those details (Responses API + web_search_preview).
+      // This avoids relying on an uncertain combined vision+web_search API format.
       const base64 = String(body.base64 || "");
       if (!base64) throw new BadRequestError("Missing base64");
+
+      const step1 = $http.send({
+        url: "https://api.openai.com/v1/chat/completions",
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({
+          model: "gpt-4o",
+          max_tokens: 300,
+          messages: [{
+            role: "user",
+            content: [
+              { type: "text", text: "Read this coffee bag carefully. Reply with ONLY a JSON object (no markdown): {\"name\": \"...\", \"roaster\": \"...\", \"origin\": \"...\", \"process\": \"...\", \"varietal\": \"...\", \"notes\": \"...\"}" },
+              { type: "image_url", image_url: { url: "data:image/jpeg;base64," + base64 } },
+            ],
+          }],
+        }),
+        timeout: 30,
+      });
+      if (step1.statusCode >= 400) throw new BadRequestError("Image read failed: " + step1.statusCode);
+      const imageDetails = (step1.json && step1.json.choices && step1.json.choices[0] && step1.json.choices[0].message && step1.json.choices[0].message.content) || "{}";
+
+      // Step 2: build verdict prompt with extracted details, then web-search.
       url = "https://api.openai.com/v1/responses";
       payload = {
         model: "gpt-4o",
         tools: [{ type: "web_search_preview" }],
-        input: [{
-          role: "user",
-          content: [
-            { type: "input_image", image_url: "data:image/jpeg;base64," + base64 },
-            { type: "input_text", text: prompt },
-          ],
-        }],
+        input: prompt + "\n\nDetails extracted from the bag photo:\n" + imageDetails,
       };
       parseText = (data) => {
         if (data && data.output_text) return data.output_text;
