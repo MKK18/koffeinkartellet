@@ -21,6 +21,9 @@ export const C = {
 // display sans (Coffelo-style chunky headings).
 export const serif = "'Archivo', system-ui, sans-serif";
 export const sans = "'DM Sans', sans-serif";
+// Editorial accent serif — scores, pull quotes, numerals. Pairs with Archivo
+// caps the same way it does on the landing page.
+export const fraunces = "'Fraunces', Georgia, serif";
 
 // Per-person identity colors (kept distinct from the brand orange).
 export const RATER_COLORS = ["#C0704A", "#4A7A90", "#5E8C61", "#9A6FB0", "#C99846", "#6B4226"];
@@ -59,7 +62,7 @@ export const darkPillBtn = {
 export function FontLink() {
   return (
     <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&display=swap"
       rel="stylesheet"
     />
   );

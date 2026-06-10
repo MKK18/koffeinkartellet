@@ -1,195 +1,74 @@
 import { useState, useEffect, useCallback } from "react";
-import { C, sans, serif, inputStyle } from "./ui.jsx";
-import { useIsWide } from "./useMediaQuery.js";
+import { C, sans, serif, fraunces } from "./ui.jsx";
 import { useNav } from "./nav.jsx";
-import { Pill } from "./components.jsx";
-import { TAG_EMOJI } from "./lib.js";
+import { CoffeeRing } from "./components.jsx";
 import { listCoffees, listAllTastings, coffeeImageUrl } from "./data.js";
 
-function CoffeeCard({ coffee, avg, count, onClick }) {
-  const img = coffeeImageUrl(coffee, "300x300");
-  const [hover, setHover] = useState(false);
+function CoffeeRow({ coffee, avg, count, onClick }) {
+  const img = coffeeImageUrl(coffee, "120x120");
   const origin = [coffee.origin, coffee.region].filter(Boolean).join(", ");
+  const meta = [origin, coffee.process].filter(Boolean).join("  ✱  ");
 
   return (
     <div
       onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
       style={{
-        background: C.card,
-        borderRadius: 16,
-        overflow: "hidden",
-        cursor: "pointer",
-        display: "flex",
-        flexDirection: "column",
-        boxShadow: hover
-          ? "0 2px 6px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.05)"
-          : "0 1px 3px rgba(0,0,0,0.04), 0 6px 16px rgba(0,0,0,0.03)",
-        transition: "box-shadow 0.25s ease",
+        display: "flex", alignItems: "center", gap: 16,
+        padding: "16px 0", cursor: "pointer",
+        borderTop: `1px solid ${C.ink}`,
       }}
     >
-      {/* Image area */}
-      <div style={{ position: "relative", width: "100%", aspectRatio: "3 / 2" }}>
-        {img ? (
-          <img
-            src={img}
-            alt=""
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              background: "#ece3d5",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <span style={{ fontSize: 40, color: C.faint, opacity: 0.45 }}>☕</span>
-          </div>
-        )}
+      {/* Thumbnail */}
+      <div style={{
+        width: 56, height: 56, borderRadius: 4, flexShrink: 0, overflow: "hidden",
+        background: "#ece3d5", display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {img
+          ? <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          : <span style={{ fontSize: 22, opacity: 0.35 }}>☕</span>}
       </div>
 
-      {/* Info area */}
-      <div style={{ padding: "18px 18px 16px" }}>
-        {/* Top row: name + score */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 12,
-            marginBottom: 6,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 17,
-              fontFamily: serif,
-              fontWeight: 700,
-              color: C.ink,
-              lineHeight: 1.25,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              flex: 1,
-              minWidth: 0,
-            }}
-          >
-            {coffee.name}
-          </div>
-          {avg && (
-            <div style={{ flexShrink: 0, textAlign: "right" }}>
-              <span
-                style={{
-                  fontFamily: serif,
-                  fontSize: 22,
-                  fontWeight: 700,
-                  color: C.accent,
-                  lineHeight: 1,
-                }}
-              >
-                {avg}
-              </span>
-              <span
-                style={{
-                  fontFamily: sans,
-                  fontSize: 11,
-                  color: C.faint,
-                  marginLeft: 1,
-                }}
-              >
-                / 10
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Roaster */}
+      {/* Name / roaster / meta */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontFamily: serif, fontWeight: 700, fontSize: 16.5, color: C.ink,
+          lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        }}>{coffee.name}</div>
         {coffee.roaster && (
-          <div
-            style={{
-              fontSize: 13,
-              color: C.muted,
-              fontFamily: sans,
-              lineHeight: 1.3,
-              marginBottom: 3,
-            }}
-          >
+          <div style={{ fontFamily: sans, fontSize: 12.5, color: C.muted, marginTop: 3, lineHeight: 1.3 }}>
             {coffee.roaster}
           </div>
         )}
-
-        {/* Origin */}
-        {origin && (
-          <div
-            style={{
-              fontSize: 12,
-              color: C.faint,
-              fontFamily: sans,
-              lineHeight: 1.3,
-              marginBottom: 12,
-            }}
-          >
-            {origin}
-          </div>
+        {meta && (
+          <div style={{
+            fontFamily: sans, fontSize: 10, color: C.faint, marginTop: 4,
+            letterSpacing: "0.1em", textTransform: "uppercase", lineHeight: 1.4,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>{meta}</div>
         )}
+      </div>
 
-        {/* Bottom row: process pill + tasting count */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            minHeight: 22,
-          }}
-        >
-          <div>
-            {coffee.process && (
-              <span
-                style={{
-                  fontSize: 11,
-                  padding: "3px 10px",
-                  borderRadius: 12,
-                  fontFamily: sans,
-                  background: "transparent",
-                  color: C.muted,
-                  border: `1px solid ${C.border}`,
-                  letterSpacing: "0.01em",
-                }}
-              >
-                {coffee.process}
-              </span>
-            )}
-          </div>
-          {count > 0 && (
-            <span
-              style={{
-                fontSize: 10,
-                color: C.faint,
-                fontFamily: sans,
-                letterSpacing: "0.02em",
-              }}
-            >
+      {/* Score */}
+      <div style={{ textAlign: "right", flexShrink: 0 }}>
+        {avg ? (
+          <>
+            <div style={{
+              fontFamily: fraunces, fontStyle: "italic", fontWeight: 600,
+              fontSize: 27, color: C.accent, lineHeight: 1, letterSpacing: "-0.02em",
+            }}>{avg}</div>
+            <div style={{ fontFamily: sans, fontSize: 9.5, color: C.faint, marginTop: 4, letterSpacing: "0.06em" }}>
               {count} {count === 1 ? "tasting" : "tastings"}
-            </span>
-          )}
-        </div>
+            </div>
+          </>
+        ) : (
+          <div style={{ fontFamily: fraunces, fontStyle: "italic", fontSize: 22, color: C.border, lineHeight: 1 }}>—</div>
+        )}
       </div>
     </div>
   );
 }
 
 export default function Catalog() {
-  const wide = useIsWide();
   const { openCoffee, addCoffee, openBuyVerdict, dataVersion } = useNav();
   const [coffees, setCoffees] = useState(null);
   const [aggregates, setAggregates] = useState({});
@@ -215,36 +94,20 @@ export default function Catalog() {
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search coffees, roasters, origins…"
         style={{
-          width: "100%",
-          padding: "12px 18px",
-          borderRadius: 14,
-          border: "none",
-          background: "#ece3d5",
-          fontSize: 15,
-          fontFamily: sans,
-          color: C.ink,
-          outline: "none",
-          boxSizing: "border-box",
-          marginBottom: 14,
+          width: "100%", padding: "12px 18px", borderRadius: 14, border: "none",
+          background: "#ece3d5", fontSize: 15, fontFamily: sans, color: C.ink,
+          outline: "none", boxSizing: "border-box", marginBottom: 12,
         }}
       />
 
       {/* Buy verdict link */}
-      <div style={{ textAlign: "center", marginBottom: 22 }}>
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
         <button
           onClick={openBuyVerdict}
           style={{
-            background: "none",
-            border: "none",
-            color: C.accent,
-            fontFamily: sans,
-            fontSize: 13,
-            fontWeight: 500,
-            cursor: "pointer",
-            padding: "2px 0",
-            textDecoration: "underline",
-            textUnderlineOffset: 3,
-            textDecorationColor: C.border,
+            background: "none", border: "none", cursor: "pointer", padding: "2px 0",
+            fontFamily: fraunces, fontStyle: "italic", fontSize: 15, color: C.accent,
+            textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: C.border,
           }}
           onMouseEnter={(e) => (e.currentTarget.style.textDecorationColor = C.accent)}
           onMouseLeave={(e) => (e.currentTarget.style.textDecorationColor = C.border)}
@@ -259,49 +122,46 @@ export default function Catalog() {
           Loading…
         </div>
       ) : coffees.length === 0 ? (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "64px 24px",
-            color: C.muted,
-            fontFamily: sans,
-          }}
-        >
-          <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.35 }}>☕</div>
-          <div
-            style={{
-              fontFamily: serif,
-              fontSize: 20,
-              color: C.ink,
-              marginBottom: 8,
-            }}
-          >
-            {search ? "No matches" : "No coffees yet"}
-          </div>
-          <div style={{ fontSize: 14, lineHeight: 1.5, maxWidth: 280, margin: "0 auto" }}>
-            {search
-              ? `Nothing matches "${search}"`
-              : "Tap + to add the first one — scan a bag or paste a link."}
-          </div>
+        <div style={{ padding: "40px 0 56px" }}>
+          <CoffeeRing size={250}>
+            <div style={{ fontFamily: fraunces, fontStyle: "italic", fontSize: 19, color: C.ink, lineHeight: 1.4, marginBottom: 6 }}>
+              {search ? "No matches." : "Nothing in the catalog yet."}
+            </div>
+            <div style={{ fontFamily: sans, fontSize: 13, color: C.muted, lineHeight: 1.5 }}>
+              {search ? `Nothing matches "${search}"` : "Tap + to scan your first bag."}
+            </div>
+          </CoffeeRing>
         </div>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: wide ? "1fr 1fr" : "1fr",
-            gap: 20,
-          }}
-        >
-          {coffees.map((c) => (
-            <CoffeeCard
-              key={c.id}
-              coffee={c}
-              avg={aggregates[c.id]?.avg}
-              count={aggregates[c.id]?.count || 0}
-              onClick={() => openCoffee(c)}
-            />
-          ))}
-        </div>
+        <>
+          {/* Index header */}
+          <div style={{
+            display: "flex", justifyContent: "space-between", alignItems: "baseline",
+            marginBottom: 10,
+          }}>
+            <span style={{
+              fontFamily: sans, fontSize: 10, letterSpacing: "0.18em",
+              textTransform: "uppercase", color: C.muted,
+            }}>The index</span>
+            <span style={{
+              fontFamily: sans, fontSize: 10, letterSpacing: "0.12em",
+              textTransform: "uppercase", color: C.faint,
+            }}>{coffees.length} {coffees.length === 1 ? "coffee" : "coffees"}</span>
+          </div>
+
+          {/* Rows */}
+          <div style={{ borderBottom: `1px solid ${C.ink}` }}>
+            {coffees.map((c) => (
+              <CoffeeRow
+                key={c.id}
+                coffee={c}
+                avg={aggregates[c.id]?.avg}
+                count={aggregates[c.id]?.count || 0}
+                onClick={() => openCoffee(c)}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

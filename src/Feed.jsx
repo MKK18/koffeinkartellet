@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { C, sans, serif } from "./ui.jsx";
+import { C, sans, fraunces } from "./ui.jsx";
 import { useNav } from "./nav.jsx";
+import { CoffeeRing } from "./components.jsx";
 import { listRecentTastings, coffeeImageUrl } from "./data.js";
 
 function timeAgo(iso) {
@@ -32,22 +33,18 @@ export default function Feed() {
           Loading...
         </div>
       ) : items.length === 0 ? (
-        <div style={{
-          textAlign: "center", padding: "80px 24px", color: C.muted, fontFamily: sans,
-        }}>
-          <div style={{ fontSize: 48, marginBottom: 20, lineHeight: 1 }}>☕</div>
-          <div style={{
-            fontFamily: serif, fontSize: 22, fontWeight: 700, color: C.ink,
-            marginBottom: 8, lineHeight: 1.3,
-          }}>
-            Nothing brewing yet
-          </div>
-          <div style={{ fontSize: 14, color: C.faint, lineHeight: 1.5 }}>
-            Tastings from everyone will show up here.
-          </div>
+        <div style={{ padding: "48px 0 56px" }}>
+          <CoffeeRing size={250}>
+            <div style={{ fontFamily: fraunces, fontStyle: "italic", fontSize: 19, color: C.ink, lineHeight: 1.4, marginBottom: 6 }}>
+              Nothing brewing yet.
+            </div>
+            <div style={{ fontFamily: sans, fontSize: 13, color: C.muted, lineHeight: 1.5 }}>
+              Tastings from everyone show up here.
+            </div>
+          </CoffeeRing>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ borderBottom: `1px solid ${C.ink}` }}>
           {items.map((t) => {
             const u = t.expand?.user || {};
             const c = t.expand?.coffee || {};
@@ -55,111 +52,67 @@ export default function Feed() {
             const userColor = u.color || C.brown;
 
             return (
-              <div key={t.id} style={{
-                background: C.card,
-                borderRadius: 16,
-                padding: 20,
-                boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 6px 16px rgba(0,0,0,0.03)",
-              }}>
-                {/* Score row */}
+              <div key={t.id} style={{ padding: "24px 0", borderTop: `1px solid ${C.ink}` }}>
+                {/* Score */}
                 <div style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  marginBottom: 14,
+                  fontFamily: fraunces, fontStyle: "italic", fontWeight: 600,
+                  fontSize: 30, color: C.accent, lineHeight: 1, letterSpacing: "-0.02em",
+                  marginBottom: 12,
                 }}>
-                  <span style={{ color: "#D4A574", fontSize: 16, lineHeight: 1 }}>★</span>
-                  <span style={{
-                    fontFamily: serif, fontWeight: 700, fontSize: 18,
-                    color: C.ink, lineHeight: 1,
-                  }}>
-                    {Number(t.score).toFixed(1)}
-                  </span>
+                  {Number(t.score).toFixed(1)}
                 </div>
 
-                {/* Tasting notes — the hero */}
+                {/* Tasting notes — the pull quote */}
                 {t.notes ? (
                   <div style={{
-                    fontFamily: sans, fontSize: 15, color: C.ink,
-                    lineHeight: 1.6, whiteSpace: "pre-wrap",
+                    fontFamily: fraunces, fontStyle: "italic", fontWeight: 400,
+                    fontSize: 19, color: C.ink, lineHeight: 1.45, whiteSpace: "pre-wrap",
+                    letterSpacing: "-0.005em",
                   }}>
-                    {t.notes}
+                    “{t.notes}”
                   </div>
                 ) : (
                   <div style={{
-                    fontFamily: sans, fontSize: 14, color: C.faint,
+                    fontFamily: sans, fontSize: 13, color: C.faint,
                     fontStyle: "italic", lineHeight: 1.5,
                   }}>
                     Rated without notes
                   </div>
                 )}
 
-                {/* User row */}
-                <div
-                  onClick={() => u.id && openProfile(u.id)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 8,
-                    marginTop: 16,
-                    cursor: u.id ? "pointer" : "default",
-                  }}
-                >
-                  <div style={{
-                    width: 24, height: 24, borderRadius: "50%",
-                    background: userColor,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "#fff", fontSize: 11, fontWeight: 600, fontFamily: sans,
-                    flexShrink: 0,
-                  }}>
-                    {(u.name || "?")[0].toUpperCase()}
-                  </div>
-                  <span style={{
-                    fontFamily: sans, fontSize: 12, color: C.muted,
-                  }}>
-                    {u.name || "Someone"}
-                  </span>
-                  <span style={{ fontFamily: sans, fontSize: 12, color: C.faint }}>·</span>
-                  <span style={{
-                    fontFamily: sans, fontSize: 12, color: C.faint,
-                  }}>
-                    {timeAgo(t.created)}
-                  </span>
-                </div>
-
-                {/* Coffee row */}
-                <div
-                  onClick={() => c.id && openCoffee(c)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 12,
-                    marginTop: 14, paddingTop: 14,
-                    borderTop: "1px solid #ece3d5",
-                    cursor: c.id ? "pointer" : "default",
-                  }}
-                >
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-                    background: img ? "transparent" : "#f0e6da",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    overflow: "hidden",
-                  }}>
-                    {img
-                      ? <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ fontSize: 18 }}>☕</span>}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{
-                      fontFamily: sans, fontWeight: 500, fontSize: 13, color: C.ink,
-                      lineHeight: 1.3,
-                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>
-                      {c.name || "a coffee"}
+                {/* Attribution */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16 }}>
+                  {img && (
+                    <div
+                      onClick={() => c.id && openCoffee(c)}
+                      style={{
+                        width: 32, height: 32, borderRadius: 4, flexShrink: 0,
+                        overflow: "hidden", cursor: c.id ? "pointer" : "default",
+                      }}
+                    >
+                      <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                     </div>
-                    {c.roaster && (
-                      <div style={{
-                        fontFamily: sans, fontSize: 12, color: C.faint,
-                        lineHeight: 1.3, marginTop: 1,
-                      }}>
-                        {c.roaster}
-                      </div>
-                    )}
+                  )}
+                  <div style={{
+                    fontFamily: sans, fontSize: 10.5, letterSpacing: "0.14em",
+                    textTransform: "uppercase", lineHeight: 1.6,
+                    flex: 1, minWidth: 0,
+                  }}>
+                    <span
+                      onClick={() => u.id && openProfile(u.id)}
+                      style={{ color: userColor, fontWeight: 700, cursor: u.id ? "pointer" : "default" }}
+                    >{u.name || "Someone"}</span>
+                    <span style={{ color: C.faint }}> — on </span>
+                    <span
+                      onClick={() => c.id && openCoffee(c)}
+                      style={{ color: C.ink, fontWeight: 600, cursor: c.id ? "pointer" : "default" }}
+                    >{c.name || "a coffee"}</span>
+                    {c.roaster && <span style={{ color: C.faint }}>, {c.roaster}</span>}
                   </div>
+                  <span style={{
+                    fontFamily: sans, fontSize: 10.5, color: C.faint,
+                    letterSpacing: "0.06em", flexShrink: 0,
+                  }}>{timeAgo(t.created)}</span>
                 </div>
               </div>
             );

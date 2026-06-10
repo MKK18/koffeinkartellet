@@ -14,9 +14,9 @@ import InstallPrompt from "./InstallPrompt.jsx";
 import BuyVerdict from "./BuyVerdict.jsx";
 
 const TABS = [
-  { id: "catalog", label: "Catalog", icon: "☕" },
-  { id: "feed", label: "Feed", icon: "📋" },
-  { id: "taste", label: "Taste", icon: "👅" },
+  { id: "catalog", label: "Catalog" },
+  { id: "feed", label: "Feed" },
+  { id: "taste", label: "Taste" },
 ];
 
 export default function AppShell() {
@@ -51,11 +51,11 @@ export default function AppShell() {
       <div style={{ minHeight: "100vh", background: C.bg, paddingBottom: "calc(72px + env(safe-area-inset-bottom))" }}>
         <FontLink />
 
-        {/* Header — light, airy (Coffi-inspired) */}
-        <div style={{ background: C.bg, padding: "18px 18px 14px", position: "sticky", top: 0, zIndex: 10, borderBottom: `1px solid ${C.borderSoft}` }}>
+        {/* Header — editorial masthead, ink hairline */}
+        <div style={{ background: C.bg, padding: "18px 18px 14px", position: "sticky", top: 0, zIndex: 10, borderBottom: `1px solid ${C.ink}` }}>
           <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: C.faint, fontFamily: sans }}>☕ Koffeinkollektivet</div>
+              <div style={{ fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: C.muted, fontFamily: sans }}>Koffeinkollektivet</div>
               <h1 style={{ margin: "2px 0 0", fontFamily: serif, fontSize: 24, color: C.ink, fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.01em" }}>{title}</h1>
             </div>
             <Avatar user={user} size={36} onClick={() => setAccountOpen(true)} />
@@ -74,10 +74,10 @@ export default function AppShell() {
           }}>+</button>
         )}
 
-        {/* Bottom tab bar (mobile-first) */}
+        {/* Bottom tab bar — letterspaced small caps, ink hairline */}
         <nav style={{
           position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 40,
-          background: C.card, borderTop: `1px solid ${C.border}`,
+          background: C.card, borderTop: `1px solid ${C.ink}`,
           paddingBottom: "env(safe-area-inset-bottom)",
           display: "flex", justifyContent: "space-around",
         }}>
@@ -86,11 +86,18 @@ export default function AppShell() {
             return (
               <button key={t.id} onClick={() => setTab(t.id)} style={{
                 flex: 1, background: "none", border: "none", cursor: "pointer",
-                padding: "10px 4px 12px", display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-                color: active ? C.brown : C.faint, fontFamily: sans,
+                padding: "16px 4px 14px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                fontFamily: sans,
               }}>
-                <span style={{ fontSize: 20, opacity: active ? 1 : 0.6 }}>{t.icon}</span>
-                <span style={{ fontSize: 11, fontWeight: active ? 600 : 400 }}>{t.label}</span>
+                <span style={{
+                  fontSize: 11, fontWeight: active ? 700 : 500,
+                  letterSpacing: "0.16em", textTransform: "uppercase",
+                  color: active ? C.ink : C.faint,
+                }}>{t.label}</span>
+                <span style={{
+                  width: 16, height: 2, borderRadius: 1,
+                  background: active ? C.accent : "transparent",
+                }} />
               </button>
             );
           })}

@@ -26,6 +26,27 @@ export function Avatar({ user, size = 32, onClick, ring }) {
   );
 }
 
+// Coffee-ring stain — the brand motif from the landing page. Children render
+// centered inside the ring (used for empty states).
+export function CoffeeRing({ size = 220, children, style }) {
+  return (
+    <div aria-hidden={!children} style={{
+      position: "relative", width: size, height: size, margin: "0 auto",
+      display: "flex", alignItems: "center", justifyContent: "center", ...style,
+    }}>
+      <div style={{
+        position: "absolute", inset: 0, borderRadius: "50%",
+        border: `${Math.max(8, Math.round(size * 0.055))}px solid rgba(139,94,60,0.10)`,
+      }} />
+      <div style={{
+        position: "absolute", inset: "3% 1% 1% 3%", borderRadius: "50%",
+        border: `${Math.max(2, Math.round(size * 0.012))}px solid rgba(139,94,60,0.14)`,
+      }} />
+      {children && <div style={{ position: "relative", textAlign: "center", padding: 24 }}>{children}</div>}
+    </div>
+  );
+}
+
 export function Pill({ children, green, awaiting, color }) {
   if (awaiting) {
     return (

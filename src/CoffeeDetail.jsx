@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
+import { C, sans, serif, fraunces, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
 import { Sheet, SectionHead, Pill, Spinner } from "./components.jsx";
 import { TAG_EMOJI } from "./lib.js";
 import { useAuth } from "./auth.jsx";
@@ -125,38 +125,47 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
         )}
       </div>
 
-      {/* ---- Score section ---- */}
+      {/* ---- Score moment (espresso block) ---- */}
       {tastings !== null && (
-        <div style={{ textAlign: "center", margin: "24px 0" }}>
+        <div style={{
+          margin: "22px 0", background: C.ink, borderRadius: 18,
+          padding: "26px 24px", position: "relative", overflow: "hidden",
+        }}>
+          {/* faint ring stain */}
+          <div aria-hidden="true" style={{
+            position: "absolute", top: "-40%", right: "-12%", width: 220, height: 220,
+            borderRadius: "50%", border: "12px solid rgba(255,248,240,0.05)",
+          }} />
           <div style={{
-            fontSize: 52, fontFamily: serif, fontWeight: 800,
-            color: avg ? C.accent : "#d4c5b5", lineHeight: 1,
+            fontFamily: fraunces, fontStyle: "italic", fontWeight: 600,
+            fontSize: 64, color: avg ? C.accent : "#5a4030", lineHeight: 0.9,
             letterSpacing: "-0.03em",
           }}>{avg || "—"}</div>
-          {avg ? (
-            <div style={{
-              fontSize: 13, color: C.faint, fontFamily: sans, marginTop: 4,
-            }}>/ 10</div>
-          ) : (
-            <div style={{
-              fontSize: 13, color: C.muted, fontFamily: sans, marginTop: 6,
-            }}>No tastings yet</div>
-          )}
+          <div style={{
+            fontFamily: sans, fontSize: 10.5, letterSpacing: "0.16em",
+            textTransform: "uppercase", color: "#b89870", marginTop: 10,
+          }}>
+            {avg
+              ? `Average  ✱  ${scores.length} ${scores.length === 1 ? "tasting" : "tastings"}`
+              : "No tastings yet"}
+          </div>
 
           {/* Per-person breakdown */}
           {personList.length > 0 && (
-            <div style={{
-              display: "flex", flexDirection: "column", alignItems: "center",
-              gap: 4, marginTop: 14,
-            }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 22px", marginTop: 16 }}>
               {personList.map((p) => {
                 const pAvg = (p.scores.reduce((a, x) => a + x, 0) / p.scores.length).toFixed(1);
                 return (
-                  <div key={p.name} style={{
-                    fontFamily: sans, fontSize: 13, color: p.color, lineHeight: 1.5,
-                  }}>
-                    {p.name} <span style={{ fontWeight: 600 }}>{"·"} {pAvg}</span>
-                    <span style={{ color: C.faint, fontWeight: 400 }}> ({p.scores.length})</span>
+                  <div key={p.name} style={{ display: "flex", alignItems: "baseline", gap: 7 }}>
+                    <span style={{
+                      fontFamily: sans, fontSize: 10.5, letterSpacing: "0.12em",
+                      textTransform: "uppercase", color: p.color, fontWeight: 700,
+                    }}>{p.name}</span>
+                    <span style={{
+                      fontFamily: fraunces, fontStyle: "italic", fontWeight: 600,
+                      fontSize: 17, color: "#fff8f0",
+                    }}>{pAvg}</span>
+                    <span style={{ fontFamily: sans, fontSize: 10, color: "#7a6050" }}>({p.scores.length})</span>
                   </div>
                 );
               })}
@@ -171,7 +180,7 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
           { label: "Origin", value: [coffee.origin, coffee.region].filter(Boolean).join(", ") },
           { label: "Producer", value: coffee.producer },
           { label: "Varietal", value: coffee.varietal },
-          { label: "Process", value: [coffee.process, coffee.roast_level].filter(Boolean).join(" · ") },
+          { label: "Process", value: [coffee.process, coffee.roast_level].filter(Boolean).join("  ✱  ") },
           { label: "Altitude", value: coffee.altitude ? `${coffee.altitude} masl` : "" },
           { label: "Harvest", value: coffee.harvest },
         ].filter((f) => f.value);
@@ -213,10 +222,10 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
           margin: "24px 0",
           borderLeft: `2px solid ${C.accent}`,
           paddingLeft: 16,
-          fontFamily: sans, fontSize: 15, color: "#5a4030",
-          lineHeight: 1.65, fontStyle: "italic",
+          fontFamily: fraunces, fontStyle: "italic", fontSize: 17,
+          color: "#5a4030", lineHeight: 1.55, letterSpacing: "-0.005em",
         }}>
-          {coffee.bag_notes}
+          “{coffee.bag_notes}”
         </div>
       )}
 
@@ -242,20 +251,20 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
                   padding: "16px 0",
                   borderBottom: idx < tastings.length - 1 ? `1px solid #ece3d5` : "none",
                 }}>
-                  {/* Top line: star + score + name + date */}
+                  {/* Top line: italic score + name + date */}
                   <div style={{
-                    display: "flex", alignItems: "center", gap: 6,
+                    display: "flex", alignItems: "baseline", gap: 8,
                     fontFamily: sans,
                   }}>
-                    <span style={{ color: "#D4A574", fontSize: 15, lineHeight: 1 }}>{"★"}</span>
                     <span style={{
-                      fontFamily: serif, fontWeight: 700, fontSize: 16,
-                      color: C.ink, lineHeight: 1,
+                      fontFamily: fraunces, fontStyle: "italic", fontWeight: 600,
+                      fontSize: 21, color: C.accent, lineHeight: 1, letterSpacing: "-0.02em",
                     }}>{Number(t.score).toFixed(1)}</span>
                     <span
                       onClick={() => u.id && openProfile(u.id)}
                       style={{
-                        color: userColor, fontSize: 13, marginLeft: 4,
+                        color: userColor, fontSize: 10.5, fontWeight: 700,
+                        letterSpacing: "0.12em", textTransform: "uppercase",
                         cursor: u.id ? "pointer" : "default",
                       }}
                     >{u.name || "Someone"}</span>
@@ -264,7 +273,7 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
 
                     {(t.tasted_on || "").split(" ")[0] && (
                       <span style={{
-                        fontSize: 11, color: C.faint, fontFamily: sans,
+                        fontSize: 10.5, color: C.faint, fontFamily: sans, letterSpacing: "0.06em",
                       }}>{(t.tasted_on || "").split(" ")[0]}</span>
                     )}
                   </div>
@@ -272,19 +281,20 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
                   {/* Grind / brew method */}
                   {(t.grind || t.brew_method) && (
                     <div style={{
-                      fontSize: 12, color: C.muted, fontFamily: sans,
-                      marginTop: 6,
+                      fontSize: 10, color: C.muted, fontFamily: sans, marginTop: 7,
+                      letterSpacing: "0.1em", textTransform: "uppercase",
                     }}>
-                      {[t.grind ? `Grind ${t.grind}` : null, t.brew_method].filter(Boolean).join(" · ")}
+                      {[t.grind ? `Grind ${t.grind}` : null, t.brew_method].filter(Boolean).join("  ✱  ")}
                     </div>
                   )}
 
                   {/* Notes */}
                   {t.notes && (
                     <div style={{
-                      fontSize: 14, color: C.ink, marginTop: 8,
-                      fontFamily: sans, lineHeight: 1.55, whiteSpace: "pre-wrap",
-                    }}>{t.notes}</div>
+                      fontSize: 15.5, color: C.ink, marginTop: 9,
+                      fontFamily: fraunces, fontStyle: "italic",
+                      lineHeight: 1.5, whiteSpace: "pre-wrap", letterSpacing: "-0.005em",
+                    }}>“{t.notes}”</div>
                   )}
 
                   {/* Edit / delete (own tastings only) */}
@@ -331,10 +341,10 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
                 }}>
                   <label style={{ ...labelStyle, marginBottom: 0 }}>Score</label>
                   <span style={{
-                    fontFamily: serif, fontSize: 28, fontWeight: 700,
-                    color: C.accent, lineHeight: 1,
+                    fontFamily: fraunces, fontStyle: "italic", fontSize: 30, fontWeight: 600,
+                    color: C.accent, lineHeight: 1, letterSpacing: "-0.02em",
                   }}>{Number(draft.score).toFixed(1)}<span style={{
-                    fontSize: 14, color: C.faint, fontWeight: 400, marginLeft: 3,
+                    fontFamily: sans, fontStyle: "normal", fontSize: 13, color: C.faint, fontWeight: 400, marginLeft: 4,
                   }}>/ 10</span></span>
                 </div>
                 <input
