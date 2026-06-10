@@ -82,6 +82,11 @@ export function Spinner() {
 }
 
 // Responsive overlay: full-screen sheet on phones, centered modal on desktop.
+// `padX` is the horizontal padding actually applied — exposed so children can
+// bleed-to-edge (e.g. a hero image) without hard-coding margins that overshoot
+// on mobile and create phantom horizontal scrollbars.
+export const SHEET_PAD_X_WIDE = 28;
+export const SHEET_PAD_X_NARROW = 18;
 export function Sheet({ children, onClose, maxWidth = 580 }) {
   const wide = useIsWide();
   useEffect(() => {
@@ -103,14 +108,23 @@ export function Sheet({ children, onClose, maxWidth = 580 }) {
       <div className="sheet-scroll" style={{
         background: C.card,
         borderRadius: wide ? 20 : "20px 20px 0 0",
-        padding: wide ? 28 : "20px 18px calc(20px + env(safe-area-inset-bottom))",
+        padding: wide
+          ? `28px ${SHEET_PAD_X_WIDE}px`
+          : `20px ${SHEET_PAD_X_NARROW}px calc(20px + env(safe-area-inset-bottom))`,
         width: "100%", maxWidth: wide ? maxWidth : "100%",
-        maxHeight: wide ? "92vh" : "94vh", overflowY: "auto",
+        maxHeight: wide ? "92vh" : "94vh",
+        // Vertical scroll only — any horizontal overshoot inside is clipped, so
+        // decorative bleeds can't produce a phantom horizontal scrollbar.
+        overflowX: "hidden",
+        overflowY: "auto",
         boxShadow: "0 -8px 40px rgba(60,20,0,0.25)",
         // Thin warm-toned scrollbar (Firefox + WebKit handled below).
         scrollbarWidth: "thin",
         scrollbarColor: "#d4c5b5 transparent",
-        scrollbarGutter: "stable",
+        // Reserve gutter only on desktop where mouse scrollbars take real
+        // width. On mobile they overlay; reserving a lane leaves a phantom
+        // strip the user reads as "extra content that can't be scrolled."
+        scrollbarGutter: wide ? "stable" : "auto",
       }}>
         <style>{`
           .sheet-scroll::-webkit-scrollbar { width: 8px; height: 8px; }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { C, sans, serif, fraunces, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
-import { Sheet, SectionHead, Pill, Spinner } from "./components.jsx";
+import { Sheet, SectionHead, Pill, Spinner, SHEET_PAD_X_WIDE, SHEET_PAD_X_NARROW } from "./components.jsx";
+import { useIsWide } from "./useMediaQuery.js";
 import { TAG_EMOJI } from "./lib.js";
 import { useAuth } from "./auth.jsx";
 import { useNav } from "./nav.jsx";
@@ -27,6 +28,8 @@ const EMPTY_T = { score: 7, grind: "", brew_method: "", notes: "", tasted_on: to
 export default function CoffeeDetail({ coffee, onClose, onEdit }) {
   const { user } = useAuth();
   const { openProfile, bumpData } = useNav();
+  const wide = useIsWide();
+  const padX = wide ? SHEET_PAD_X_WIDE : SHEET_PAD_X_NARROW;
   const [tastings, setTastings] = useState(null);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(EMPTY_T);
@@ -86,7 +89,12 @@ export default function CoffeeDetail({ coffee, onClose, onEdit }) {
       >&times;</button>
 
       {/* ---- Hero image ---- */}
-      <div style={{ margin: "-28px -28px 0", borderRadius: "20px 20px 0 0", overflow: "hidden" }}>
+      <div style={{
+        // bleed to sheet edges — must match the sheet's actual padding so the
+        // image doesn't overshoot and trigger a horizontal scrollbar
+        margin: `${wide ? -28 : -20}px -${padX}px 0`,
+        borderRadius: "20px 20px 0 0", overflow: "hidden",
+      }}>
         {img ? (
           <div style={{ position: "relative", width: "100%", height: 200, background: C.tint }}>
             <img
