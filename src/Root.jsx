@@ -4,7 +4,7 @@ import LoginScreen from "./LoginScreen.jsx";
 import AppShell from "./AppShell.jsx";
 import LandingPage from "./LandingPage.jsx";
 import { C, sans } from "./ui.jsx";
-import { navigate } from "./router.js";
+import { navigate, isStandalone } from "./router.js";
 
 function usePathname() {
   const [path, setPath] = useState(window.location.pathname);
@@ -28,19 +28,26 @@ function Gate() {
     );
   }
 
-  if (path === "/" || path === "") return <LandingPage user={user} />;
+  if (path === "/" || path === "") {
+    // Installed (home-screen) apps should never land on the marketing page —
+    // PWAs installed before the app moved to /app still open with the old
+    // cached start_url of "/". Send them straight into the journal; the /app
+    // route handles auth from there.
+    if (isStandalone()) { navigate("/app", { replace: true }); return null; }
+    return <LandingPage user={user} />;
+  }
 
   if (path === "/login") {
-    if (user) { navigate("/app"); return null; }
+    if (user) { navigate("/app", { replace: true }); return null; }
     return <LoginScreen />;
   }
 
   if (path.startsWith("/app")) {
-    if (!user) { navigate("/login"); return null; }
+    if (!user) { navigate("/login", { replace: true }); return null; }
     return <AppShell />;
   }
 
-  navigate("/");
+  navigate("/", { replace: true });
   return null;
 }
 
