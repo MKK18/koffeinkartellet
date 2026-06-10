@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { C, serif, sans } from "./ui.jsx";
 import { useIsWide } from "./useMediaQuery.js";
 import { navigate } from "./router.js";
@@ -36,21 +36,66 @@ function Ticker() {
   );
 }
 
-function CoffeeRing({ size = 440, top, left, right, bottom, opacity = 1 }) {
+// An actual coffee-ring stain: turbulence-displaced strokes (the wobble a real
+// cup leaves), uneven double ring, a couple of stray droplets.
+function Stain({ size = 320, color = "139,94,60", alpha = 1, seed = 2, strength = 1, style }) {
+  const id = `lp-stain-${seed}-${Math.round(size)}`;
+  const a = (base) => Math.min(1, base * strength);
   return (
-    <div aria-hidden="true" style={{
-      position: "absolute", top, left, right, bottom, width: size, height: size,
-      pointerEvents: "none", opacity,
-    }}>
-      <div style={{
-        position: "absolute", inset: 0, borderRadius: "50%",
-        border: `${Math.round(size * 0.055)}px solid rgba(139,94,60,0.10)`,
-      }} />
-      <div style={{
-        position: "absolute", inset: "3% 1% 1% 3%", borderRadius: "50%",
-        border: `${Math.round(size * 0.012)}px solid rgba(139,94,60,0.14)`,
-      }} />
-    </div>
+    <svg
+      viewBox="0 0 200 200" width={size} height={size} aria-hidden="true"
+      style={{ display: "block", pointerEvents: "none", overflow: "visible", ...style }}
+    >
+      <defs>
+        <filter id={id} x="-30%" y="-30%" width="160%" height="160%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.032" numOctaves="3" seed={seed} result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="17" />
+        </filter>
+      </defs>
+      <g filter={`url(#${id})`} opacity={alpha} transform="rotate(-8 100 100) scale(1 0.97)">
+        <circle cx="100" cy="100" r="78" fill="none" stroke={`rgba(${color},${a(0.14)})`} strokeWidth="9" />
+        <circle cx="101" cy="99" r="70" fill="none" stroke={`rgba(${color},${a(0.09)})`} strokeWidth="3" />
+        <circle cx="99" cy="101" r="85" fill="none" stroke={`rgba(${color},${a(0.06)})`} strokeWidth="1.6" />
+        <circle cx="160" cy="58" r="5" fill={`rgba(${color},${a(0.09)})`} />
+        <circle cx="40" cy="142" r="3.4" fill={`rgba(${color},${a(0.07)})`} />
+        <circle cx="172" cy="118" r="2.2" fill={`rgba(${color},${a(0.08)})`} />
+      </g>
+    </svg>
+  );
+}
+
+// Scroll-triggered reveal: fades + rises once its top clears the viewport edge.
+// Plain scroll check rather than IntersectionObserver — instant jumps (anchors,
+// fast flicks) can skip right past an observer without ever intersecting.
+function Reveal({ children, delay = 0, as = "div", y = 26, style }) {
+  const ref = useRef(null);
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const el = ref.current;
+      if (el && el.getBoundingClientRect().top < window.innerHeight * 0.92) {
+        setOn(true);
+        window.removeEventListener("scroll", check);
+        window.removeEventListener("resize", check);
+      }
+    };
+    check();
+    window.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => {
+      window.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
+    };
+  }, []);
+  const Tag = as;
+  return (
+    <Tag ref={ref} style={{
+      display: as === "span" ? "inline-block" : undefined,
+      opacity: on ? 1 : 0,
+      transform: on ? "none" : `translateY(${y}px)`,
+      transition: `opacity 0.9s ease ${delay}ms, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`,
+      ...style,
+    }}>{children}</Tag>
   );
 }
 
@@ -103,7 +148,7 @@ function PhoneMockup() {
                 <div style={{ fontSize: 10, color: C.muted, fontFamily: sans, marginTop: 2 }}>{b.roaster}</div>
                 <div style={{ fontSize: 9, color: C.faint, fontFamily: sans, marginTop: 1 }}>{b.origin}</div>
               </div>
-              <div style={{ fontFamily: serif, fontWeight: 800, fontSize: 17, color: C.accent, flexShrink: 0, marginLeft: 12 }}>{b.score}</div>
+              <div style={{ fontFamily: fraunces, fontStyle: "italic", fontWeight: 600, fontSize: 18, color: C.accent, flexShrink: 0, marginLeft: 12 }}>{b.score}</div>
             </div>
           ))}
         </div>
@@ -129,9 +174,25 @@ const FLAVOR_SPECIMEN = [
   { w: "TROPICAL", f: "archivo", size: 34, color: "ink" },
 ];
 
+// Masked line: type rises out of an overflow-hidden strip on load.
+function RiseLine({ children, delay = 0, style }) {
+  return (
+    <span style={{ display: "block", overflow: "hidden" }}>
+      <span style={{
+        display: "block",
+        animation: `lp-rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms both`,
+        ...style,
+      }}>{children}</span>
+    </span>
+  );
+}
+
 export default function LandingPage({ user }) {
   const wide = useIsWide();
   const [scrolled, setScrolled] = useState(false);
+  const [cups, setCups] = useState([]);
+  const ringFar = useRef(null);
+  const ringNear = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -142,6 +203,29 @@ export default function LandingPage({ user }) {
   const go = (to) => (e) => { e.preventDefault(); navigate(to); };
   const colorOf = (k) => k === "accent" ? C.accent : k === "muted" ? C.muted : k === "faint" ? C.faint : C.ink;
 
+  // Mouse parallax on the hero stains — refs only, no re-render per move.
+  const onHeroMove = (e) => {
+    const x = e.clientX / window.innerWidth - 0.5;
+    const y = e.clientY / window.innerHeight - 0.5;
+    if (ringFar.current) ringFar.current.style.transform = `translate3d(${x * 28}px, ${y * 20}px, 0)`;
+    if (ringNear.current) ringNear.current.style.transform = `translate3d(${x * -16}px, ${y * -11}px, 0)`;
+  };
+
+  // Set a cup down: click anywhere non-interactive in the hero → a stain blooms.
+  const setCupDown = (e) => {
+    if (e.target.closest("a, button, input")) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCups((prev) => [
+      ...prev.slice(-7),
+      {
+        id: Date.now() + Math.random(),
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+        seed: 10 + Math.floor(Math.random() * 90),
+      },
+    ]);
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: C.bg, overflowX: "hidden", color: C.ink }}>
       <link
@@ -150,7 +234,14 @@ export default function LandingPage({ user }) {
       />
       <style>{`
         @keyframes lp-fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes lp-rise { from { transform: translateY(112%); } to { transform: translateY(0); } }
         @keyframes lp-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes lp-stain {
+          0% { opacity: 0; transform: scale(0.45); }
+          55% { opacity: 1; }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes lp-dry { to { opacity: 0.5; } }
       `}</style>
 
       {/* ── Nav ── */}
@@ -188,16 +279,46 @@ export default function LandingPage({ user }) {
       </nav>
 
       {/* ── Hero ── */}
-      <header style={{ position: "relative", padding: "0 24px" }}>
-        <CoffeeRing size={wide ? 480 : 300} top={wide ? 60 : 30} right={wide ? "4%" : "-20%"} />
-        <CoffeeRing size={wide ? 260 : 170} bottom={40} left={wide ? "6%" : "-12%"} opacity={0.7} />
+      <header
+        onMouseMove={onHeroMove}
+        onClick={setCupDown}
+        style={{ position: "relative", padding: "0 24px", cursor: "pointer" }}
+      >
+        {/* Parallax stains */}
+        <div ref={ringFar} style={{
+          position: "absolute", top: wide ? 50 : 30, right: wide ? "3%" : "-22%",
+          transition: "transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)", willChange: "transform",
+        }}>
+          <Stain size={wide ? 500 : 300} seed={7} />
+        </div>
+        <div ref={ringNear} style={{
+          position: "absolute", bottom: 30, left: wide ? "5%" : "-14%",
+          transition: "transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)", willChange: "transform",
+        }}>
+          <Stain size={wide ? 280 : 180} seed={23} alpha={0.8} />
+        </div>
+
+        {/* Cups the visitor has set down */}
+        {cups.map((cup) => (
+          <div key={cup.id} style={{
+            position: "absolute", left: cup.x, top: cup.y,
+            transform: "translate(-50%, -50%)", pointerEvents: "none",
+          }}>
+            {/* bloom in, then "dry" back toward ambient */}
+            <div style={{
+              animation: "lp-stain 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both, lp-dry 6s ease 1.5s forwards",
+            }}>
+              <Stain size={130 + (cup.seed % 70)} seed={cup.seed} strength={2.4} />
+            </div>
+          </div>
+        ))}
 
         <div style={{ maxWidth: 1240, margin: "0 auto", padding: wide ? "84px 0 72px" : "56px 0 48px", position: "relative" }}>
           {/* Editorial meta line */}
           <div style={{
             display: "flex", justifyContent: "space-between", fontFamily: sans,
             fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: C.muted,
-            marginBottom: wide ? 48 : 32, animation: "lp-fadeUp 0.6s ease both",
+            marginBottom: wide ? 48 : 32, animation: "lp-fadeUp 0.7s ease 0.45s both",
           }}>
             <span>A shared tasting journal</span>
             {wide && <span>For coffee households</span>}
@@ -209,32 +330,38 @@ export default function LandingPage({ user }) {
             fontFamily: serif, fontWeight: 900, color: C.ink,
             fontSize: wide ? "clamp(80px, 11vw, 150px)" : "clamp(56px, 16vw, 80px)",
             lineHeight: 0.88, letterSpacing: "-0.04em",
-            animation: "lp-fadeUp 0.7s ease 0.05s both",
           }}>
-            Every cup,
+            <RiseLine delay={80}>Every cup,</RiseLine>
           </h1>
           <div style={{
             fontFamily: fraunces, fontStyle: "italic", fontWeight: 400, color: C.accent,
             fontSize: wide ? "clamp(80px, 10.5vw, 144px)" : "clamp(52px, 15vw, 76px)",
             lineHeight: 1.04, letterSpacing: "-0.02em", textTransform: "none",
-            animation: "lp-fadeUp 0.7s ease 0.12s both",
           }}>
-            remembered.
+            <RiseLine delay={220} style={{ paddingBottom: "0.12em", marginBottom: "-0.12em" }}>remembered.</RiseLine>
           </div>
 
           <div style={{
             display: "flex", alignItems: wide ? "flex-end" : "flex-start",
             flexDirection: wide ? "row" : "column",
             justifyContent: "space-between", gap: 28,
-            marginTop: wide ? 64 : 40, animation: "lp-fadeUp 0.7s ease 0.2s both",
+            marginTop: wide ? 64 : 40, animation: "lp-fadeUp 0.7s ease 0.55s both",
           }}>
-            <p style={{
-              margin: 0, maxWidth: 380, fontFamily: sans, fontSize: 16,
-              lineHeight: 1.65, color: C.muted,
-            }}>
-              Snap the bag, brew, and rate together. Koffeinkollektivet is the tasting
-              journal your household keeps coming back to — one cup at a time.
-            </p>
+            <div>
+              <p style={{
+                margin: 0, maxWidth: 380, fontFamily: sans, fontSize: 16,
+                lineHeight: 1.65, color: C.muted,
+              }}>
+                Snap the bag, brew, and rate together. Koffeinkollektivet is the tasting
+                journal your household keeps coming back to — one cup at a time.
+              </p>
+              <div style={{
+                marginTop: 14, fontFamily: fraunces, fontStyle: "italic",
+                fontSize: 13.5, color: C.faint,
+              }}>
+                Go on — set your cup down anywhere.
+              </div>
+            </div>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <a href={user ? "/app" : "/login"} onClick={go(user ? "/app" : "/login")} style={{
                 padding: "15px 34px", borderRadius: 999, background: C.accent, color: "#fff8f0",
@@ -260,54 +387,62 @@ export default function LandingPage({ user }) {
 
       {/* ── How it works: editorial index ── */}
       <section style={{ maxWidth: 1240, margin: "0 auto", padding: wide ? "96px 24px" : "64px 24px" }}>
-        <div style={{
-          fontFamily: sans, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
-          color: C.muted, marginBottom: 28,
-        }}>How it works</div>
+        <Reveal>
+          <div style={{
+            fontFamily: sans, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
+            color: C.muted, marginBottom: 28,
+          }}>How it works</div>
+        </Reveal>
 
         {[
           { n: "01", t: "Snap the bag", d: "Photograph any coffee. AI reads the label — origin, process, varietal, tasting notes — and files it in your shared catalog." },
           { n: "02", t: "Brew & rate", d: "Everyone scores independently. Grind setting, brew method, honest notes. No peeking at each other's numbers first." },
           { n: "03", t: "Know your palate", d: "Origins, processes and flavors stack into a taste profile. Next time you're staring at a shelf, you'll know exactly what to buy." },
         ].map((s, i, arr) => (
-          <div key={s.n} style={{
-            display: wide ? "grid" : "block",
-            gridTemplateColumns: "110px 1fr 1.1fr",
-            gap: 24, alignItems: "baseline",
-            padding: wide ? "34px 0" : "26px 0",
-            borderTop: `1px solid ${C.ink}`,
-            borderBottom: i === arr.length - 1 ? `1px solid ${C.ink}` : "none",
-          }}>
-            <div style={{ fontFamily: fraunces, fontStyle: "italic", fontSize: wide ? 30 : 22, color: C.accent, marginBottom: wide ? 0 : 6 }}>
-              {s.n}
+          <Reveal key={s.n} delay={i * 110}>
+            <div style={{
+              display: wide ? "grid" : "block",
+              gridTemplateColumns: "110px 1fr 1.1fr",
+              gap: 24, alignItems: "baseline",
+              padding: wide ? "34px 0" : "26px 0",
+              borderTop: `1px solid ${C.ink}`,
+              borderBottom: i === arr.length - 1 ? `1px solid ${C.ink}` : "none",
+            }}>
+              <div style={{ fontFamily: fraunces, fontStyle: "italic", fontSize: wide ? 30 : 22, color: C.accent, marginBottom: wide ? 0 : 6 }}>
+                {s.n}
+              </div>
+              <h3 style={{
+                margin: 0, fontFamily: serif, fontWeight: 900, textTransform: "uppercase",
+                fontSize: wide ? "clamp(28px, 3.2vw, 44px)" : 28, letterSpacing: "-0.02em", lineHeight: 1,
+                marginBottom: wide ? 0 : 10,
+              }}>{s.t}</h3>
+              <p style={{ margin: 0, fontFamily: sans, fontSize: 15, lineHeight: 1.65, color: C.muted }}>
+                {s.d}
+              </p>
             </div>
-            <h3 style={{
-              margin: 0, fontFamily: serif, fontWeight: 900, textTransform: "uppercase",
-              fontSize: wide ? "clamp(28px, 3.2vw, 44px)" : 28, letterSpacing: "-0.02em", lineHeight: 1,
-              marginBottom: wide ? 0 : 10,
-            }}>{s.t}</h3>
-            <p style={{ margin: 0, fontFamily: sans, fontSize: 15, lineHeight: 1.65, color: C.muted }}>
-              {s.d}
-            </p>
-          </div>
+          </Reveal>
         ))}
       </section>
 
       {/* ── The score moment (espresso block) ── */}
       <section style={{ background: C.ink, color: "#fff8f0", position: "relative", overflow: "hidden" }}>
-        <CoffeeRing size={wide ? 560 : 320} top="-15%" right="-8%" opacity={0.9} />
+        <div style={{ position: "absolute", top: "-15%", right: "-8%" }}>
+          <Stain size={wide ? 560 : 320} seed={41} color="255,248,240" alpha={0.55} />
+        </div>
         <div style={{
           maxWidth: 1240, margin: "0 auto", padding: wide ? "110px 24px" : "72px 24px",
           display: wide ? "grid" : "block", gridTemplateColumns: "auto 1fr", gap: 72, alignItems: "center",
         }}>
-          <div style={{ lineHeight: 0.8, marginBottom: wide ? 0 : 32 }}>
-            <span style={{
-              fontFamily: fraunces, fontWeight: 600, fontStyle: "italic",
-              fontSize: wide ? "clamp(160px, 18vw, 260px)" : "clamp(120px, 32vw, 170px)",
-              color: C.accent, letterSpacing: "-0.04em",
-            }}>9.5</span>
-          </div>
-          <div>
+          <Reveal y={34}>
+            <div style={{ lineHeight: 0.8, marginBottom: wide ? 0 : 32 }}>
+              <span style={{
+                fontFamily: fraunces, fontWeight: 600, fontStyle: "italic",
+                fontSize: wide ? "clamp(160px, 18vw, 260px)" : "clamp(120px, 32vw, 170px)",
+                color: C.accent, letterSpacing: "-0.04em",
+              }}>9.5</span>
+            </div>
+          </Reveal>
+          <Reveal delay={140}>
             <p style={{
               margin: 0, fontFamily: fraunces, fontStyle: "italic", fontWeight: 400,
               fontSize: wide ? "clamp(24px, 2.6vw, 36px)" : 22, lineHeight: 1.35, color: "#fff8f0",
@@ -324,7 +459,7 @@ export default function LandingPage({ user }) {
             <div style={{ marginTop: 6, fontFamily: sans, fontSize: 12, color: "#7a6050" }}>
               Logged from the kitchen counter. Settled an argument.
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -333,65 +468,75 @@ export default function LandingPage({ user }) {
         <div style={{
           display: wide ? "grid" : "block", gridTemplateColumns: "1fr auto", gap: 80, alignItems: "center",
         }}>
-          <div style={{ marginBottom: wide ? 0 : 48 }}>
-            <h2 style={{
-              margin: "0 0 20px", fontFamily: serif, fontWeight: 900, textTransform: "uppercase",
-              fontSize: wide ? "clamp(40px, 5vw, 64px)" : 36, lineHeight: 0.95, letterSpacing: "-0.03em",
-            }}>
-              The whole catalog,{" "}
-              <span style={{ fontFamily: fraunces, fontStyle: "italic", fontWeight: 400, textTransform: "none", color: C.accent }}>
-                in your pocket.
-              </span>
-            </h2>
-            <p style={{ margin: "0 0 28px", maxWidth: 420, fontFamily: sans, fontSize: 15, lineHeight: 1.65, color: C.muted }}>
-              Every bag you've brewed, every score, every note — searchable at the shelf.
-              Install it as an app and it lives next to the grinder.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {[
-                "AI reads the bag so you don't type",
-                "Separate scores for every taster",
-                "A verdict before you buy the next bag",
-              ].map((x) => (
-                <div key={x} style={{ display: "flex", alignItems: "center", gap: 14, fontFamily: sans, fontSize: 15, color: C.ink }}>
-                  <span style={{ width: 22, height: 1, background: C.accent, flexShrink: 0 }} />
-                  {x}
-                </div>
-              ))}
+          <Reveal>
+            <div style={{ marginBottom: wide ? 0 : 48 }}>
+              <h2 style={{
+                margin: "0 0 20px", fontFamily: serif, fontWeight: 900, textTransform: "uppercase",
+                fontSize: wide ? "clamp(40px, 5vw, 64px)" : 36, lineHeight: 0.95, letterSpacing: "-0.03em",
+              }}>
+                The whole catalog,{" "}
+                <span style={{ fontFamily: fraunces, fontStyle: "italic", fontWeight: 400, textTransform: "none", color: C.accent }}>
+                  in your pocket.
+                </span>
+              </h2>
+              <p style={{ margin: "0 0 28px", maxWidth: 420, fontFamily: sans, fontSize: 15, lineHeight: 1.65, color: C.muted }}>
+                Every bag you've brewed, every score, every note — searchable at the shelf.
+                Install it as an app and it lives next to the grinder.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {[
+                  "AI reads the bag so you don't type",
+                  "Separate scores for every taster",
+                  "A verdict before you buy the next bag",
+                ].map((x) => (
+                  <div key={x} style={{ display: "flex", alignItems: "center", gap: 14, fontFamily: sans, fontSize: 15, color: C.ink }}>
+                    <span style={{ width: 22, height: 1, background: C.accent, flexShrink: 0 }} />
+                    {x}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          <div style={{ position: "relative" }}>
-            <CoffeeRing size={360} top="-10%" left="-25%" />
-            <PhoneMockup />
-          </div>
+          </Reveal>
+          <Reveal delay={160} y={40}>
+            <div style={{ position: "relative" }}>
+              <div style={{ position: "absolute", top: "-10%", left: "-25%" }}>
+                <Stain size={340} seed={67} />
+              </div>
+              <PhoneMockup />
+            </div>
+          </Reveal>
         </div>
       </section>
 
       {/* ── Flavor specimen ── */}
       <section style={{ borderTop: `1px solid ${C.ink}`, padding: wide ? "96px 24px 110px" : "64px 24px 72px" }}>
         <div style={{ maxWidth: 1240, margin: "0 auto" }}>
-          <div style={{
-            fontFamily: sans, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
-            color: C.muted, marginBottom: 12,
-          }}>The vocabulary</div>
-          <p style={{ margin: "0 0 48px", fontFamily: sans, fontSize: 15, color: C.muted, maxWidth: 420, lineHeight: 1.6 }}>
-            22 flavor tags and counting. Whatever you taste, there's a word for it —
-            and a chart that remembers you tasted it.
-          </p>
+          <Reveal>
+            <div style={{
+              fontFamily: sans, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
+              color: C.muted, marginBottom: 12,
+            }}>The vocabulary</div>
+            <p style={{ margin: "0 0 48px", fontFamily: sans, fontSize: 15, color: C.muted, maxWidth: 420, lineHeight: 1.6 }}>
+              22 flavor tags and counting. Whatever you taste, there's a word for it —
+              and a chart that remembers you tasted it.
+            </p>
+          </Reveal>
           <div style={{
             display: "flex", flexWrap: "wrap", alignItems: "baseline",
             columnGap: wide ? 38 : 22, rowGap: wide ? 18 : 10, maxWidth: 1000,
           }}>
-            {FLAVOR_SPECIMEN.map(({ w, f, size, color }) => (
-              <span key={w} style={{
-                fontFamily: f === "fraunces" ? fraunces : serif,
-                fontStyle: f === "fraunces" ? "italic" : "normal",
-                fontWeight: f === "fraunces" ? 400 : 900,
-                textTransform: f === "fraunces" ? "none" : "uppercase",
-                fontSize: wide ? size : Math.round(size * 0.7),
-                letterSpacing: f === "fraunces" ? "-0.01em" : "-0.02em",
-                color: colorOf(color), lineHeight: 1,
-              }}>{w}</span>
+            {FLAVOR_SPECIMEN.map(({ w, f, size, color }, i) => (
+              <Reveal key={w} as="span" delay={i * 45} y={18}>
+                <span style={{
+                  fontFamily: f === "fraunces" ? fraunces : serif,
+                  fontStyle: f === "fraunces" ? "italic" : "normal",
+                  fontWeight: f === "fraunces" ? 400 : 900,
+                  textTransform: f === "fraunces" ? "none" : "uppercase",
+                  fontSize: wide ? size : Math.round(size * 0.7),
+                  letterSpacing: f === "fraunces" ? "-0.01em" : "-0.02em",
+                  color: colorOf(color), lineHeight: 1,
+                }}>{w}</span>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -399,29 +544,35 @@ export default function LandingPage({ user }) {
 
       {/* ── Final CTA (burnt orange block) ── */}
       <section style={{ background: C.accent, color: "#fff8f0", position: "relative", overflow: "hidden" }}>
-        <CoffeeRing size={wide ? 500 : 280} bottom="-30%" right="-6%" opacity={0.6} />
+        <div style={{ position: "absolute", bottom: "-30%", right: "-6%" }}>
+          <Stain size={wide ? 500 : 280} seed={83} color="42,26,16" alpha={0.7} />
+        </div>
         <div style={{ maxWidth: 1240, margin: "0 auto", padding: wide ? "110px 24px" : "72px 24px", position: "relative" }}>
-          <h2 style={{
-            margin: "0 0 12px", fontFamily: serif, fontWeight: 900, textTransform: "uppercase",
-            fontSize: wide ? "clamp(56px, 8vw, 110px)" : "clamp(40px, 11vw, 56px)",
-            lineHeight: 0.9, letterSpacing: "-0.04em", color: "#fff8f0",
-          }}>
-            Brew.<br />Rate.<br />
-            <span style={{ fontFamily: fraunces, fontStyle: "italic", fontWeight: 400, textTransform: "none", letterSpacing: "-0.02em" }}>
-              Remember.
-            </span>
-          </h2>
-          <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 40, flexWrap: "wrap" }}>
-            <a href={user ? "/app" : "/login"} onClick={go(user ? "/app" : "/login")} style={{
-              padding: "16px 40px", borderRadius: 999, background: C.ink, color: "#fff8f0",
-              fontFamily: sans, fontSize: 16, fontWeight: 600, textDecoration: "none",
+          <Reveal>
+            <h2 style={{
+              margin: "0 0 12px", fontFamily: serif, fontWeight: 900, textTransform: "uppercase",
+              fontSize: wide ? "clamp(56px, 8vw, 110px)" : "clamp(40px, 11vw, 56px)",
+              lineHeight: 0.9, letterSpacing: "-0.04em", color: "#fff8f0",
             }}>
-              {user ? "Open your journal" : "Get started — it's free"}
-            </a>
-            <span style={{ fontFamily: sans, fontSize: 13, color: "rgba(255,248,240,0.8)" }}>
-              Free for your household. Invite-only, like a good dinner party.
-            </span>
-          </div>
+              Brew.<br />Rate.<br />
+              <span style={{ fontFamily: fraunces, fontStyle: "italic", fontWeight: 400, textTransform: "none", letterSpacing: "-0.02em" }}>
+                Remember.
+              </span>
+            </h2>
+          </Reveal>
+          <Reveal delay={150}>
+            <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 40, flexWrap: "wrap" }}>
+              <a href={user ? "/app" : "/login"} onClick={go(user ? "/app" : "/login")} style={{
+                padding: "16px 40px", borderRadius: 999, background: C.ink, color: "#fff8f0",
+                fontFamily: sans, fontSize: 16, fontWeight: 600, textDecoration: "none",
+              }}>
+                {user ? "Open your journal" : "Get started — it's free"}
+              </a>
+              <span style={{ fontFamily: sans, fontSize: 13, color: "rgba(255,248,240,0.8)" }}>
+                Free for your household. Invite-only, like a good dinner party.
+              </span>
+            </div>
+          </Reveal>
         </div>
       </section>
 
