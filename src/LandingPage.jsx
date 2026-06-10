@@ -1,7 +1,58 @@
 import { useState, useEffect } from "react";
-import { C, serif, sans, FontLink } from "./ui.jsx";
+import { C, serif, sans } from "./ui.jsx";
 import { useIsWide } from "./useMediaQuery.js";
 import { navigate } from "./router.js";
+
+// Editorial accent serif, landing page only.
+const fraunces = "'Fraunces', Georgia, serif";
+
+const TICKER = [
+  ["Ethiopia", "strawberry jam", "9.0"],
+  ["Kenya", "blackcurrant", "8.7"],
+  ["Panama Gesha", "jasmine", "9.5"],
+  ["Colombia", "boozy mango", "8.0"],
+  ["Yirgacheffe", "bergamot", "9.2"],
+  ["Huila", "lychee", "8.5"],
+  ["Nyeri", "winey", "9.0"],
+  ["Sidamo", "white grape", "8.7"],
+];
+
+function Ticker() {
+  const row = TICKER.map(([origin, note, score], i) => (
+    <span key={i} style={{ display: "inline-flex", alignItems: "baseline", gap: 14, paddingRight: 14 }}>
+      <span style={{ fontFamily: serif, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em" }}>{origin}</span>
+      <span style={{ fontFamily: fraunces, fontStyle: "italic", fontWeight: 400, opacity: 0.85 }}>{note}</span>
+      <span style={{ fontFamily: serif, fontWeight: 800, color: C.accent }}>{score}</span>
+      <span style={{ opacity: 0.35 }}>✱</span>
+    </span>
+  ));
+  return (
+    <div style={{ overflow: "hidden", borderTop: `1px solid ${C.ink}`, borderBottom: `1px solid ${C.ink}`, padding: "13px 0", background: C.bg }}>
+      <div style={{ display: "inline-flex", whiteSpace: "nowrap", animation: "lp-marquee 36s linear infinite", fontSize: 15, color: C.ink }}>
+        <span style={{ display: "inline-flex" }}>{row}</span>
+        <span style={{ display: "inline-flex" }} aria-hidden="true">{row}</span>
+      </div>
+    </div>
+  );
+}
+
+function CoffeeRing({ size = 440, top, left, right, bottom, opacity = 1 }) {
+  return (
+    <div aria-hidden="true" style={{
+      position: "absolute", top, left, right, bottom, width: size, height: size,
+      pointerEvents: "none", opacity,
+    }}>
+      <div style={{
+        position: "absolute", inset: 0, borderRadius: "50%",
+        border: `${Math.round(size * 0.055)}px solid rgba(139,94,60,0.10)`,
+      }} />
+      <div style={{
+        position: "absolute", inset: "3% 1% 1% 3%", borderRadius: "50%",
+        border: `${Math.round(size * 0.012)}px solid rgba(139,94,60,0.14)`,
+      }} />
+    </div>
+  );
+}
 
 function PhoneMockup() {
   const beans = [
@@ -9,73 +60,74 @@ function PhoneMockup() {
     { name: "Kieni AA", roaster: "Coffee Collective", origin: "Kenya, Nyeri", score: "9.0" },
     { name: "Hartmann Geisha", roaster: "La Cabra", origin: "Panama, Chiriqui", score: "9.2" },
   ];
-
   return (
-    <div style={{ position: "relative" }}>
-      {/* Warm glow behind the phone */}
+    <div style={{
+      position: "relative", width: 270, margin: "0 auto",
+      background: "#1a1a1a", borderRadius: 44, padding: 12,
+      boxShadow: "0 8px 30px rgba(0,0,0,0.14), 0 30px 60px rgba(42,26,16,0.18)",
+      transform: "rotate(-3deg)",
+    }}>
       <div style={{
-        position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
-        width: "120%", height: "120%",
-        background: "radial-gradient(ellipse at center, rgba(226,97,29,0.08) 0%, rgba(226,97,29,0.03) 40%, transparent 70%)",
-        borderRadius: "50%", pointerEvents: "none",
+        position: "absolute", top: 18, left: "50%", transform: "translateX(-50%)",
+        width: 86, height: 24, background: "#1a1a1a", borderRadius: 20, zIndex: 10,
       }} />
-      {/* Phone frame */}
-      <div style={{
-        position: "relative", width: 280, margin: "0 auto",
-        background: "#1a1a1a", borderRadius: 44, padding: 12,
-        boxShadow: "0 8px 30px rgba(0,0,0,0.12), 0 30px 60px rgba(0,0,0,0.08)",
-      }}>
-        {/* Dynamic island */}
-        <div style={{
-          position: "absolute", top: 18, left: "50%", transform: "translateX(-50%)",
-          width: 90, height: 26, background: "#1a1a1a", borderRadius: 20, zIndex: 10,
-        }} />
-        {/* Screen */}
-        <div style={{ borderRadius: 34, overflow: "hidden", background: C.card }}>
-          {/* Status bar area */}
-          <div style={{ height: 48, background: C.ink }} />
-          {/* App header */}
-          <div style={{ background: C.ink, padding: "0 18px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div style={{ fontSize: 8, letterSpacing: "0.16em", textTransform: "uppercase", color: "#7a6050", fontFamily: sans }}>
-                Koffeinkollektivet
-              </div>
-              <div style={{ fontFamily: serif, fontSize: 14, fontWeight: 800, color: "#fff8f0", textTransform: "uppercase" }}>
-                The catalog
-              </div>
+      <div style={{ borderRadius: 34, overflow: "hidden", background: C.card }}>
+        <div style={{ height: 46, background: C.ink }} />
+        <div style={{ background: C.ink, padding: "0 18px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 8, letterSpacing: "0.16em", textTransform: "uppercase", color: "#7a6050", fontFamily: sans }}>
+              Koffeinkollektivet
             </div>
-            <div style={{ width: 24, height: 24, borderRadius: "50%", background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: sans, fontSize: 10, fontWeight: 600 }}>
-              K
+            <div style={{ fontFamily: serif, fontSize: 14, fontWeight: 800, color: "#fff8f0", textTransform: "uppercase" }}>
+              The catalog
             </div>
           </div>
-          {/* Search */}
-          <div style={{ padding: "12px 14px 6px" }}>
-            <div style={{ background: "#ece3d5", borderRadius: 10, padding: "8px 12px", fontFamily: sans, fontSize: 11, color: C.faint }}>
-              Search coffees, roasters, origins...
-            </div>
+          <div style={{ width: 24, height: 24, borderRadius: "50%", background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: sans, fontSize: 10, fontWeight: 600 }}>
+            K
           </div>
-          {/* Bean list */}
-          <div style={{ padding: "8px 14px 18px" }}>
-            {beans.map((b, i) => (
-              <div key={i} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-                padding: "12px 0",
-                borderBottom: i < beans.length - 1 ? "1px solid #ece3d5" : "none",
-              }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 13, color: C.ink }}>{b.name}</div>
-                  <div style={{ fontSize: 10, color: C.muted, fontFamily: sans, marginTop: 2 }}>{b.roaster}</div>
-                  <div style={{ fontSize: 9, color: C.faint, fontFamily: sans, marginTop: 1 }}>{b.origin}</div>
-                </div>
-                <div style={{ fontFamily: serif, fontWeight: 800, fontSize: 17, color: C.accent, flexShrink: 0, marginLeft: 12 }}>{b.score}</div>
+        </div>
+        <div style={{ padding: "12px 14px 6px" }}>
+          <div style={{ background: "#ece3d5", borderRadius: 10, padding: "8px 12px", fontFamily: sans, fontSize: 11, color: C.faint }}>
+            Search coffees, roasters, origins...
+          </div>
+        </div>
+        <div style={{ padding: "8px 14px 18px" }}>
+          {beans.map((b, i) => (
+            <div key={i} style={{
+              display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+              padding: "12px 0",
+              borderBottom: i < beans.length - 1 ? "1px solid #ece3d5" : "none",
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 13, color: C.ink }}>{b.name}</div>
+                <div style={{ fontSize: 10, color: C.muted, fontFamily: sans, marginTop: 2 }}>{b.roaster}</div>
+                <div style={{ fontSize: 9, color: C.faint, fontFamily: sans, marginTop: 1 }}>{b.origin}</div>
               </div>
-            ))}
-          </div>
+              <div style={{ fontFamily: serif, fontWeight: 800, fontSize: 17, color: C.accent, flexShrink: 0, marginLeft: 12 }}>{b.score}</div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 }
+
+const FLAVOR_SPECIMEN = [
+  { w: "Jasmine", f: "fraunces", size: 44, color: "ink" },
+  { w: "FUNKY", f: "archivo", size: 52, color: "accent" },
+  { w: "blackcurrant", f: "fraunces", size: 34, color: "muted" },
+  { w: "STONE FRUIT", f: "archivo", size: 28, color: "ink" },
+  { w: "Bergamot", f: "fraunces", size: 56, color: "ink" },
+  { w: "WINEY", f: "archivo", size: 36, color: "muted" },
+  { w: "lychee", f: "fraunces", size: 30, color: "accent" },
+  { w: "CARAMEL", f: "archivo", size: 44, color: "ink" },
+  { w: "Rose", f: "fraunces", size: 38, color: "muted" },
+  { w: "JUICY", f: "archivo", size: 58, color: "ink" },
+  { w: "tomato?", f: "fraunces", size: 26, color: "faint" },
+  { w: "CLEAN", f: "archivo", size: 30, color: "muted" },
+  { w: "Earl Grey", f: "fraunces", size: 46, color: "accent" },
+  { w: "TROPICAL", f: "archivo", size: 34, color: "ink" },
+];
 
 export default function LandingPage({ user }) {
   const wide = useIsWide();
@@ -88,42 +140,46 @@ export default function LandingPage({ user }) {
   }, []);
 
   const go = (to) => (e) => { e.preventDefault(); navigate(to); };
+  const colorOf = (k) => k === "accent" ? C.accent : k === "muted" ? C.muted : k === "faint" ? C.faint : C.ink;
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, overflowX: "hidden" }}>
-      <FontLink />
+    <div style={{ minHeight: "100vh", background: C.bg, overflowX: "hidden", color: C.ink }}>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&display=swap"
+        rel="stylesheet"
+      />
       <style>{`
-        @keyframes lp-fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes lp-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes lp-fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes lp-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
       `}</style>
 
       {/* ── Nav ── */}
       <nav style={{
         position: "sticky", top: 0, zIndex: 50,
-        background: scrolled ? "rgba(246,239,226,0.92)" : "transparent",
+        background: scrolled ? "rgba(246,239,226,0.94)" : C.bg,
         backdropFilter: scrolled ? "blur(12px)" : "none",
         WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
-        transition: "all 0.3s ease",
-        borderBottom: scrolled ? "1px solid #ece3d5" : "1px solid transparent",
+        borderBottom: `1px solid ${C.ink}`,
       }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontFamily: serif, fontWeight: 800, fontSize: 17, color: C.ink, letterSpacing: "-0.02em", textTransform: "uppercase" }}>
+        <div style={{ maxWidth: 1240, margin: "0 auto", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontFamily: serif, fontWeight: 900, fontSize: 16, letterSpacing: "-0.01em", textTransform: "uppercase" }}>
             Koffeinkollektivet
           </div>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
             {user ? (
               <a href="/app" onClick={go("/app")} style={{
-                padding: "9px 22px", borderRadius: 999, background: C.ink, color: "#fff8f0",
-                fontFamily: sans, fontSize: 14, fontWeight: 600, textDecoration: "none",
-              }}>Open App</a>
+                padding: "8px 20px", borderRadius: 999, background: C.ink, color: "#fff8f0",
+                fontFamily: sans, fontSize: 13, fontWeight: 600, textDecoration: "none",
+              }}>Open app</a>
             ) : (
               <>
                 <a href="/login" onClick={go("/login")} style={{
-                  color: C.muted, fontFamily: sans, fontSize: 14, textDecoration: "none", fontWeight: 500,
+                  color: C.ink, fontFamily: sans, fontSize: 13, fontWeight: 500,
+                  textDecoration: "none", borderBottom: `1px solid ${C.ink}`, paddingBottom: 1,
                 }}>Sign in</a>
                 <a href="/login" onClick={go("/login")} style={{
-                  padding: "9px 22px", borderRadius: 999, background: C.ink, color: "#fff8f0",
-                  fontFamily: sans, fontSize: 14, fontWeight: 600, textDecoration: "none",
+                  padding: "8px 20px", borderRadius: 999, background: C.ink, color: "#fff8f0",
+                  fontFamily: sans, fontSize: 13, fontWeight: 600, textDecoration: "none",
                 }}>Get started</a>
               </>
             )}
@@ -132,145 +188,254 @@ export default function LandingPage({ user }) {
       </nav>
 
       {/* ── Hero ── */}
-      <section style={{
-        padding: wide ? "80px 48px 100px" : "64px 24px 56px",
-        maxWidth: 1100, margin: "0 auto",
-        display: wide ? "flex" : "block",
-        alignItems: "center", gap: 64,
-      }}>
-        {/* Text side */}
-        <div style={{ flex: 1, textAlign: wide ? "left" : "center", marginBottom: wide ? 0 : 48 }}>
-          <h1 style={{
-            fontFamily: serif, fontSize: wide ? "clamp(44px, 5vw, 64px)" : "clamp(36px, 8vw, 52px)",
-            fontWeight: 900, color: C.ink, lineHeight: 1.02, letterSpacing: "-0.035em",
-            margin: "0 0 24px", textTransform: "uppercase",
-            animation: "lp-fadeUp 0.6s ease both",
-          }}>
-            Remember{wide ? <br /> : " "}<span style={{
-              background: `linear-gradient(transparent 60%, rgba(226,97,29,0.15) 60%)`,
-            }}>every</span>{wide ? <br /> : " "}cup.
-          </h1>
-          <p style={{
-            fontSize: wide ? 18 : 16, color: C.muted, fontFamily: sans, lineHeight: 1.6,
-            maxWidth: 440, margin: wide ? "0 0 36px" : "0 auto 36px",
-            animation: "lp-fadeUp 0.6s ease 0.1s both",
-          }}>
-            A tasting journal for coffee lovers. Snap a bag, rate together, and discover
-            your household's palate — one cup at a time.
-          </p>
+      <header style={{ position: "relative", padding: "0 24px" }}>
+        <CoffeeRing size={wide ? 480 : 300} top={wide ? 60 : 30} right={wide ? "4%" : "-20%"} />
+        <CoffeeRing size={wide ? 260 : 170} bottom={40} left={wide ? "6%" : "-12%"} opacity={0.7} />
+
+        <div style={{ maxWidth: 1240, margin: "0 auto", padding: wide ? "84px 0 72px" : "56px 0 48px", position: "relative" }}>
+          {/* Editorial meta line */}
           <div style={{
-            display: "flex", gap: 14, justifyContent: wide ? "flex-start" : "center",
-            flexWrap: "wrap", animation: "lp-fadeUp 0.6s ease 0.18s both",
+            display: "flex", justifyContent: "space-between", fontFamily: sans,
+            fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: C.muted,
+            marginBottom: wide ? 48 : 32, animation: "lp-fadeUp 0.6s ease both",
           }}>
-            <a href={user ? "/app" : "/login"} onClick={go(user ? "/app" : "/login")} style={{
-              padding: "14px 36px", borderRadius: 999, background: C.ink, color: "#fff8f0",
-              fontFamily: sans, fontSize: 16, fontWeight: 600, textDecoration: "none",
+            <span>A shared tasting journal</span>
+            {wide && <span>For coffee households</span>}
+            <span>Est. one great cup ago</span>
+          </div>
+
+          <h1 style={{
+            margin: 0, textTransform: "uppercase",
+            fontFamily: serif, fontWeight: 900, color: C.ink,
+            fontSize: wide ? "clamp(80px, 11vw, 150px)" : "clamp(56px, 16vw, 80px)",
+            lineHeight: 0.88, letterSpacing: "-0.04em",
+            animation: "lp-fadeUp 0.7s ease 0.05s both",
+          }}>
+            Every cup,
+          </h1>
+          <div style={{
+            fontFamily: fraunces, fontStyle: "italic", fontWeight: 400, color: C.accent,
+            fontSize: wide ? "clamp(80px, 10.5vw, 144px)" : "clamp(52px, 15vw, 76px)",
+            lineHeight: 1.04, letterSpacing: "-0.02em", textTransform: "none",
+            animation: "lp-fadeUp 0.7s ease 0.12s both",
+          }}>
+            remembered.
+          </div>
+
+          <div style={{
+            display: "flex", alignItems: wide ? "flex-end" : "flex-start",
+            flexDirection: wide ? "row" : "column",
+            justifyContent: "space-between", gap: 28,
+            marginTop: wide ? 64 : 40, animation: "lp-fadeUp 0.7s ease 0.2s both",
+          }}>
+            <p style={{
+              margin: 0, maxWidth: 380, fontFamily: sans, fontSize: 16,
+              lineHeight: 1.65, color: C.muted,
             }}>
-              {user ? "Open your journal" : "Start your journal"}
-            </a>
-            {!user && (
-              <a href="/login" onClick={go("/login")} style={{
-                padding: "14px 36px", borderRadius: 999, background: "transparent",
-                color: C.ink, border: `1.5px solid ${C.border}`,
-                fontFamily: sans, fontSize: 16, fontWeight: 500, textDecoration: "none",
-              }}>Sign in</a>
-            )}
+              Snap the bag, brew, and rate together. Koffeinkollektivet is the tasting
+              journal your household keeps coming back to — one cup at a time.
+            </p>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <a href={user ? "/app" : "/login"} onClick={go(user ? "/app" : "/login")} style={{
+                padding: "15px 34px", borderRadius: 999, background: C.accent, color: "#fff8f0",
+                fontFamily: sans, fontSize: 15, fontWeight: 600, textDecoration: "none",
+                boxShadow: "0 10px 28px rgba(226,97,29,0.32)",
+              }}>
+                {user ? "Open your journal" : "Start your journal"}
+              </a>
+              {!user && (
+                <a href="/login" onClick={go("/login")} style={{
+                  padding: "15px 30px", borderRadius: 999, background: "transparent",
+                  border: `1px solid ${C.ink}`, color: C.ink,
+                  fontFamily: sans, fontSize: 15, fontWeight: 500, textDecoration: "none",
+                }}>Sign in</a>
+              )}
+            </div>
           </div>
         </div>
+      </header>
 
-        {/* Phone side */}
+      {/* ── Tasting-notes ticker ── */}
+      <Ticker />
+
+      {/* ── How it works: editorial index ── */}
+      <section style={{ maxWidth: 1240, margin: "0 auto", padding: wide ? "96px 24px" : "64px 24px" }}>
         <div style={{
-          flexShrink: 0, animation: "lp-fadeUp 0.6s ease 0.26s both",
-          ...(wide ? {} : { maxWidth: 320, margin: "0 auto" }),
+          fontFamily: sans, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
+          color: C.muted, marginBottom: 28,
+        }}>How it works</div>
+
+        {[
+          { n: "01", t: "Snap the bag", d: "Photograph any coffee. AI reads the label — origin, process, varietal, tasting notes — and files it in your shared catalog." },
+          { n: "02", t: "Brew & rate", d: "Everyone scores independently. Grind setting, brew method, honest notes. No peeking at each other's numbers first." },
+          { n: "03", t: "Know your palate", d: "Origins, processes and flavors stack into a taste profile. Next time you're staring at a shelf, you'll know exactly what to buy." },
+        ].map((s, i, arr) => (
+          <div key={s.n} style={{
+            display: wide ? "grid" : "block",
+            gridTemplateColumns: "110px 1fr 1.1fr",
+            gap: 24, alignItems: "baseline",
+            padding: wide ? "34px 0" : "26px 0",
+            borderTop: `1px solid ${C.ink}`,
+            borderBottom: i === arr.length - 1 ? `1px solid ${C.ink}` : "none",
+          }}>
+            <div style={{ fontFamily: fraunces, fontStyle: "italic", fontSize: wide ? 30 : 22, color: C.accent, marginBottom: wide ? 0 : 6 }}>
+              {s.n}
+            </div>
+            <h3 style={{
+              margin: 0, fontFamily: serif, fontWeight: 900, textTransform: "uppercase",
+              fontSize: wide ? "clamp(28px, 3.2vw, 44px)" : 28, letterSpacing: "-0.02em", lineHeight: 1,
+              marginBottom: wide ? 0 : 10,
+            }}>{s.t}</h3>
+            <p style={{ margin: 0, fontFamily: sans, fontSize: 15, lineHeight: 1.65, color: C.muted }}>
+              {s.d}
+            </p>
+          </div>
+        ))}
+      </section>
+
+      {/* ── The score moment (espresso block) ── */}
+      <section style={{ background: C.ink, color: "#fff8f0", position: "relative", overflow: "hidden" }}>
+        <CoffeeRing size={wide ? 560 : 320} top="-15%" right="-8%" opacity={0.9} />
+        <div style={{
+          maxWidth: 1240, margin: "0 auto", padding: wide ? "110px 24px" : "72px 24px",
+          display: wide ? "grid" : "block", gridTemplateColumns: "auto 1fr", gap: 72, alignItems: "center",
         }}>
-          <div style={{ animation: "lp-float 6s ease-in-out infinite" }}>
+          <div style={{ lineHeight: 0.8, marginBottom: wide ? 0 : 32 }}>
+            <span style={{
+              fontFamily: fraunces, fontWeight: 600, fontStyle: "italic",
+              fontSize: wide ? "clamp(160px, 18vw, 260px)" : "clamp(120px, 32vw, 170px)",
+              color: C.accent, letterSpacing: "-0.04em",
+            }}>9.5</span>
+          </div>
+          <div>
+            <p style={{
+              margin: 0, fontFamily: fraunces, fontStyle: "italic", fontWeight: 400,
+              fontSize: wide ? "clamp(24px, 2.6vw, 36px)" : 22, lineHeight: 1.35, color: "#fff8f0",
+            }}>
+              "Possibly the best cup of the year. Jasmine front, peach middle,
+              sweetness that won't leave."
+            </p>
+            <div style={{
+              marginTop: 22, fontFamily: sans, fontSize: 12, letterSpacing: "0.16em",
+              textTransform: "uppercase", color: "#b89870",
+            }}>
+              Madsy — on Hartmann Geisha, La Cabra
+            </div>
+            <div style={{ marginTop: 6, fontFamily: sans, fontSize: 12, color: "#7a6050" }}>
+              Logged from the kitchen counter. Settled an argument.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Catalog in your pocket ── */}
+      <section style={{ maxWidth: 1240, margin: "0 auto", padding: wide ? "110px 24px" : "72px 24px", position: "relative" }}>
+        <div style={{
+          display: wide ? "grid" : "block", gridTemplateColumns: "1fr auto", gap: 80, alignItems: "center",
+        }}>
+          <div style={{ marginBottom: wide ? 0 : 48 }}>
+            <h2 style={{
+              margin: "0 0 20px", fontFamily: serif, fontWeight: 900, textTransform: "uppercase",
+              fontSize: wide ? "clamp(40px, 5vw, 64px)" : 36, lineHeight: 0.95, letterSpacing: "-0.03em",
+            }}>
+              The whole catalog,{" "}
+              <span style={{ fontFamily: fraunces, fontStyle: "italic", fontWeight: 400, textTransform: "none", color: C.accent }}>
+                in your pocket.
+              </span>
+            </h2>
+            <p style={{ margin: "0 0 28px", maxWidth: 420, fontFamily: sans, fontSize: 15, lineHeight: 1.65, color: C.muted }}>
+              Every bag you've brewed, every score, every note — searchable at the shelf.
+              Install it as an app and it lives next to the grinder.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {[
+                "AI reads the bag so you don't type",
+                "Separate scores for every taster",
+                "A verdict before you buy the next bag",
+              ].map((x) => (
+                <div key={x} style={{ display: "flex", alignItems: "center", gap: 14, fontFamily: sans, fontSize: 15, color: C.ink }}>
+                  <span style={{ width: 22, height: 1, background: C.accent, flexShrink: 0 }} />
+                  {x}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ position: "relative" }}>
+            <CoffeeRing size={360} top="-10%" left="-25%" />
             <PhoneMockup />
           </div>
         </div>
       </section>
 
-      {/* ── How it works (dark section) ── */}
-      <section style={{ padding: "100px 24px", background: C.ink }}>
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 64 }}>
-            <h2 style={{ fontFamily: serif, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, color: "#fff8f0", margin: 0, letterSpacing: "-0.025em", textTransform: "uppercase" }}>
-              Three steps
-            </h2>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 48 }}>
-            {[
-              { num: "1", title: "Snap the bag", desc: "Photograph any coffee package. AI reads the label and fills in origin, process, varietal, and tasting notes." },
-              { num: "2", title: "Brew & rate", desc: "Everyone rates independently. Track grind settings, brew methods, and scores across multiple sessions." },
-              { num: "3", title: "Discover your taste", desc: "Watch your coffee map grow. See which origins, processes, and flavors your household loves most." },
-            ].map((s, i) => (
-              <div key={i}>
-                <div style={{ fontFamily: serif, fontWeight: 900, fontSize: 48, color: "rgba(255,248,240,0.1)", lineHeight: 1, marginBottom: 16 }}>{s.num}</div>
-                <h3 style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: "#fff8f0", margin: "0 0 10px", letterSpacing: "-0.01em" }}>{s.title}</h3>
-                <p style={{ fontSize: 14, color: "#b89870", fontFamily: sans, lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Features ── */}
-      <section style={{ padding: "100px 24px" }}>
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 64 }}>
-            <h2 style={{ fontFamily: serif, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, color: C.ink, margin: 0, letterSpacing: "-0.025em", textTransform: "uppercase" }}>
-              What's inside
-            </h2>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 32 }}>
-            {[
-              { title: "AI-powered scanning", desc: "Photograph any bag and watch the details fill themselves in. Powered by Claude." },
-              { title: "Household sharing", desc: "Everyone has their own ratings. See where you agree — and where you don't." },
-              { title: "Origin map", desc: "A world map colored by your scores. See your coffee belt preferences at a glance." },
-              { title: "Taste insights", desc: "Charts by origin, process, varietal, and roast level. Your preferences, quantified." },
-              { title: "Flavor tagging", desc: "22 flavor tags from Fruity to Funky. Track what lights up your palate." },
-              { title: "Works offline", desc: "Install as an app. Open it right next to the grinder, no connection needed." },
-            ].map((f, i) => (
-              <div key={i} style={{ padding: "4px 0" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                  <span style={{ width: 20, height: 2, background: C.accent, borderRadius: 1, flexShrink: 0 }} />
-                  <h3 style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, color: C.ink, margin: 0, letterSpacing: "-0.01em" }}>{f.title}</h3>
-                </div>
-                <p style={{ fontSize: 14, color: C.muted, fontFamily: sans, lineHeight: 1.6, margin: 0, paddingLeft: 30 }}>{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Final CTA ── */}
-      <section style={{ padding: "100px 24px", textAlign: "center", background: C.ink }}>
-        <div style={{ maxWidth: 540, margin: "0 auto" }}>
-          <h2 style={{
-            fontFamily: serif, fontSize: "clamp(28px, 4.5vw, 48px)", fontWeight: 900,
-            color: "#fff8f0", margin: "0 0 20px", letterSpacing: "-0.03em", lineHeight: 1.05,
-            textTransform: "uppercase",
-          }}>
-            Start your journal
-          </h2>
-          <p style={{ fontSize: 16, color: "#7a6050", fontFamily: sans, marginBottom: 36, lineHeight: 1.6 }}>
-            Free to use. Invite your household.<br />Never forget a great bean again.
+      {/* ── Flavor specimen ── */}
+      <section style={{ borderTop: `1px solid ${C.ink}`, padding: wide ? "96px 24px 110px" : "64px 24px 72px" }}>
+        <div style={{ maxWidth: 1240, margin: "0 auto" }}>
+          <div style={{
+            fontFamily: sans, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
+            color: C.muted, marginBottom: 12,
+          }}>The vocabulary</div>
+          <p style={{ margin: "0 0 48px", fontFamily: sans, fontSize: 15, color: C.muted, maxWidth: 420, lineHeight: 1.6 }}>
+            22 flavor tags and counting. Whatever you taste, there's a word for it —
+            and a chart that remembers you tasted it.
           </p>
-          <a href={user ? "/app" : "/login"} onClick={go(user ? "/app" : "/login")} style={{
-            display: "inline-block", padding: "16px 40px", borderRadius: 999,
-            background: "#fff8f0", color: C.ink,
-            fontFamily: sans, fontSize: 16, fontWeight: 600, textDecoration: "none",
+          <div style={{
+            display: "flex", flexWrap: "wrap", alignItems: "baseline",
+            columnGap: wide ? 38 : 22, rowGap: wide ? 18 : 10, maxWidth: 1000,
           }}>
-            {user ? "Open your journal" : "Get started — it's free"}
-          </a>
+            {FLAVOR_SPECIMEN.map(({ w, f, size, color }) => (
+              <span key={w} style={{
+                fontFamily: f === "fraunces" ? fraunces : serif,
+                fontStyle: f === "fraunces" ? "italic" : "normal",
+                fontWeight: f === "fraunces" ? 400 : 900,
+                textTransform: f === "fraunces" ? "none" : "uppercase",
+                fontSize: wide ? size : Math.round(size * 0.7),
+                letterSpacing: f === "fraunces" ? "-0.01em" : "-0.02em",
+                color: colorOf(color), lineHeight: 1,
+              }}>{w}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Final CTA (burnt orange block) ── */}
+      <section style={{ background: C.accent, color: "#fff8f0", position: "relative", overflow: "hidden" }}>
+        <CoffeeRing size={wide ? 500 : 280} bottom="-30%" right="-6%" opacity={0.6} />
+        <div style={{ maxWidth: 1240, margin: "0 auto", padding: wide ? "110px 24px" : "72px 24px", position: "relative" }}>
+          <h2 style={{
+            margin: "0 0 12px", fontFamily: serif, fontWeight: 900, textTransform: "uppercase",
+            fontSize: wide ? "clamp(56px, 8vw, 110px)" : "clamp(40px, 11vw, 56px)",
+            lineHeight: 0.9, letterSpacing: "-0.04em", color: "#fff8f0",
+          }}>
+            Brew.<br />Rate.<br />
+            <span style={{ fontFamily: fraunces, fontStyle: "italic", fontWeight: 400, textTransform: "none", letterSpacing: "-0.02em" }}>
+              Remember.
+            </span>
+          </h2>
+          <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 40, flexWrap: "wrap" }}>
+            <a href={user ? "/app" : "/login"} onClick={go(user ? "/app" : "/login")} style={{
+              padding: "16px 40px", borderRadius: 999, background: C.ink, color: "#fff8f0",
+              fontFamily: sans, fontSize: 16, fontWeight: 600, textDecoration: "none",
+            }}>
+              {user ? "Open your journal" : "Get started — it's free"}
+            </a>
+            <span style={{ fontFamily: sans, fontSize: 13, color: "rgba(255,248,240,0.8)" }}>
+              Free for your household. Invite-only, like a good dinner party.
+            </span>
+          </div>
         </div>
       </section>
 
       {/* ── Footer ── */}
       <footer style={{
-        padding: "20px 24px", textAlign: "center", background: "#1a0f08",
-        fontFamily: sans, fontSize: 12, color: "#5a4030",
+        background: C.ink, color: "#7a6050", padding: "26px 24px",
+        fontFamily: sans, fontSize: 12,
       }}>
-        Koffeinkollektivet
+        <div style={{ maxWidth: 1240, margin: "0 auto", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+          <span style={{ fontFamily: serif, fontWeight: 800, textTransform: "uppercase", color: "#b89870" }}>
+            Koffeinkollektivet
+          </span>
+          <span style={{ fontFamily: fraunces, fontStyle: "italic" }}>every cup, remembered.</span>
+        </div>
       </footer>
     </div>
   );
