@@ -12,7 +12,14 @@ export function AuthProvider({ children }) {
     // Refresh the cached session on load so profile/role changes (e.g. becoming
     // admin) propagate without needing to sign out and back in.
     if (isLoggedIn()) {
-      pb.collection("users").authRefresh().catch(() => { /* keep cached session if offline/expired */ });
+      pb.collection("users").authRefresh().catch((err) => {
+        // 401 = token is invalid (DB reset, account deleted, secret key changed).
+        // Clear the stale session so the user lands on the login screen instead
+        // of seeing an empty app. Non-401 errors (offline, 5xx) keep the cache.
+        if (err?.status === 401 || err?.response?.code === 401) {
+          pbLogout();
+        }
+      });
     }
     setReady(true);
     return unsub;
