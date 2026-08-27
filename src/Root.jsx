@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from "./auth.jsx";
 import LoginScreen from "./LoginScreen.jsx";
 import AppShell from "./AppShell.jsx";
 import LandingPage from "./LandingPage.jsx";
-import { C, sans } from "./ui.jsx";
+import NotFound from "./NotFound.jsx";
 import { navigate, isStandalone } from "./router.js";
 
 function usePathname() {
@@ -47,8 +47,8 @@ function Gate() {
     return <AppShell />;
   }
 
-  navigate("/", { replace: true });
-  return null;
+  // Unknown path → a real 404 (kept in-world), not a silent bounce home.
+  return <NotFound loggedIn={!!user} />;
 }
 
 export default function Root() {
