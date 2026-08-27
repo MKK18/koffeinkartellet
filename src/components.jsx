@@ -1,17 +1,22 @@
 import { useState, useEffect, useRef } from "react";
-import { C, sans, serif } from "./ui.jsx";
 import { useIsWide } from "./useMediaQuery.js";
 import { COFFEE_COUNTRIES, FLAVOR_CATEGORIES, TAG_EMOJI, ROAST_INTENSITY } from "./lib.js";
 import { avatarUrl } from "./pb.js";
 
-// Round avatar: shows the uploaded photo if there is one, else a colored circle
-// with the person's first initial.
+// Contraband Ledger primitives. Every screen renders inside AppShell's `.cl`
+// container, so var(--ink)/var(--font-mono)/etc. resolve in inline styles here.
+const DISPLAY = "var(--font-display)";
+const MONO = "var(--font-mono)";
+const BODY = "var(--font-body)";
+
+// Avatar: uploaded photo, else a colored square (the member's stamp color) with
+// their initial — squares, not circles, to sit in the ledger world.
 export function Avatar({ user, size = 32, onClick, ring }) {
   const url = avatarUrl(user);
   const initial = (user?.name || user?.email || "?").trim().charAt(0).toUpperCase();
   const base = {
-    width: size, height: size, borderRadius: "50%", flexShrink: 0,
-    border: ring ? `2px solid ${ring}` : "none",
+    width: size, height: size, flexShrink: 0,
+    border: ring ? `2px solid ${ring}` : "1px solid var(--ink-line)",
     cursor: onClick ? "pointer" : "default", display: "block",
   };
   if (url) {
@@ -19,72 +24,68 @@ export function Avatar({ user, size = 32, onClick, ring }) {
   }
   return (
     <div onClick={onClick} title={user?.name || ""} style={{
-      ...base, background: user?.color || C.brown, display: "flex", alignItems: "center",
-      justifyContent: "center", color: "#fff8f0", fontFamily: serif, fontWeight: 700,
-      fontSize: Math.round(size * 0.46), lineHeight: 1, userSelect: "none",
+      ...base, background: user?.color || "var(--stamp)", display: "flex", alignItems: "center",
+      justifyContent: "center", color: "#fff", fontFamily: DISPLAY,
+      fontSize: Math.round(size * 0.5), lineHeight: 1, userSelect: "none",
     }}>{initial}</div>
   );
 }
 
-// Coffee-ring stain — the brand motif from the landing page. Children render
-// centered inside the ring (used for empty states).
+// Repurposed empty-state motif: a stamped "void" frame (the ledger world refuses
+// the old coffee-ring). Children render centered inside the stamp.
 export function CoffeeRing({ size = 220, children, style }) {
   return (
     <div aria-hidden={!children} style={{
-      position: "relative", width: size, height: size, margin: "0 auto",
+      position: "relative", width: size, height: size * 0.62, margin: "0 auto",
       display: "flex", alignItems: "center", justifyContent: "center", ...style,
     }}>
       <div style={{
-        position: "absolute", inset: 0, borderRadius: "50%",
-        border: `${Math.max(8, Math.round(size * 0.055))}px solid rgba(139,94,60,0.10)`,
+        position: "absolute", inset: 0, transform: "rotate(-4deg)", borderRadius: 6,
+        border: "2.5px solid var(--ink-line)",
       }} />
       <div style={{
-        position: "absolute", inset: "3% 1% 1% 3%", borderRadius: "50%",
-        border: `${Math.max(2, Math.round(size * 0.012))}px solid rgba(139,94,60,0.14)`,
+        position: "absolute", inset: "8px 6px", transform: "rotate(-4deg)", borderRadius: 5,
+        border: "1px dashed var(--dim-2)",
       }} />
-      {children && <div style={{ position: "relative", textAlign: "center", padding: 24 }}>{children}</div>}
+      {children && <div style={{ position: "relative", textAlign: "center", padding: 24, color: "var(--dim)", fontFamily: MONO, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>{children}</div>}
     </div>
   );
 }
 
 export function Pill({ children, green, awaiting, color }) {
+  const common = { fontSize: 10, padding: "3px 9px", fontFamily: MONO, letterSpacing: "0.1em", textTransform: "uppercase", display: "inline-block" };
   if (awaiting) {
-    return (
-      <span style={{ fontSize: 11, padding: "1px 9px", borderRadius: 12, fontFamily: sans, background: "transparent", color, border: `1px dashed ${color}`, letterSpacing: "0.02em" }}>{children}</span>
-    );
+    return <span style={{ ...common, background: "transparent", color: color || "var(--dim)", border: `1px dashed ${color || "var(--dim)"}` }}>{children}</span>;
   }
   return (
-    <span style={{ fontSize: 11, padding: "2px 10px", borderRadius: 12, fontFamily: sans, background: green ? "#e8f0e8" : "#f0e6da", color: green ? "#3a6040" : "#6b4226" }}>{children}</span>
+    <span style={{ ...common, background: "transparent", color: green ? "var(--ok)" : "var(--manila)", border: `1px solid ${green ? "var(--ok)" : "var(--ink-line)"}` }}>{children}</span>
   );
 }
 
 export function Tag({ label, active, onClick }) {
   return (
     <button type="button" onClick={onClick} style={{
-      padding: "8px 14px", borderRadius: 20, fontSize: 13, fontFamily: sans, letterSpacing: "0.04em",
-      border: active ? `1.5px solid ${C.brown}` : `1.5px solid #d4c5b5`,
-      background: active ? C.brown : "transparent", color: active ? "#fff8f0" : C.muted,
+      padding: "8px 14px", fontSize: 11, fontFamily: MONO, letterSpacing: "0.1em", textTransform: "uppercase",
+      border: active ? "1px solid var(--stamp)" : "1px solid var(--ink-line)",
+      background: active ? "var(--stamp)" : "transparent", color: active ? "#fff" : "var(--manila)",
       cursor: "pointer", transition: "all 0.15s ease",
     }}>{label}</button>
   );
 }
 
 export function SectionHead({ title }) {
-  return <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: C.faint, fontFamily: sans, marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #ecddd0", marginTop: 20 }}>{title}</div>;
+  return <div style={{ fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--dim)", fontFamily: MONO, marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid var(--ink-line)", marginTop: 22 }}>{title}</div>;
 }
 
 export function Spinner() {
   return (
-    <span style={{ display: "inline-block", width: 16, height: 16, border: "2px solid #e0d0c0", borderTopColor: C.brown, borderRadius: "50%", animation: "spin 0.7s linear infinite" }}>
+    <span style={{ display: "inline-block", width: 16, height: 16, border: "2px solid var(--ink-line)", borderTopColor: "var(--stamp)", borderRadius: "50%", animation: "spin 0.7s linear infinite" }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </span>
   );
 }
 
 // Responsive overlay: full-screen sheet on phones, centered modal on desktop.
-// `padX` is the horizontal padding actually applied — exposed so children can
-// bleed-to-edge (e.g. a hero image) without hard-coding margins that overshoot
-// on mobile and create phantom horizontal scrollbars.
 export const SHEET_PAD_X_WIDE = 28;
 export const SHEET_PAD_X_NARROW = 18;
 export function Sheet({ children, onClose, maxWidth = 580 }) {
@@ -100,37 +101,31 @@ export function Sheet({ children, onClose, maxWidth = 580 }) {
     <div
       onClick={(e) => e.target === e.currentTarget && onClose()}
       style={{
-        position: "fixed", inset: 0, background: "rgba(20,10,5,0.6)", zIndex: 100,
+        position: "fixed", inset: 0, background: "rgba(6,4,3,0.72)", zIndex: 100,
         display: "flex", alignItems: wide ? "center" : "flex-end", justifyContent: "center",
-        padding: wide ? 16 : 0,
+        padding: wide ? 16 : 0, backdropFilter: "blur(2px)",
       }}
     >
       <div className="sheet-scroll" style={{
-        background: C.card,
-        borderRadius: wide ? 20 : "20px 20px 0 0",
+        background: "var(--ink-2)",
+        border: "1px solid var(--ink-line)",
+        borderRadius: wide ? 6 : "6px 6px 0 0",
+        color: "var(--bone)", fontFamily: BODY,
         padding: wide
           ? `28px ${SHEET_PAD_X_WIDE}px`
           : `20px ${SHEET_PAD_X_NARROW}px calc(20px + env(safe-area-inset-bottom))`,
         width: "100%", maxWidth: wide ? maxWidth : "100%",
         maxHeight: wide ? "92vh" : "94vh",
-        // Vertical scroll only — any horizontal overshoot inside is clipped, so
-        // decorative bleeds can't produce a phantom horizontal scrollbar.
-        overflowX: "hidden",
-        overflowY: "auto",
-        boxShadow: "0 -8px 40px rgba(60,20,0,0.25)",
-        // Thin warm-toned scrollbar (Firefox + WebKit handled below).
-        scrollbarWidth: "thin",
-        scrollbarColor: "#d4c5b5 transparent",
-        // Reserve gutter only on desktop where mouse scrollbars take real
-        // width. On mobile they overlay; reserving a lane leaves a phantom
-        // strip the user reads as "extra content that can't be scrolled."
+        overflowX: "hidden", overflowY: "auto",
+        boxShadow: "0 -20px 60px rgba(0,0,0,0.6)",
+        scrollbarWidth: "thin", scrollbarColor: "var(--ink-line) transparent",
         scrollbarGutter: wide ? "stable" : "auto",
       }}>
         <style>{`
           .sheet-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
           .sheet-scroll::-webkit-scrollbar-track { background: transparent; margin: 12px 0; }
-          .sheet-scroll::-webkit-scrollbar-thumb { background: #d4c5b5; border-radius: 999px; }
-          .sheet-scroll::-webkit-scrollbar-thumb:hover { background: #c0a890; }
+          .sheet-scroll::-webkit-scrollbar-thumb { background: var(--ink-line); }
+          .sheet-scroll::-webkit-scrollbar-thumb:hover { background: var(--dim-2); }
         `}</style>
         {children}
       </div>
@@ -138,9 +133,16 @@ export function Sheet({ children, onClose, maxWidth = 580 }) {
   );
 }
 
-// Generic combobox: a text input that suggests from `options` but accepts any
-// value the user types. Uses a custom popup (not native <datalist>) so the
-// dropdown positions reliably below the input across browsers.
+// Dropdown panel shared by the comboboxes.
+const POPUP = {
+  position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "var(--ink-2)",
+  border: "1px solid var(--ink-line)", borderRadius: 4, maxHeight: 220, overflowY: "auto",
+  zIndex: 20, boxShadow: "0 16px 40px rgba(0,0,0,.6)",
+};
+const OPT = { padding: "10px 14px", fontSize: 14, fontFamily: BODY, color: "var(--bone)", cursor: "pointer" };
+const optEnter = (e) => (e.currentTarget.style.background = "var(--ink-line)");
+const optLeave = (e) => (e.currentTarget.style.background = "transparent");
+
 export function Combobox({ value, onChange, options, placeholder, style }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef();
@@ -157,9 +159,7 @@ export function Combobox({ value, onChange, options, placeholder, style }) {
   return (
     <div ref={wrap} style={{ position: "relative" }}>
       <input
-        type="text"
-        value={value || ""}
-        placeholder={placeholder || ""}
+        type="text" value={value || ""} placeholder={placeholder || ""}
         onFocus={() => setOpen(true)}
         onChange={(e) => { onChange(e.target.value); setOpen(true); }}
         onKeyDown={(e) => {
@@ -169,14 +169,10 @@ export function Combobox({ value, onChange, options, placeholder, style }) {
         style={style}
       />
       {open && filtered.length > 0 && !exactMatch && (
-        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 10, maxHeight: 220, overflowY: "auto", zIndex: 20, boxShadow: "0 8px 20px rgba(100,70,40,0.14)" }}>
+        <div style={POPUP}>
           {filtered.map((o) => (
-            <div key={o}
-              onMouseDown={(e) => { e.preventDefault(); onChange(o); setOpen(false); }}
-              style={{ padding: "10px 14px", fontSize: 14, fontFamily: sans, color: C.ink, cursor: "pointer" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = C.tint)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >{o}</div>
+            <div key={o} onMouseDown={(e) => { e.preventDefault(); onChange(o); setOpen(false); }}
+              style={OPT} onMouseEnter={optEnter} onMouseLeave={optLeave}>{o}</div>
           ))}
         </div>
       )}
@@ -184,11 +180,6 @@ export function Combobox({ value, onChange, options, placeholder, style }) {
   );
 }
 
-// Multi-value combobox: stores an array, displays each value as a chip,
-// autocompletes from `options`, but accepts any free-text the user types.
-// Used for Varietal (most coffees have 1-3) and Origin (blends span many).
-// Enter or comma adds the current text. Backspace on empty input removes
-// the last chip.
 export function MultiCombobox({ values = [], onChange, options = [], placeholder, style }) {
   const [input, setInput] = useState("");
   const [open, setOpen] = useState(false);
@@ -213,9 +204,6 @@ export function MultiCombobox({ values = [], onChange, options = [], placeholder
   const filtered = (q ? options.filter((o) => o.toLowerCase().includes(q)) : options)
     .filter((o) => !values.some((v) => v.toLowerCase() === o.toLowerCase()));
 
-  // Treat the host `style` as the *outer* box style (matching inputStyle), but
-  // override padding so chips have breathing room and the inner <input> stays
-  // borderless.
   const outerStyle = { ...style, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", cursor: "text", padding: "8px 10px" };
 
   return (
@@ -224,19 +212,17 @@ export function MultiCombobox({ values = [], onChange, options = [], placeholder
         {values.map((v, i) => (
           <span key={`${v}-${i}`} style={{
             display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 4px 3px 10px",
-            background: C.tint, border: `1px solid ${C.border}`, borderRadius: 999,
-            fontSize: 13, fontFamily: sans, color: C.ink,
+            background: "transparent", border: "1px solid var(--ink-line)",
+            fontSize: 12, fontFamily: MONO, letterSpacing: "0.06em", color: "var(--manila)",
           }}>
             {v}
             <button type="button" onClick={(e) => { e.stopPropagation(); removeAt(i); }} style={{
-              background: "none", border: "none", color: C.muted, cursor: "pointer", padding: "0 6px", lineHeight: 1, fontSize: 16,
+              background: "none", border: "none", color: "var(--dim)", cursor: "pointer", padding: "0 6px", lineHeight: 1, fontSize: 16,
             }}>×</button>
           </span>
         ))}
         <input
-          ref={inputRef}
-          type="text"
-          value={input}
+          ref={inputRef} type="text" value={input}
           placeholder={values.length === 0 ? (placeholder || "") : ""}
           onFocus={() => setOpen(true)}
           onChange={(e) => { setInput(e.target.value); setOpen(true); }}
@@ -251,23 +237,17 @@ export function MultiCombobox({ values = [], onChange, options = [], placeholder
             } else if (e.key === "Backspace" && !input && values.length > 0) {
               e.preventDefault();
               removeAt(values.length - 1);
-            } else if (e.key === "Escape") {
-              setOpen(false);
-            }
+            } else if (e.key === "Escape") { setOpen(false); }
           }}
           onBlur={() => { if (input.trim()) add(input); }}
-          style={{ flex: 1, minWidth: 80, border: "none", outline: "none", background: "transparent", fontFamily: sans, fontSize: 14, color: C.ink, padding: "2px 0" }}
+          style={{ flex: 1, minWidth: 80, border: "none", outline: "none", background: "transparent", fontFamily: MONO, fontSize: 14, color: "var(--bone)", padding: "2px 0" }}
         />
       </div>
       {open && filtered.length > 0 && (
-        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 10, maxHeight: 220, overflowY: "auto", zIndex: 20, boxShadow: "0 8px 20px rgba(100,70,40,0.14)" }}>
+        <div style={POPUP}>
           {filtered.map((o) => (
-            <div key={o}
-              onMouseDown={(e) => { e.preventDefault(); add(o); }}
-              style={{ padding: "10px 14px", fontSize: 14, fontFamily: sans, color: C.ink, cursor: "pointer" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = C.tint)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >{o}</div>
+            <div key={o} onMouseDown={(e) => { e.preventDefault(); add(o); }}
+              style={OPT} onMouseEnter={optEnter} onMouseLeave={optLeave}>{o}</div>
           ))}
         </div>
       )}
@@ -275,7 +255,6 @@ export function MultiCombobox({ values = [], onChange, options = [], placeholder
   );
 }
 
-// Country autocomplete (free text allowed) — ported from the original.
 export function CountryCombobox({ value, onChange, placeholder, style }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef();
@@ -302,15 +281,10 @@ export function CountryCombobox({ value, onChange, placeholder, style }) {
         style={style}
       />
       {open && filtered.length > 0 && !exactMatch && (
-        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 10, maxHeight: 220, overflowY: "auto", zIndex: 20, boxShadow: "0 8px 20px rgba(100,70,40,0.14)" }}>
+        <div style={POPUP}>
           {filtered.map((c) => (
-            <div key={c}
-              onMouseDown={(e) => { e.preventDefault(); onChange(c); setOpen(false); }}
-              style={{ padding: "10px 14px", fontSize: 14, fontFamily: sans, color: C.ink, cursor: "pointer" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#fbeee4")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-              {c}
-            </div>
+            <div key={c} onMouseDown={(e) => { e.preventDefault(); onChange(c); setOpen(false); }}
+              style={OPT} onMouseEnter={optEnter} onMouseLeave={optLeave}>{c}</div>
           ))}
         </div>
       )}
@@ -318,20 +292,21 @@ export function CountryCombobox({ value, onChange, placeholder, style }) {
   );
 }
 
-// Category-grouped flavour picker (Coffi-inspired). Replaces the flat tag list.
+// Category-grouped flavour picker. Category dots keep their own hue; chips read
+// as stamped marks in the ledger world.
 export function FlavorPicker({ value = [], onChange }) {
   const toggle = (t) => onChange(value.includes(t) ? value.filter((x) => x !== t) : [...value, t]);
   return (
     <div>
       {value.length > 0 && (
-        <div style={{ marginBottom: 16, padding: 12, background: C.tint, borderRadius: 14, border: `1px solid ${C.borderSoft}` }}>
-          <div style={{ fontSize: 11, color: C.muted, fontFamily: sans, marginBottom: 8, letterSpacing: "0.06em" }}>SELECTED ({value.length})</div>
+        <div style={{ marginBottom: 16, padding: 12, background: "var(--ink)", border: "1px solid var(--ink-line)" }}>
+          <div style={{ fontSize: 10, color: "var(--dim)", fontFamily: MONO, marginBottom: 8, letterSpacing: "0.16em", textTransform: "uppercase" }}>Selected ({value.length})</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {value.map((t) => (
               <button key={t} type="button" onClick={() => toggle(t)} style={{
                 display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px",
-                borderRadius: 999, border: "none", background: C.brown, color: "#fff8f0",
-                fontFamily: sans, fontSize: 13, cursor: "pointer",
+                border: "1px solid var(--stamp)", background: "var(--stamp)", color: "#fff",
+                fontFamily: MONO, fontSize: 12, letterSpacing: "0.06em", cursor: "pointer",
               }}>
                 <span>{TAG_EMOJI[t] || ""}</span>{t}<span style={{ opacity: 0.75, marginLeft: 2 }}>×</span>
               </button>
@@ -342,20 +317,19 @@ export function FlavorPicker({ value = [], onChange }) {
       {FLAVOR_CATEGORIES.map((cat) => (
         <div key={cat.name} style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: cat.color, display: "inline-block" }} />
-            <span style={{ fontFamily: sans, fontSize: 13, fontWeight: 600, color: C.ink }}>{cat.name}</span>
+            <span style={{ width: 8, height: 8, background: cat.color, display: "inline-block" }} />
+            <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--bone)" }}>{cat.name}</span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {cat.tags.map((t) => {
               const active = value.includes(t);
               return (
                 <button key={t} type="button" onClick={() => toggle(t)} style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "8px 14px", borderRadius: 999, cursor: "pointer",
-                  border: `1.5px solid ${active ? cat.color : C.border}`,
+                  display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer",
+                  border: `1px solid ${active ? cat.color : "var(--ink-line)"}`,
                   background: active ? cat.color : "transparent",
-                  color: active ? "#fff8f0" : C.muted,
-                  fontFamily: sans, fontSize: 13, transition: "all 0.15s",
+                  color: active ? "#fff" : "var(--manila)",
+                  fontFamily: MONO, fontSize: 12, letterSpacing: "0.06em", transition: "all 0.15s",
                 }}>
                   <span>{TAG_EMOJI[t] || ""}</span>{t}
                 </button>
@@ -368,20 +342,18 @@ export function FlavorPicker({ value = [], onChange }) {
   );
 }
 
-// Filled-square scale (1-5).
 const SCALE_LABEL = ["—", "Low", "Med-Low", "Medium", "Med-High", "High"];
-function ScaleBars({ value, color = C.ink }) {
+function ScaleBars({ value, color = "var(--stamp)" }) {
   const v = Math.round(Number(value) || 0);
   return (
     <div style={{ display: "flex", gap: 5 }}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} style={{ width: 18, height: 18, borderRadius: 3, background: i <= v ? color : C.borderSoft, display: "inline-block" }} />
+        <span key={i} style={{ width: 18, height: 18, background: i <= v ? color : "var(--ink-line)", display: "inline-block" }} />
       ))}
     </div>
   );
 }
 
-// Coffi-style flavour profile: roast (from text), acidity, body, sweetness.
 export function FlavorProfile({ roast, acidity, body, sweetness }) {
   const roastVal = ROAST_INTENSITY[roast] || 0;
   const rows = [
@@ -393,30 +365,29 @@ export function FlavorProfile({ roast, acidity, body, sweetness }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
       {rows.map((r) => (
-        <div key={r.label} style={{ background: C.card, border: `1px solid ${C.borderSoft}`, borderRadius: 14, padding: 14 }}>
-          <div style={{ fontFamily: sans, fontSize: 12, color: C.muted, marginBottom: 10 }}>{r.label}</div>
+        <div key={r.label} style={{ background: "var(--ink)", border: "1px solid var(--ink-line)", padding: 14 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--dim)", marginBottom: 10 }}>{r.label}</div>
           <ScaleBars value={r.val} />
-          <div style={{ fontFamily: sans, fontStyle: "italic", fontSize: 13, color: C.ink, marginTop: 10 }}>{r.text}</div>
+          <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: "0.04em", color: "var(--manila)", marginTop: 10 }}>{r.text}</div>
         </div>
       ))}
     </div>
   );
 }
 
-// Small slider used inside the form (acidity/body/sweetness).
-export function ScaleSlider({ label, value, onChange, color = C.brown }) {
+export function ScaleSlider({ label, value, onChange, color = "var(--stamp)" }) {
   const v = Number(value) || 0;
   return (
     <div style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-        <span style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, fontFamily: sans }}>{label}</span>
-        <span style={{ fontFamily: sans, fontSize: 13, color: C.ink }}>{v > 0 ? SCALE_LABEL[v] : "—"}</span>
+        <span style={{ fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--dim)", fontFamily: MONO }}>{label}</span>
+        <span style={{ fontFamily: MONO, fontSize: 12, color: "var(--manila)" }}>{v > 0 ? SCALE_LABEL[v] : "—"}</span>
       </div>
       <div style={{ display: "flex", gap: 6 }}>
         {[1, 2, 3, 4, 5].map((i) => (
           <button key={i} type="button" onClick={() => onChange(i === v ? 0 : i)} style={{
-            flex: 1, height: 32, borderRadius: 8, border: "none", cursor: "pointer",
-            background: i <= v ? color : C.borderSoft,
+            flex: 1, height: 32, border: "none", cursor: "pointer",
+            background: i <= v ? color : "var(--ink-line)",
           }} />
         ))}
       </div>
@@ -424,14 +395,14 @@ export function ScaleSlider({ label, value, onChange, color = C.brown }) {
   );
 }
 
-// Small circular score badge.
-export function ScorePuck({ score, label, color = C.brown, size = 44 }) {
+// Score badge — Anton numerals, stamp ink.
+export function ScorePuck({ score, label, color = "var(--stamp)", size = 44 }) {
   return (
     <div style={{ textAlign: "center", flexShrink: 0 }}>
-      <div style={{ fontSize: size * 0.5, fontFamily: serif, fontWeight: 700, color: score ? color : "#d4c5b5", lineHeight: 1 }}>
+      <div className="tnum" style={{ fontSize: size * 0.62, fontFamily: DISPLAY, color: score ? color : "var(--dim-2)", lineHeight: 0.9 }}>
         {score ? Number(score).toFixed(1) : "—"}
       </div>
-      {label && <div style={{ fontSize: 9, color, opacity: 0.75, fontFamily: sans, letterSpacing: "0.1em", marginTop: 2 }}>{label}</div>}
+      {label && <div style={{ fontSize: 9, color: "var(--dim)", fontFamily: MONO, letterSpacing: "0.14em", textTransform: "uppercase", marginTop: 3 }}>{label}</div>}
     </div>
   );
 }
