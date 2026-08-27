@@ -66,7 +66,7 @@ export default function Catalog() {
   useEffect(() => { const t = setTimeout(() => refresh(search), 250); return () => clearTimeout(t); }, [search, refresh, dataVersion]);
 
   return (
-    <div style={{ maxWidth: 760, margin: "0 auto", padding: "20px var(--gut)" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto", padding: "20px var(--gut) 100px" }}>
       <input
         value={search}
         onChange={(e) => setSearch(e.target.value)}

@@ -27,7 +27,7 @@ export default function Feed() {
   useEffect(() => { listRecentTastings(60).then(setItems).catch(() => setItems([])); }, [dataVersion]);
 
   return (
-    <div style={{ maxWidth: 760, margin: "0 auto", padding: "20px var(--gut)" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto", padding: "20px var(--gut) 100px" }}>
       {items === null ? (
         <div style={{ textAlign: "center", padding: 60, color: "var(--dim)", fontFamily: MONO, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase" }}>Loading feed…</div>
       ) : items.length === 0 ? (
