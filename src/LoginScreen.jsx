@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { login, signUpWithInvite } from "./pb.js";
 import { useAuth } from "./auth.jsx";
-import { C, serif, sans, inputStyle, labelStyle, primaryBtn, RATER_COLORS, FontLink } from "./ui.jsx";
+import { RATER_COLORS, FontLink } from "./ui.jsx";
 import { navigate } from "./router.js";
 
 export default function LoginScreen() {
@@ -35,56 +35,54 @@ export default function LoginScreen() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+    <div className="cl" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <FontLink />
-      <div style={{ width: "100%", maxWidth: 400 }}>
-        <div style={{ marginBottom: 16 }}>
-          <a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }}
-            style={{ fontSize: 13, color: C.muted, fontFamily: sans, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
-            <span style={{ fontSize: 16, lineHeight: 1 }}>&larr;</span> Back to home
-          </a>
-        </div>
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: C.faint, fontFamily: sans }}>☕ Koffeinkartellet</div>
-          <h1 style={{ margin: "8px 0 0", fontFamily: serif, fontSize: 36, color: C.ink, fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.02em", lineHeight: 0.95 }}>
-            {mode === "signin" ? "Welcome back" : "Join the cartel"}
-          </h1>
-          <div style={{ fontSize: 13, color: C.muted, fontFamily: sans, marginTop: 6 }}>
-            {mode === "signin" ? "Sign in to your tasting journal" : "You'll need an invite code to sign up"}
+      <style>{LOGIN_CSS}</style>
+      <div style={{ width: "100%", maxWidth: 430 }}>
+        <a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }} className="cl-login-back">
+          ← Back to home
+        </a>
+
+        <div style={{ marginTop: 22, marginBottom: 20 }}>
+          <div className="cl-brand">KOFFEIN<b>KARTELLET</b></div>
+          <h1 className="cl-login-head">{mode === "signin" ? "Welcome back" : "Request entry"}</h1>
+          <div className="cl-login-sub">
+            {mode === "signin" ? "Present your credentials to the ledger" : "Entry requires a valid invitation code"}
           </div>
         </div>
 
-        <form onSubmit={submit} style={{ background: C.card, border: `1px solid ${C.borderSoft}`, borderRadius: 18, padding: 24, boxShadow: "0 8px 28px rgba(100,70,40,0.08)" }}>
+        <form onSubmit={submit} className="cl-login-panel">
           {mode === "signup" && (
-            <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle}>Invite code</label>
-              <input style={inputStyle} value={code} onChange={(e) => setCode(e.target.value)} placeholder="e.g. KIKI-MADSY" autoCapitalize="characters" />
-            </div>
+            <label className="cl-field">
+              <span className="cl-label">Invitation code</span>
+              <input className="cl-input" value={code} onChange={(e) => setCode(e.target.value)} placeholder="e.g. TUR-2026" autoCapitalize="characters" />
+            </label>
           )}
 
-          <div style={{ marginBottom: 14 }}>
-            <label style={labelStyle}>Email</label>
-            <input style={inputStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
-          </div>
+          <label className="cl-field">
+            <span className="cl-label">Email</span>
+            <input className="cl-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+          </label>
 
-          <div style={{ marginBottom: 14 }}>
-            <label style={labelStyle}>Password</label>
-            <input style={inputStyle} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === "signup" ? "At least 8 characters" : "••••••••"} required />
-          </div>
+          <label className="cl-field">
+            <span className="cl-label">Password</span>
+            <input className="cl-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === "signup" ? "At least 8 characters" : "••••••••"} required />
+          </label>
 
           {mode === "signup" && (
             <>
-              <div style={{ marginBottom: 14 }}>
-                <label style={labelStyle}>Display name</label>
-                <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Kiki" />
-              </div>
-              <div style={{ marginBottom: 16 }}>
-                <label style={labelStyle}>Your color</label>
+              <label className="cl-field">
+                <span className="cl-label">Display name</span>
+                <input className="cl-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Kiki" />
+              </label>
+              <div className="cl-field">
+                <span className="cl-label">Your stamp color</span>
                 <div style={{ display: "flex", gap: 8 }}>
                   {RATER_COLORS.map((c) => (
-                    <button type="button" key={c} onClick={() => setColor(c)} style={{
-                      width: 34, height: 34, borderRadius: "50%", background: c, cursor: "pointer",
-                      border: color === c ? "3px solid #2c1a0e" : "3px solid transparent",
+                    <button type="button" key={c} onClick={() => setColor(c)} aria-label={"color " + c} style={{
+                      width: 34, height: 34, background: c, cursor: "pointer",
+                      border: color === c ? "2px solid var(--bone)" : "2px solid var(--ink-line)",
+                      outline: color === c ? "2px solid var(--stamp)" : "none", outlineOffset: 1,
                     }} />
                   ))}
                 </div>
@@ -92,20 +90,18 @@ export default function LoginScreen() {
             </>
           )}
 
-          {error && (
-            <div style={{ background: "#f7e4dc", color: "#a05040", borderRadius: 10, padding: "9px 12px", fontSize: 13, fontFamily: sans, marginBottom: 14 }}>{error}</div>
-          )}
+          {error && <div className="cl-login-err">{error}</div>}
 
-          <button type="submit" disabled={busy} style={{ ...primaryBtn(!busy), width: "100%" }}>
-            {busy ? "One moment…" : mode === "signin" ? "Sign in" : "Create account"}
+          <button type="submit" disabled={busy} className="cl-stamp-btn" style={{ width: "100%", justifyContent: "center", marginTop: 4 }}>
+            {busy ? "One moment…" : mode === "signin" ? "Sign in →" : "Request entry →"}
           </button>
         </form>
 
-        <div style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: C.muted, fontFamily: sans }}>
+        <div className="cl-login-toggle">
           {mode === "signin" ? (
-            <>Got an invite? <button onClick={() => { setMode("signup"); setError(""); }} style={linkBtn}>Create an account</button></>
+            <>Got an invitation? <button onClick={() => { setMode("signup"); setError(""); }}>Request a seat</button></>
           ) : (
-            <>Already a member? <button onClick={() => { setMode("signin"); setError(""); }} style={linkBtn}>Sign in</button></>
+            <>Already a member? <button onClick={() => { setMode("signin"); setError(""); }}>Sign in</button></>
           )}
         </div>
       </div>
@@ -113,7 +109,13 @@ export default function LoginScreen() {
   );
 }
 
-const linkBtn = {
-  background: "none", border: "none", color: "#8B5E3C", fontFamily: "'DM Sans', sans-serif",
-  fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline", padding: 0,
-};
+const LOGIN_CSS = `
+.cl-login-back{font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);text-decoration:none}
+.cl-login-back:hover{color:var(--bone)}
+.cl-login-head{font-family:var(--font-display);font-weight:400;text-transform:uppercase;font-size:clamp(38px,9vw,58px);line-height:.9;letter-spacing:-.01em;color:var(--bone);margin:10px 0 0}
+.cl-login-sub{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-top:10px}
+.cl-login-panel{background:var(--ink-2);border:1px solid var(--ink-line);padding:26px 24px}
+.cl-login-err{background:rgba(226,67,29,.12);border:1px solid var(--stamp);color:#f0b7a6;font-family:var(--font-mono);font-size:12px;letter-spacing:.04em;padding:10px 12px;margin-bottom:14px}
+.cl-login-toggle{text-align:center;margin-top:18px;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.cl-login-toggle button{background:none;border:none;color:var(--stamp);font-family:inherit;font-size:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+`;
