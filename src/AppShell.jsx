@@ -45,7 +45,6 @@ export default function AppShell() {
 
   const Screen = tab === "catalog" ? <Catalog /> : tab === "feed" ? <Feed /> : <Profile />;
   const title = tab === "catalog" ? "The catalog" : tab === "feed" ? "The feed" : "Your palate";
-  const legend = tab === "catalog" ? "Ledger · all entries" : tab === "feed" ? "Latest verdicts" : "Standing averages";
 
   return (
     <NavProvider value={nav}>
@@ -56,8 +55,7 @@ export default function AppShell() {
         <div style={{ background: "rgba(16,13,10,.9)", backdropFilter: "blur(6px)", padding: "14px 18px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid var(--ink-line)" }}>
           <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div className="cl-brand" style={{ fontSize: 10 }}>KOFFEIN<b>KARTELLET</b> · <span style={{ color: "var(--dim)" }}>{legend}</span></div>
-              <h1 style={{ margin: "3px 0 0", fontFamily: "var(--font-display)", fontSize: 26, color: "var(--bone)", fontWeight: 400, textTransform: "uppercase", letterSpacing: "-0.01em", lineHeight: 1 }}>{title}</h1>
+              <h1 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: 26, color: "var(--bone)", fontWeight: 400, textTransform: "uppercase", letterSpacing: "-0.01em", lineHeight: 1 }}>{title}</h1>
             </div>
             <Avatar user={user} size={38} onClick={() => setAccountOpen(true)} />
           </div>
