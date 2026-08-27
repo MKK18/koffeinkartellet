@@ -1,0 +1,137 @@
+/* ────────────────────────────────────────────────────────────────────────
+   Koffeinkartellet — Contraband Ledger design system
+   See DESIGN.md (seed e6a196ca). Everything is scoped under .cl so screens can
+   migrate one at a time without disturbing un-converted (warm) screens.
+   ──────────────────────────────────────────────────────────────────────── */
+.cl{
+  --ink:#100d0a; --ink-2:#181310; --ink-line:#2b241d;
+  --manila:#d8c7a4; --manila-2:#c8b58e; --bone:#efe7d6;
+  --stamp:#e2431d; --stamp-deep:#b8330f; --amber:#e8a13a;
+  --dim:#8a7c67; --dim-2:#6a5e4d; --ok:#7fae6a;
+  --font-display:"Anton",Impact,sans-serif;
+  --font-mono:"Martian Mono",ui-monospace,monospace;
+  --font-body:"Archivo",system-ui,sans-serif;
+  --gut:clamp(18px,4.5vw,56px);
+  background:var(--ink); color:var(--bone);
+  font-family:var(--font-body); font-size:17px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 38px, rgba(255,255,255,.014) 38px 39px),
+    radial-gradient(120% 80% at 80% -10%, rgba(226,67,29,.10), transparent 60%);
+}
+.cl *{box-sizing:border-box}
+.cl ::selection{background:var(--stamp);color:#fff}
+.cl :focus-visible{outline:2px solid var(--stamp);outline-offset:3px}
+.cl ::-webkit-scrollbar{width:12px;height:12px}
+.cl ::-webkit-scrollbar-track{background:var(--ink)}
+.cl ::-webkit-scrollbar-thumb{background:var(--ink-line);border:3px solid var(--ink)}
+.cl ::-webkit-scrollbar-thumb:hover{background:var(--dim-2)}
+
+.cl .mono{font-family:var(--font-mono);letter-spacing:.02em}
+.cl .tnum{font-variant-numeric:tabular-nums}
+.cl a{color:inherit}
+
+/* layout */
+.cl-wrap{max-width:1240px;margin:0 auto;padding:0 var(--gut)}
+.cl-rule{border-top:1px solid var(--ink-line)}
+
+/* masthead */
+.cl-masthead{position:sticky;top:0;z-index:40;background:rgba(16,13,10,.86);backdrop-filter:blur(6px);border-bottom:1px solid var(--ink-line)}
+.cl-masthead .cl-wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:60px}
+.cl-brand{font-family:var(--font-mono);font-weight:600;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--bone)}
+.cl-brand b{color:var(--stamp)}
+.cl-mast-meta{display:flex;gap:22px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+.cl-mast-meta span{display:flex;gap:7px}
+.cl-mast-meta i{color:var(--amber);font-style:normal}
+@media(max-width:720px){.cl-mast-meta{display:none}}
+
+/* buttons */
+.cl-stamp-btn{position:relative;display:inline-flex;align-items:center;gap:12px;
+  font-family:var(--font-mono);font-weight:600;font-size:13px;letter-spacing:.2em;text-transform:uppercase;
+  color:#fff;background:var(--stamp);border:none;padding:16px 26px;cursor:pointer;
+  transition:transform .12s cubic-bezier(.2,.8,.2,1),box-shadow .12s;
+  box-shadow:0 14px 30px -16px rgba(0,0,0,.85);}
+.cl-stamp-btn:hover{transform:translateY(-2px) rotate(-.4deg)}
+.cl-stamp-btn:active{transform:translateY(1px) scale(.99)}
+.cl-stamp-btn .arw{transition:transform .18s}
+.cl-stamp-btn:hover .arw{transform:translateX(5px)}
+.cl-ghost-btn{font-family:var(--font-mono);font-weight:500;font-size:12.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--manila);background:none;border:1px solid var(--ink-line);padding:16px 22px;cursor:pointer;
+  transition:border-color .15s,color .15s}
+.cl-ghost-btn:hover{border-color:var(--manila);color:var(--bone)}
+
+/* section legend + titles */
+.cl-sec-head{display:flex;align-items:baseline;gap:16px;padding:22px 0 4px;font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim)}
+.cl-sec-head .no{color:var(--stamp)}
+.cl-sec-head .ln{flex:1;height:1px;background:var(--ink-line)}
+.cl-sec-title{font-family:var(--font-display);font-weight:400;text-transform:uppercase;font-size:clamp(30px,5vw,58px);line-height:.92;margin:14px 0 0;color:var(--bone)}
+.cl-sec-lede{max-width:56ch;color:var(--manila);margin:16px 0 0;font-size:17px}
+
+/* headline */
+.cl-head{font-family:var(--font-display);font-weight:400;font-size:clamp(52px,10.5vw,148px);line-height:.86;letter-spacing:-.01em;margin:0;color:var(--bone);text-transform:uppercase}
+.cl-head .l2{color:var(--stamp)}
+.cl-head .l3{-webkit-text-stroke:1.4px var(--manila-2);color:transparent}
+
+/* stamp / doc-stamp mark */
+.cl-doc-stamp{color:var(--stamp);border:1.5px solid var(--stamp);padding:4px 9px;transform:rotate(-3deg);border-radius:2px;font-weight:600;font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;display:inline-block}
+.cl-ink-stamp{color:var(--stamp-deep);border:2.5px solid var(--stamp-deep);border-radius:4px;padding:5px 11px 4px;
+  font-family:var(--font-mono);font-weight:600;font-size:15px;letter-spacing:.14em;text-transform:uppercase;transform:rotate(-9deg);opacity:.86;mix-blend-mode:multiply;display:inline-block}
+
+/* ledger entry card (manila paper) */
+.cl-entry{background:
+    repeating-linear-gradient(0deg,transparent 0 33px,rgba(0,0,0,.16) 33px 34px),
+    linear-gradient(180deg,var(--manila),var(--manila-2));
+  color:#2a2016;padding:22px 22px 18px;position:relative;
+  box-shadow:0 40px 80px -40px rgba(0,0,0,.9),0 2px 0 rgba(255,255,255,.15) inset}
+.cl-entry::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:0 0 0 1px rgba(42,32,22,.35) inset}
+.cl-entry-top{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#7c6a4c;border-bottom:1px solid rgba(42,32,22,.3);padding-bottom:10px}
+.cl-entry-body{display:flex;gap:18px;padding:16px 0 6px;align-items:flex-start}
+.cl-entry-score{font-family:var(--font-display);font-size:74px;line-height:.8;color:#2a2016}
+.cl-entry-score sup{font-size:22px;color:#7c6a4c;vertical-align:top}
+.cl-entry-name{font-family:var(--font-body);font-weight:800;font-size:22px;line-height:1.05;text-transform:uppercase;color:#241b12}
+.cl-entry-sub{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:#6c5c40;margin-top:6px;line-height:1.5}
+.cl-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.cl-tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#3a2c1c;border:1px solid rgba(42,32,22,.4);padding:3px 7px}
+
+/* manifest rows */
+.cl-manifest{border-top:1px solid var(--ink-line)}
+.cl-mrow{display:grid;grid-template-columns:74px 1.1fr 1.4fr auto;gap:22px;align-items:center;padding:26px 0;border-bottom:1px solid var(--ink-line);transition:background .2s}
+.cl-mrow:hover{background:var(--ink-2)}
+.cl-mrow .idx{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;color:var(--stamp)}
+.cl-mrow h3{font-family:var(--font-body);font-weight:800;font-size:clamp(20px,2.6vw,27px);text-transform:uppercase;margin:0;color:var(--bone)}
+.cl-mrow p{margin:6px 0 0;color:var(--manila);font-size:15.5px;max-width:42ch}
+.cl-mrow .io{font-family:var(--font-mono);color:var(--dim);font-size:12px;letter-spacing:.06em;line-height:1.7}
+.cl-mrow .io b{color:var(--manila);font-weight:400}
+.cl-mrow .mk{justify-self:end}
+@media(max-width:760px){.cl-mrow{grid-template-columns:44px 1fr;gap:6px 16px}.cl-mrow .mdesc{grid-column:2}.cl-mrow .io{grid-column:2}.cl-mrow .mk{grid-column:1/-1;justify-self:start;margin-top:12px}}
+
+/* split-flap verdict */
+.cl-flap{position:relative;width:min(78vw,340px);height:132px;background:#0a0806;border:1px solid #000;
+  box-shadow:0 30px 60px -30px #000,0 0 0 1px var(--ink-line);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cl-flap::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;background:#000;z-index:3;transform:translateY(-1px)}
+.cl-flap-txt{font-family:var(--font-display);font-size:78px;letter-spacing:.04em;line-height:1;color:var(--flapc,#fff);text-transform:uppercase;will-change:transform}
+.cl-flap.flip .cl-flap-txt{animation:cl-flap .34s cubic-bezier(.4,0,.2,1)}
+@keyframes cl-flap{0%{transform:rotateX(0) scaleY(1);opacity:1}45%{transform:rotateX(-88deg) scaleY(.6);opacity:.15}55%{transform:rotateX(88deg) scaleY(.6);opacity:.15}100%{transform:rotateX(0) scaleY(1);opacity:1}}
+
+/* palate ledger rows */
+.cl-prow{display:grid;grid-template-columns:16px 1fr 120px 60px;gap:18px;align-items:center;padding:16px 0;border-bottom:1px solid var(--ink-line)}
+.cl-prow .dot{width:11px;height:11px;border-radius:50%}
+.cl-prow .who{font-weight:700;text-transform:uppercase;font-size:16px}
+.cl-prow .who small{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;font-weight:400;margin-top:3px}
+.cl-bar{height:8px;background:var(--ink-line);position:relative}
+.cl-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--stamp)}
+.cl-prow .avg{font-family:var(--font-mono);font-weight:600;font-size:19px;text-align:right;color:var(--bone)}
+@media(max-width:640px){.cl-prow{grid-template-columns:14px 1fr 50px}.cl-prow .cl-bar{display:none}}
+
+/* forms (for login / add-coffee / settings later) */
+.cl-field{display:block;margin-bottom:16px}
+.cl-label{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:8px;display:block}
+.cl-input{width:100%;background:var(--ink-2);border:1px solid var(--ink-line);color:var(--bone);
+  font-family:var(--font-mono);font-size:14px;padding:14px 15px;outline:none;transition:border-color .15s}
+.cl-input::placeholder{color:var(--dim-2)}
+.cl-input:focus{border-color:var(--stamp)}
+
+/* entrance motion */
+.cl-stamp-in{animation:cl-stampin .5s cubic-bezier(.2,.9,.3,1.1) both}
+@keyframes cl-stampin{0%{opacity:0;transform:scale(1.14) rotate(-2deg)}60%{opacity:1}100%{opacity:1;transform:scale(1) rotate(0)}}
+@media(prefers-reduced-motion:reduce){.cl-stamp-in{animation:none}.cl-flap.flip .cl-flap-txt{animation:none}}

@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Koffeinkartellet — Bonded Tasting Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=Martian+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/*
+  DIRECTION CONTRACT — seed e6a196ca (impeccable, persuade, new-work §5)
+  THESIS: A private coffee tasting journal drawn as a bonded contraband ledger — refuses the warm-cream / coffee-ring / terracotta editorial look every coffee site ships.
+  OWN-WORLD: Bonded-warehouse customs manifest. Warm ink-black ground, manila panels, ONE customs-stamp red ink. Anton condensed display, Martian Mono tallies, Archivo body. Letterpress ruled rows; rubber-stamp marks as an immaculate branded system; state shown by mark type, not hue.
+  STORY: Visitor sees coffees logged, scored and stamped BUY/MAYBE/SKIP by a private crew → believes it's a serious, members-only journal → presents an invite.
+  FIRST VIEWPORT: Full-bleed ink-black manifest. Masthead rule; monumental "LOGGED · SCORED · STAMPED"; a live ledger entry stamping a score; primary PRESENT INVITE stamp-button.
+  FORM: Contraband ledger / customs manifest — #4 of my grounded list, assigned by the roll; raised by TDR (immaculate mark density), split-flap (mechanical verdict), jackfield (state-by-mark).
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+*/
+:root{
+  --ink:#100d0a;          /* warm ink-black ground */
+  --ink-2:#181310;        /* raised panel */
+  --ink-line:#2b241d;     /* letterpress rule */
+  --manila:#d8c7a4;       /* aged manifest paper */
+  --manila-2:#c8b58e;
+  --bone:#efe7d6;         /* headline bone */
+  --stamp:#e2431d;        /* customs-stamp red — the single accent */
+  --stamp-deep:#b8330f;
+  --amber:#e8a13a;        /* secondary lamp */
+  --dim:#8a7c67;          /* mono legend */
+  --dim-2:#6a5e4d;
+  --ok:#7fae6a;           /* buy */
+  --font-display:"Anton",Impact,sans-serif;
+  --font-mono:"Martian Mono",ui-monospace,monospace;
+  --font-body:"Archivo",system-ui,sans-serif;
+  --gut:clamp(18px,4.5vw,56px);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--ink);color:var(--bone);
+  font-family:var(--font-body);font-size:17px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  /* faint ledger grain */
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 38px, rgba(255,255,255,.014) 38px 39px),
+    radial-gradient(120% 80% at 80% -10%, rgba(226,67,29,.10), transparent 60%);
+}
+::selection{background:var(--stamp);color:#fff;}
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:var(--ink)}
+::-webkit-scrollbar-thumb{background:var(--ink-line);border:3px solid var(--ink);border-radius:0}
+::-webkit-scrollbar-thumb:hover{background:var(--dim-2)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--stamp);outline-offset:3px}
+.mono{font-family:var(--font-mono);letter-spacing:.02em}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ── shell / masthead rule ── */
+.wrap{max-width:1240px;margin:0 auto;padding:0 var(--gut)}
+.rule{border-top:1px solid var(--ink-line)}
+.masthead{position:sticky;top:0;z-index:40;background:rgba(16,13,10,.86);backdrop-filter:blur(6px);border-bottom:1px solid var(--ink-line)}
+.masthead .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:60px}
+.brand{font-family:var(--font-mono);font-weight:600;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--bone)}
+.brand b{color:var(--stamp)}
+.mast-meta{display:flex;gap:22px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+.mast-meta span{display:flex;gap:7px}
+.mast-meta i{color:var(--amber);font-style:normal}
+@media(max-width:720px){.mast-meta{display:none}}
+
+/* ── stamp button ── */
+.stamp-btn{
+  --c:var(--stamp);
+  position:relative;display:inline-flex;align-items:center;gap:12px;
+  font-family:var(--font-mono);font-weight:600;font-size:13px;letter-spacing:.2em;text-transform:uppercase;
+  color:#fff;background:var(--c);border:none;padding:16px 26px;cursor:pointer;
+  clip-path:polygon(0 0,100% 0,100% 100%,0 100%);
+  transition:transform .12s cubic-bezier(.2,.8,.2,1),box-shadow .12s;
+  box-shadow:0 14px 30px -16px rgba(0,0,0,.85);
+}
+.stamp-btn:hover{transform:translateY(-2px) rotate(-.4deg)}
+.stamp-btn:active{transform:translateY(1px) scale(.99)}
+.stamp-btn .arw{transition:transform .18s}
+.stamp-btn:hover .arw{transform:translateX(5px)}
+.ghost-btn{
+  font-family:var(--font-mono);font-weight:500;font-size:12.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--manila);background:none;border:1px solid var(--ink-line);padding:16px 22px;cursor:pointer;
+  transition:border-color .15s,color .15s}
+.ghost-btn:hover{border-color:var(--manila);color:var(--bone)}
+
+/* ── HERO ── */
+.hero{position:relative;padding:clamp(40px,7vw,86px) 0 clamp(48px,7vw,92px)}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(28px,4vw,60px);align-items:end}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr;align-items:stretch}}
+.stampline{display:flex;align-items:center;gap:14px;font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);margin-bottom:26px}
+.stampline .doc-stamp{color:var(--stamp);border:1.5px solid var(--stamp);padding:4px 9px;transform:rotate(-3deg);border-radius:2px;font-weight:600}
+h1.head{
+  font-family:var(--font-display);font-weight:400;
+  font-size:clamp(52px,10.5vw,148px);line-height:.86;letter-spacing:-.01em;
+  margin:0;color:var(--bone);text-transform:uppercase;
+}
+h1.head .l2{color:var(--stamp)}
+h1.head .l3{-webkit-text-stroke:1.4px var(--manila-2);color:transparent}
+.dek{max-width:46ch;margin:26px 0 30px;color:var(--manila);font-size:clamp(16px,1.9vw,19px);line-height:1.55}
+.dek b{color:var(--bone);font-weight:600}
+.cta-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.cta-note{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim-2);max-width:20ch;line-height:1.5}
+
+/* ── live ledger entry (hero right) ── */
+.entry{
+  background:
+    repeating-linear-gradient(0deg,transparent 0 33px,rgba(0,0,0,.16) 33px 34px),
+    linear-gradient(180deg,var(--manila),var(--manila-2));
+  color:#2a2016;padding:22px 22px 18px;position:relative;
+  box-shadow:0 40px 80px -40px rgba(0,0,0,.9), 0 2px 0 rgba(255,255,255,.15) inset;
+  transform:rotate(.5deg);
+}
+.entry::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:0 0 0 1px rgba(42,32,22,.35) inset}
+.entry-top{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#7c6a4c;border-bottom:1px solid rgba(42,32,22,.3);padding-bottom:10px}
+.entry-body{display:flex;gap:18px;padding:16px 0 6px;align-items:flex-start}
+.entry-score{font-family:var(--font-display);font-size:74px;line-height:.8;color:#2a2016}
+.entry-score sup{font-size:22px;color:#7c6a4c;vertical-align:top}
+.entry-name{font-family:var(--font-body);font-weight:800;font-size:22px;line-height:1.05;letter-spacing:-.01em;text-transform:uppercase;color:#241b12}
+.entry-sub{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:#6c5c40;margin-top:6px;line-height:1.5}
+.entry-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#3a2c1c;border:1px solid rgba(42,32,22,.4);padding:3px 7px}
+.ink-stamp{
+  position:absolute;right:16px;bottom:14px;color:var(--stamp-deep);
+  border:2.5px solid var(--stamp-deep);border-radius:4px;padding:5px 11px 4px;
+  font-family:var(--font-mono);font-weight:600;font-size:15px;letter-spacing:.14em;text-transform:uppercase;
+  transform:rotate(-9deg);opacity:.86;mix-blend-mode:multiply;
+}
+
+/* ── section framing ── */
+section{position:relative}
+.sec-head{display:flex;align-items:baseline;gap:16px;padding:22px 0 4px;font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim)}
+.sec-head .no{color:var(--stamp)}
+.sec-head .ln{flex:1;height:1px;background:var(--ink-line)}
+.sec-title{font-family:var(--font-display);font-weight:400;text-transform:uppercase;font-size:clamp(30px,5vw,58px);line-height:.92;letter-spacing:0;margin:14px 0 0;color:var(--bone)}
+.sec-lede{max-width:56ch;color:var(--manila);margin:16px 0 0;font-size:17px}
+
+/* ── manifest rows (mechanism) ── */
+.manifest{margin-top:34px;border-top:1px solid var(--ink-line)}
+.mrow{display:grid;grid-template-columns:74px 1.1fr 1.4fr auto;gap:22px;align-items:center;padding:26px 0;border-bottom:1px solid var(--ink-line);transition:background .2s}
+.mrow:hover{background:var(--ink-2)}
+.mrow .idx{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;color:var(--stamp)}
+.mrow h3{font-family:var(--font-body);font-weight:800;font-size:clamp(20px,2.6vw,27px);text-transform:uppercase;letter-spacing:-.01em;margin:0;color:var(--bone)}
+.mrow p{margin:6px 0 0;color:var(--manila);font-size:15.5px;max-width:42ch}
+.mrow .mk{justify-self:end}
+@media(max-width:760px){
+  .mrow{grid-template-columns:44px 1fr;gap:6px 16px}
+  .mrow .mdesc{grid-column:2}
+  .mrow .mk{grid-column:1/-1;justify-self:start;margin-top:12px}
+}
+
+/* ── verdict split-flap ── */
+.verdict{margin-top:30px;background:var(--ink-2);border:1px solid var(--ink-line);padding:clamp(24px,4vw,48px);display:grid;grid-template-columns:1fr auto;gap:36px;align-items:center}
+@media(max-width:820px){.verdict{grid-template-columns:1fr;gap:26px}}
+.verdict .lede{max-width:40ch}
+.flap-wrap{display:flex;flex-direction:column;align-items:center;gap:16px}
+.flap{
+  position:relative;width:min(78vw,340px);height:132px;background:#0a0806;
+  border:1px solid #000;box-shadow:0 30px 60px -30px #000, 0 0 0 1px var(--ink-line);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.flap::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;background:#000;z-index:3;transform:translateY(-1px)}
+.flap-txt{font-family:var(--font-display);font-size:78px;letter-spacing:.04em;line-height:1;color:var(--flapc,#fff);
+  text-transform:uppercase;transition:opacity .04s;will-change:transform}
+.flap.flip .flap-txt{animation:flap .34s cubic-bezier(.4,0,.2,1)}
+@keyframes flap{0%{transform:rotateX(0) scaleY(1);opacity:1}45%{transform:rotateX(-88deg) scaleY(.6);opacity:.15}55%{transform:rotateX(88deg) scaleY(.6);opacity:.15}100%{transform:rotateX(0) scaleY(1);opacity:1}}
+.flap-meta{font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);text-align:center;line-height:1.6}
+.flap-meta b{color:var(--flapc,#fff)}
+.flap-btns{display:flex;gap:8px}
+.flap-btns button{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);background:none;border:1px solid var(--ink-line);padding:8px 12px;cursor:pointer;transition:.15s}
+.flap-btns button:hover{color:var(--bone);border-color:var(--dim)}
+
+/* ── palate ledger ── */
+.palate{margin-top:34px;border-top:1px solid var(--ink-line)}
+.prow{display:grid;grid-template-columns:16px 1fr 120px 60px;gap:18px;align-items:center;padding:16px 0;border-bottom:1px solid var(--ink-line)}
+.prow .dot{width:11px;height:11px;border-radius:50%}
+.prow .who{font-weight:700;text-transform:uppercase;letter-spacing:.01em;font-size:16px}
+.prow .who small{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;font-weight:400;margin-top:3px}
+.bar{height:8px;background:var(--ink-line);position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--stamp)}
+.prow .avg{font-family:var(--font-mono);font-weight:600;font-size:19px;text-align:right;color:var(--bone)}
+@media(max-width:640px){.prow{grid-template-columns:14px 1fr 50px}.prow .bar{display:none}}
+
+/* ── specimen tasting record ── */
+.specimen{margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--ink-line);border:1px solid var(--ink-line)}
+@media(max-width:760px){.specimen{grid-template-columns:1fr}}
+.spec-cell{background:var(--ink);padding:clamp(22px,3vw,34px)}
+.spec-cell.q{background:var(--ink-2)}
+.spec-lab{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:16px}
+.quote{font-family:var(--font-body);font-weight:500;font-style:italic;font-size:clamp(19px,2.4vw,25px);line-height:1.45;color:var(--bone)}
+.quote::before{content:"“";color:var(--stamp)}
+.quote::after{content:"”";color:var(--stamp)}
+.byline{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:18px}
+.spec-data dt{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:14px}
+.spec-data dd{margin:3px 0 0;font-weight:600;font-size:16px}
+.spec-data{columns:2;column-gap:26px}
+.spec-data .full{column-span:all}
+
+/* ── CTA close ── */
+.close{padding:clamp(56px,9vw,120px) 0;text-align:center;position:relative}
+.close .big{font-family:var(--font-display);font-size:clamp(40px,9vw,120px);line-height:.9;text-transform:uppercase;color:var(--bone);margin:0}
+.close .big em{font-style:normal;color:var(--stamp)}
+.close .sub{font-family:var(--font-mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:22px 0 34px}
+.foot{border-top:1px solid var(--ink-line);padding:26px 0 60px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim-2)}
+
+/* entrance: one authored stamp-in for the hero, respects reduced-motion */
+.stamp-in{animation:stampin .5s cubic-bezier(.2,.9,.3,1.1) both}
+@keyframes stampin{0%{opacity:0;transform:scale(1.14) rotate(-2deg)}60%{opacity:1}100%{opacity:1;transform:scale(1) rotate(0)}}
+@media(prefers-reduced-motion:reduce){.stamp-in{animation:none}.flap.flip .flap-txt{animation:none}}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <div class="brand">KOFFEIN<b>KARTELLET</b></div>
+    <nav class="mast-meta">
+      <span>LEDGER <i>N° 07</i></span>
+      <span>STATUS <i>BONDED</i></span>
+      <span>ENTRIES <i class="tnum">1,204</i></span>
+    </nav>
+    <button class="ghost-btn" onclick="document.getElementById('gate').scrollIntoView({behavior:'smooth'})">Present invite</button>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="stampline stamp-in">
+        <span class="doc-stamp">Members only</span>
+        <span>Bonded tasting ledger · est. Copenhagen</span>
+      </div>
+      <h1 class="head stamp-in">Logged.<br><span class="l2">Scored.</span><br><span class="l3">Stamped.</span></h1>
+      <p class="dek">Every bag your crew brews gets entered, scored, and stamped with a verdict. Photograph a bag and it books itself in — roaster, origin, process, notes. Then the cartel argues. <b>Entry is by invitation.</b></p>
+      <div class="cta-row">
+        <button class="stamp-btn" onclick="document.getElementById('gate').scrollIntoView({behavior:'smooth'})">Present invite <span class="arw">→</span></button>
+        <span class="cta-note">No open door. Someone vouches, or you request a seat.</span>
+      </div>
+    </div>
+
+    <figure class="entry stamp-in" style="margin:0">
+      <div class="entry-top"><span>ENTRY · 1,204</span><span class="tnum">14·11·26</span></div>
+      <div class="entry-body">
+        <div class="entry-score tnum">9<sup>.2</sup></div>
+        <div>
+          <div class="entry-name">Kieni AA</div>
+          <div class="entry-sub">Tembo Coffee · Nyeri, Kenya<br>Washed · SL28 / SL34 · 1,750m</div>
+          <div class="entry-tags"><span class="tag">Blackcurrant</span><span class="tag">Grapefruit</span><span class="tag">Cane sugar</span><span class="tag">Juicy</span></div>
+        </div>
+      </div>
+      <div class="ink-stamp">Buy ✓</div>
+    </figure>
+  </div>
+</section>
+
+<section class="wrap" id="how">
+  <div class="sec-head"><span class="no">A</span><span>The mechanism</span><span class="ln"></span><span>03 movements</span></div>
+  <h2 class="sec-title">A bag books itself in.</h2>
+  <div class="manifest">
+    <div class="mrow">
+      <div class="idx">M·01</div>
+      <div class="mdesc">
+        <h3>Scan the bag</h3>
+        <p>Photograph the packaging or paste a roaster link. It reads roaster, origin, region, producer, varietal, process, altitude and notes — and files the entry.</p>
+      </div>
+      <div class="mdesc mono" style="color:var(--dim);font-size:12px;letter-spacing:.06em;line-height:1.7">
+        IN&nbsp;&nbsp;→ photo.jpg<br>OUT →&nbsp;<span style="color:var(--manila)">14 fields, stamped</span>
+      </div>
+      <div class="mk">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="#e2431d" stroke-width="2"><rect x="8" y="12" width="36" height="28" rx="1"/><path d="M8 20h36"/><circle cx="26" cy="30" r="6"/><path d="M18 12l3-4h10l3 4"/></svg>
+      </div>
+    </div>
+    <div class="mrow">
+      <div class="idx">M·02</div>
+      <div class="mdesc">
+        <h3>The crew scores it</h3>
+        <p>Every member rates 0–10 and tags the flavors they caught. Scores accumulate into one shared palate the household can read — and dispute.</p>
+      </div>
+      <div class="mdesc mono" style="color:var(--dim);font-size:12px;letter-spacing:.06em;line-height:1.7">
+        RATERS → 4 active<br>PALATE →&nbsp;<span style="color:var(--manila)">1,204 tastings</span>
+      </div>
+      <div class="mk">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="#e2431d" stroke-width="2"><path d="M26 8l5 11 12 1-9 8 3 12-11-7-11 7 3-12-9-8 12-1z"/></svg>
+      </div>
+    </div>
+    <div class="mrow">
+      <div class="idx">M·03</div>
+      <div class="mdesc">
+        <h3>Get the verdict — in the shop</h3>
+        <p>Standing at the roaster, scan a bag you don't own. It weighs it against your palate and stamps <b style="color:var(--bone)">buy</b>, <b style="color:var(--bone)">maybe</b>, or <b style="color:var(--bone)">skip</b>, with the reasons.</p>
+      </div>
+      <div class="mdesc mono" style="color:var(--dim);font-size:12px;letter-spacing:.06em;line-height:1.7">
+        MATCH → palate ×&nbsp;bag<br>OUT →&nbsp;<span style="color:var(--stamp)">a stamp</span>
+      </div>
+      <div class="mk">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="#e2431d" stroke-width="2"><path d="M12 26l9 9 19-19"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <div class="lede">
+      <div class="sec-head" style="padding-top:0"><span class="no">B</span><span>Signature · buy verdict</span></div>
+      <h2 class="sec-title" style="font-size:clamp(26px,4vw,42px)">The stamp that saves you 180&nbsp;kr.</h2>
+      <p class="sec-lede">One tap in the shop. The board turns over and lands on the only three words that matter. No stars, no paragraphs — a verdict you can act on before the barista looks up.</p>
+    </div>
+    <div class="flap-wrap">
+      <div class="flap" id="flap" aria-live="polite"><div class="flap-txt" id="flaptxt">BUY</div></div>
+      <div class="flap-meta">KIENI AA · <b id="flapscore">92% MATCH</b><br id="flapwhy2"><span id="flapwhy">high on your washed Kenyans</span></div>
+      <div class="flap-btns">
+        <button data-v="BUY">Buy</button>
+        <button data-v="MAYBE">Maybe</button>
+        <button data-v="SKIP">Skip</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="palate" style="margin-top:clamp(60px,9vw,120px)">
+  <div class="sec-head"><span class="no">C</span><span>The shared palate</span><span class="ln"></span><span>household · 4</span></div>
+  <h2 class="sec-title">Four palates, one ledger.</h2>
+  <p class="sec-lede">The cartel's standing averages — who runs hot, who never gives a nine. Synthetic sample data.</p>
+  <div class="palate">
+    <div class="prow"><span class="dot" style="background:#e2431d"></span><span class="who">Kiki <small>washed · florals · 312 entries</small></span><span class="bar"><i style="width:82%"></i></span><span class="avg tnum">8.2</span></div>
+    <div class="prow"><span class="dot" style="background:#e8a13a"></span><span class="who">Mads <small>naturals · funk · 288 entries</small></span><span class="bar"><i style="width:74%"></i></span><span class="avg tnum">7.4</span></div>
+    <div class="prow"><span class="dot" style="background:#7fae6a"></span><span class="who">Sof <small>anaerobic · fruit bombs · 341 entries</small></span><span class="bar"><i style="width:88%"></i></span><span class="avg tnum">8.8</span></div>
+    <div class="prow"><span class="dot" style="background:#8a7c67"></span><span class="who">The Auditor <small>never impressed · 263 entries</small></span><span class="bar"><i style="width:61%"></i></span><span class="avg tnum">6.1</span></div>
+  </div>
+</section>
+
+<section class="wrap" id="specimen" style="margin-top:clamp(60px,9vw,120px)">
+  <div class="sec-head"><span class="no">D</span><span>Specimen · entry 1,204</span><span class="ln"></span></div>
+  <div class="specimen">
+    <div class="spec-cell q">
+      <div class="spec-lab">Tasting note · on the record</div>
+      <p class="quote">Blackcurrant the second it hits, then a grapefruit acidity that will not quit. Cane sugar underneath keeps it from turning shrill. The cleanest cup on the ledger this month.</p>
+      <div class="byline">— Sof, stamped 14·11·26</div>
+    </div>
+    <div class="spec-cell">
+      <div class="spec-lab">Manifest</div>
+      <dl class="spec-data">
+        <dt>Roaster</dt><dd>Tembo Coffee</dd>
+        <dt>Origin</dt><dd>Nyeri, Kenya</dd>
+        <dt>Process</dt><dd>Washed</dd>
+        <dt>Varietal</dt><dd>SL28 / SL34</dd>
+        <dt>Altitude</dt><dd class="tnum">1,750 m</dd>
+        <dt>Roast</dt><dd>Light</dd>
+        <dt class="full">Crew score</dt><dd class="full tnum" style="font-family:var(--font-display);font-size:44px;color:var(--stamp);line-height:1">9.2 / 10</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="close" id="gate">
+  <div class="wrap">
+    <p class="big">Entry is by <em>invitation.</em></p>
+    <p class="sub">Have a code? Present it. Otherwise, request a seat and wait to be vouched for.</p>
+    <div class="cta-row" style="justify-content:center">
+      <button class="stamp-btn">Present invite <span class="arw">→</span></button>
+      <button class="ghost-btn">Request a seat</button>
+    </div>
+  </div>
+</section>
+
+<footer class="foot wrap">
+  <span>Koffeinkartellet · Bonded Tasting Ledger N° 07</span>
+  <span>Copenhagen · Invite-only · PWA</span>
+  <span class="tnum">1,204 entries on file</span>
+</footer>
+</main>
+
+<script>
+(function(){
+  var states={
+    BUY:  {c:'#7fae6a', s:'92% MATCH', w:'high on your washed Kenyans'},
+    MAYBE:{c:'#e8a13a', s:'61% MATCH', w:'you run cool on light naturals'},
+    SKIP: {c:'#e2431d', s:'28% MATCH', w:'the Auditor has vetoed this roaster twice'}
+  };
+  var order=['BUY','MAYBE','SKIP'], i=0;
+  var flap=document.getElementById('flap'), txt=document.getElementById('flaptxt'),
+      sc=document.getElementById('flapscore'), why=document.getElementById('flapwhy');
+  var timer;
+  function set(v){
+    var st=states[v];
+    flap.classList.remove('flip'); void flap.offsetWidth; flap.classList.add('flip');
+    setTimeout(function(){
+      txt.textContent=v; flap.style.setProperty('--flapc',st.c);
+      sc.textContent=st.s; why.textContent=st.w;
+    },150);
+    i=order.indexOf(v);
+  }
+  function next(){ set(order[(i+1)%order.length]); }
+  set('BUY');
+  timer=setInterval(next, 2600);
+  document.querySelectorAll('.flap-btns button').forEach(function(b){
+    b.addEventListener('click',function(){ clearInterval(timer); set(b.dataset.v); });
+  });
+  // pause cycling when off-screen
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(e){
+      e.forEach(function(en){ if(!en.isIntersecting){clearInterval(timer);} else if(!timer._done){clearInterval(timer);timer=setInterval(next,2600);} });
+    },{threshold:.2}).observe(flap);
+  }
+})();
+</script>
+</body>
+</html>

@@ -25,3 +25,7 @@ pocketbase/pb_public/
 pocketbase/*.zip
 pocketbase/CHANGELOG.md
 pocketbase/LICENSE.md
+
+# impeccable skill runtime + vendored skill (kept out of the app repo)
+.impeccable/
+.claude/skills/impeccable/
