@@ -1,20 +1,19 @@
 import { useState, useRef } from "react";
-import { C, sans, serif, inputStyle, labelStyle, primaryBtn, ghostBtn } from "./ui.jsx";
 import { Sheet, Spinner } from "./components.jsx";
 import { compressImage, verdictFromImage, verdictFromUrl, fetchExternalImage } from "./lib.js";
-import { palateSummary, getMyHousehold, createCoffee, coffeeImageUrl } from "./data.js";
+import { palateSummary, getMyHousehold, createCoffee } from "./data.js";
 import { useAuth } from "./auth.jsx";
 import { useNav } from "./nav.jsx";
 
-const TABS = [
-  { id: "photo", label: "📷 Photo" },
-  { id: "link", label: "🔗 Link" },
-];
+const MONO = "var(--font-mono)";
+const DISPLAY = "var(--font-display)";
+const BODY = "var(--font-body)";
 
-const VERDICT_COLORS = {
-  buy:   { bg: "#e6f0e0", border: "#a8c898", ink: "#356633", emoji: "🟢", label: "BUY" },
-  maybe: { bg: "#fbeed4", border: "#d8c490", ink: "#6b5526", emoji: "🟡", label: "MAYBE" },
-  skip:  { bg: "#f0dada", border: "#d1a0a0", ink: "#7a3030", emoji: "🔴", label: "SKIP" },
+const TABS = [{ id: "photo", label: "Photo" }, { id: "link", label: "Link" }];
+const VERDICT = {
+  buy:   { c: "var(--ok)", label: "BUY" },
+  maybe: { c: "var(--amber)", label: "MAYBE" },
+  skip:  { c: "var(--stamp)", label: "SKIP" },
 };
 
 export default function BuyVerdict({ onClose }) {
@@ -26,7 +25,7 @@ export default function BuyVerdict({ onClose }) {
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [errMsg, setErrMsg] = useState("");
-  const [result, setResult] = useState(null); // { coffee, verdict, confidence, reasoning }
+  const [result, setResult] = useState(null);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef();
 
@@ -63,7 +62,6 @@ export default function BuyVerdict({ onClose }) {
       const palate = await loadPalate();
       const r = await verdictFromUrl(link, palate);
       setResult(r);
-      // Try to pull a product image so "save to catalog" has the photo.
       if (r?.coffee?.image_url) {
         try {
           const blob = await fetchExternalImage(r.coffee.image_url);
@@ -86,8 +84,6 @@ export default function BuyVerdict({ onClose }) {
     setSaving(true);
     try {
       const c = result.coffee;
-      // origin and varietal can come back as arrays (new prompt) or strings
-      // (legacy). Flatten to comma-separated strings for storage.
       const flat = (v) => Array.isArray(v) ? v.filter(Boolean).join(", ") : (v || "");
       const saved = await createCoffee({
         name: c.name || "", roaster: c.roaster || "", origin: flat(c.origin),
@@ -104,25 +100,24 @@ export default function BuyVerdict({ onClose }) {
     }
   };
 
-  const v = result?.verdict && VERDICT_COLORS[result.verdict] ? VERDICT_COLORS[result.verdict] : null;
+  const v = result?.verdict && VERDICT[result.verdict] ? VERDICT[result.verdict] : null;
 
   return (
     <Sheet onClose={onClose}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <h2 style={{ margin: 0, fontFamily: serif, fontSize: 22, color: C.ink }}>🔮 Should I buy this?</h2>
-        <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 26, color: C.muted, cursor: "pointer", lineHeight: 1 }}>×</button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h2 style={{ margin: 0, fontFamily: DISPLAY, fontSize: 26, fontWeight: 400, textTransform: "uppercase", color: "var(--bone)" }}>Should I buy this?</h2>
+        <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", fontSize: 24, color: "var(--dim)", cursor: "pointer", lineHeight: 1 }}>×</button>
       </div>
 
       {/* Tab selector */}
-      <div style={{ display: "flex", gap: 6, background: C.tint, border: `1px solid ${C.borderSoft}`, borderRadius: 12, padding: 4, marginBottom: 16 }}>
+      <div style={{ display: "flex", gap: 4, border: "1px solid var(--ink-line)", padding: 4, marginBottom: 18 }}>
         {TABS.map((t) => {
           const active = tab === t.id;
           return (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
-              flex: 1, padding: "9px 4px", borderRadius: 9, border: "none", cursor: "pointer",
-              fontFamily: sans, fontSize: 13, fontWeight: active ? 600 : 500,
-              background: active ? C.card : "transparent", color: active ? C.brown : C.muted,
-              boxShadow: active ? "0 1px 4px rgba(100,70,40,0.12)" : "none",
+              flex: 1, padding: "10px 4px", border: "none", cursor: "pointer",
+              fontFamily: MONO, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase",
+              background: active ? "var(--stamp)" : "transparent", color: active ? "#fff" : "var(--dim)",
             }}>{t.label}</button>
           );
         })}
@@ -134,28 +129,28 @@ export default function BuyVerdict({ onClose }) {
         <div onClick={() => fileRef.current?.click()}
           onDrop={(e) => { e.preventDefault(); handlePhoto(e.dataTransfer.files[0]); }}
           onDragOver={(e) => e.preventDefault()}
-          style={{ border: "2px dashed #d4c5b5", borderRadius: 14, padding: "40px 20px", textAlign: "center", cursor: "pointer", background: C.tint }}>
-          <div style={{ fontSize: 32, marginBottom: 10 }}>📷</div>
-          <div style={{ fontFamily: serif, fontSize: 16, color: "#6b4226", marginBottom: 4 }}>Snap a bag</div>
-          <div style={{ fontFamily: sans, fontSize: 13, color: C.faint }}>I'll read it and tell you if it's your kind of coffee.</div>
+          style={{ border: "1px dashed var(--ink-line)", padding: "40px 20px", textAlign: "center", cursor: "pointer", background: "var(--ink)" }}>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--stamp)" strokeWidth="1.4" style={{ marginBottom: 12 }}><rect x="3" y="6" width="18" height="14" rx="1" /><path d="M3 10h18" /><circle cx="12" cy="14" r="3.2" /><path d="M8 6l1.5-2h5L16 6" /></svg>
+          <div style={{ fontFamily: DISPLAY, fontSize: 20, textTransform: "uppercase", color: "var(--bone)", marginBottom: 6 }}>Snap a bag</div>
+          <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: "var(--dim)" }}>I'll read it and check it against your palate.</div>
         </div>
       )}
 
       {tab === "photo" && preview && (
         <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 8 }}>
-          <img src={preview} alt="bag" style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 12, border: `1.5px solid ${C.border}` }} />
-          <button onClick={() => fileRef.current?.click()} style={{ ...ghostBtn, padding: "7px 14px", fontSize: 12 }}>Replace photo</button>
+          <img src={preview} alt="bag" style={{ width: 96, height: 96, objectFit: "cover", border: "1px solid var(--ink-line)" }} />
+          <button onClick={() => fileRef.current?.click()} className="cl-ghost-btn" style={{ padding: "9px 14px" }}>Replace photo</button>
         </div>
       )}
 
       {tab === "link" && (
         <div>
-          <label style={labelStyle}>Roaster product link</label>
+          <span className="cl-label">Roaster product link</span>
           <div style={{ display: "flex", gap: 8 }}>
             <input type="url" value={url} onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fetchUrl(); } }}
-              placeholder="https://roaster.com/shop/that-coffee" style={{ ...inputStyle, flex: 1 }} />
-            <button onClick={fetchUrl} disabled={busy || !url.trim()} style={{ ...primaryBtn(!busy && !!url.trim()), padding: "0 18px", whiteSpace: "nowrap" }}>
+              placeholder="https://roaster.com/shop/that-coffee" className="cl-input" style={{ flex: 1 }} />
+            <button onClick={fetchUrl} disabled={busy || !url.trim()} className="cl-stamp-btn" style={{ padding: "0 18px", whiteSpace: "nowrap" }}>
               {busy ? <Spinner /> : "Check"}
             </button>
           </div>
@@ -163,90 +158,77 @@ export default function BuyVerdict({ onClose }) {
       )}
 
       {busy && (
-        <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 10, color: C.muted, fontFamily: sans, fontSize: 14 }}>
+        <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 10, color: "var(--dim)", fontFamily: MONO, fontSize: 12, letterSpacing: "0.06em" }}>
           <Spinner /> Reading the bag and consulting your palate…
         </div>
       )}
 
       {errMsg && (
-        <div style={{ marginTop: 14, background: "#f7e4dc", color: "#a05040", borderRadius: 10, padding: "10px 12px", fontSize: 13, fontFamily: sans }}>{errMsg}</div>
+        <div style={{ marginTop: 14, background: "rgba(226,67,29,.12)", border: "1px solid var(--stamp)", color: "#f0b7a6", padding: "10px 12px", fontSize: 12, fontFamily: MONO }}>{errMsg}</div>
       )}
 
-      {/* The verdict card */}
+      {/* The verdict — stamped board */}
       {v && !busy && (
-        <div style={{ marginTop: 18, background: v.bg, border: `1.5px solid ${v.border}`, borderRadius: 16, padding: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-            <span style={{ fontSize: 28 }}>{v.emoji}</span>
-            <span style={{ fontFamily: serif, fontWeight: 900, fontSize: 28, color: v.ink, letterSpacing: "-0.01em" }}>{v.label}</span>
+        <div style={{ marginTop: 18, background: "var(--ink)", border: "1px solid var(--ink-line)", padding: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12, borderBottom: "1px solid var(--ink-line)", paddingBottom: 14 }}>
+            <span className="tnum" style={{ fontFamily: DISPLAY, fontSize: 52, lineHeight: 0.8, color: v.c }}>{v.label}</span>
             <span style={{ flex: 1 }} />
-            <span style={{ fontFamily: sans, fontSize: 11, color: v.ink, opacity: 0.75, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              {result.confidence || "—"} confidence
+            <span style={{ fontFamily: MONO, fontSize: 10, color: "var(--dim)", textTransform: "uppercase", letterSpacing: "0.12em", textAlign: "right" }}>
+              {result.confidence || "—"}<br />confidence
             </span>
           </div>
-          <div style={{ fontFamily: sans, fontSize: 14, color: v.ink, lineHeight: 1.5 }}>{result.reasoning}</div>
+          <div style={{ fontFamily: BODY, fontSize: 15, color: "var(--manila)", lineHeight: 1.55 }}>{result.reasoning}</div>
 
-          {/* Overlap with the palate */}
           {(result.matches?.length > 0 || result.mismatches?.length > 0) && (
-            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
               {result.matches?.map((m, i) => (
-                <div key={`m${i}`} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: sans, fontSize: 13, color: v.ink }}>
-                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", background: "#a8c898", color: "#fff8f0", fontSize: 11 }}>✓</span>
-                  <span style={{ flex: 1 }}><strong>{m.attr}:</strong> {m.value}</span>
+                <div key={`m${i}`} style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: MONO, fontSize: 12, color: "var(--manila)" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, border: "1px solid var(--ok)", color: "var(--ok)", fontSize: 11 }}>✓</span>
+                  <span style={{ flex: 1, letterSpacing: "0.04em", textTransform: "uppercase" }}><b style={{ color: "var(--bone)" }}>{m.attr}:</b> {m.value}</span>
                   {typeof m.yourAvg === "number" && (
-                    <span style={{ opacity: 0.85, fontFamily: serif, fontWeight: 700 }}>
-                      {Number(m.yourAvg).toFixed(1)}<span style={{ fontSize: 10, fontFamily: sans, opacity: 0.7, marginLeft: 3 }}>({m.n || 0})</span>
-                    </span>
+                    <span className="tnum" style={{ fontFamily: DISPLAY, color: "var(--ok)" }}>{Number(m.yourAvg).toFixed(1)}<span style={{ fontSize: 9, fontFamily: MONO, color: "var(--dim)", marginLeft: 3 }}>({m.n || 0})</span></span>
                   )}
                 </div>
               ))}
               {result.mismatches?.map((m, i) => (
-                <div key={`x${i}`} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: sans, fontSize: 13, color: v.ink, opacity: 0.75 }}>
-                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", background: "#d1a0a0", color: "#fff8f0", fontSize: 11 }}>!</span>
-                  <span style={{ flex: 1 }}><strong>{m.attr}:</strong> {m.value}</span>
-                  <span style={{ fontSize: 11, fontStyle: "italic" }}>{m.note}</span>
+                <div key={`x${i}`} style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: MONO, fontSize: 12, color: "var(--dim)" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, border: "1px solid var(--stamp)", color: "var(--stamp)", fontSize: 11 }}>!</span>
+                  <span style={{ flex: 1, letterSpacing: "0.04em", textTransform: "uppercase" }}><b style={{ color: "var(--manila)" }}>{m.attr}:</b> {m.value}</span>
+                  <span style={{ fontSize: 10, fontStyle: "italic", fontFamily: BODY }}>{m.note}</span>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Compact extracted info */}
           {result.coffee?.name && (
-            <details style={{ marginTop: 12 }}>
-              <summary style={{ cursor: "pointer", fontFamily: sans, fontSize: 12, color: v.ink, opacity: 0.85 }}>What I read on the bag</summary>
-              <div style={{ marginTop: 8, fontSize: 13, fontFamily: sans, color: C.ink, lineHeight: 1.6 }}>
+            <details style={{ marginTop: 14 }}>
+              <summary style={{ cursor: "pointer", fontFamily: MONO, fontSize: 11, color: "var(--dim)", letterSpacing: "0.1em", textTransform: "uppercase" }}>What I read on the bag</summary>
+              <div style={{ marginTop: 10, fontSize: 13, fontFamily: BODY, color: "var(--manila)", lineHeight: 1.6 }}>
                 {(() => {
-                  const flat = (v) => Array.isArray(v) ? v.filter(Boolean).join(", ") : (v || "");
+                  const flat = (val) => Array.isArray(val) ? val.filter(Boolean).join(", ") : (val || "");
                   const origin = flat(result.coffee.origin);
                   const varietal = flat(result.coffee.varietal);
                   const region = result.coffee.region || "";
                   const facts = [varietal, result.coffee.process, result.coffee.roastLevel, result.coffee.altitude ? `${result.coffee.altitude} masl` : null].filter(Boolean);
                   return (
                     <>
-                      <div><strong>{result.coffee.name}</strong>{result.coffee.roaster ? ` · ${result.coffee.roaster}` : ""}</div>
-                      {(origin || region) && (
-                        <div style={{ color: C.muted }}>{[origin, region].filter(Boolean).join(" · ")}</div>
-                      )}
-                      {facts.length > 0 && (
-                        <div style={{ color: C.muted, marginTop: 2 }}>{facts.join(" · ")}</div>
-                      )}
+                      <div><b style={{ color: "var(--bone)" }}>{result.coffee.name}</b>{result.coffee.roaster ? ` · ${result.coffee.roaster}` : ""}</div>
+                      {(origin || region) && <div style={{ color: "var(--dim)" }}>{[origin, region].filter(Boolean).join(" · ")}</div>}
+                      {facts.length > 0 && <div style={{ color: "var(--dim)", marginTop: 2 }}>{facts.join(" · ")}</div>}
                     </>
                   );
                 })()}
-                {result.coffee.tags?.length > 0 && (
-                  <div style={{ color: C.muted, marginTop: 4 }}>{result.coffee.tags.join(" · ")}</div>
-                )}
+                {result.coffee.tags?.length > 0 && <div style={{ color: "var(--dim)", marginTop: 4 }}>{result.coffee.tags.join(" · ")}</div>}
               </div>
             </details>
           )}
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20, paddingTop: 16, borderTop: "1px solid #ecddd0" }}>
-        <button onClick={onClose} style={ghostBtn}>{result ? "Done" : "Cancel"}</button>
+      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--ink-line)" }}>
+        <button onClick={onClose} className="cl-ghost-btn">{result ? "Done" : "Cancel"}</button>
         {result?.coffee?.name && (
-          <button onClick={saveToCatalog} disabled={saving} style={primaryBtn(!saving)}>
-            {saving ? "Saving…" : "Save to catalog"}
-          </button>
+          <button onClick={saveToCatalog} disabled={saving} className="cl-stamp-btn">{saving ? "Saving…" : "Save to catalog"}</button>
         )}
       </div>
     </Sheet>
