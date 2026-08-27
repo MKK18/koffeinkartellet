@@ -120,7 +120,7 @@ export default function LandingPage() {
           <h2 className="cl-sec-title">A bag books itself in.</h2>
           <div className="cl-manifest" style={{ marginTop: 34 }}>
             <Row idx="M·01" title="Scan the bag" desc="Photograph the packaging or paste a roaster link. It reads roaster, origin, region, producer, varietal, process, altitude and notes — and files the entry." io={<>IN&nbsp;&nbsp;→ photo.jpg<br />OUT → <b>14 fields, stamped</b></>} mark={<CamMark />} />
-            <Row idx="M·02" title="The crew scores it" desc="Every member rates 0–10 and tags the flavors they caught. Scores accumulate into one shared palate the household can read — and dispute." io={<>RATERS → 4 active<br />PALATE → <b>1,204 tastings</b></>} mark={<StarMark />} />
+            <Row idx="M·02" title="Your crew scores it" desc="Every member rates 0–10 and tags the flavors they caught. Scores accumulate into one shared palate the household can read — and dispute." io={<>RATERS → 4 active<br />PALATE → <b>1,204 tastings</b></>} mark={<StarMark />} />
             <Row idx="M·03" title="Get the verdict — in the shop" desc={<>Standing at the roaster, scan a bag you don't own. It weighs it against your palate and stamps <b style={{ color: "var(--bone)" }}>buy</b>, <b style={{ color: "var(--bone)" }}>maybe</b>, or <b style={{ color: "var(--bone)" }}>skip</b>, with the reasons.</>} io={<>MATCH → palate × bag<br />OUT → <b style={{ color: "var(--stamp)" }}>a stamp</b></>} mark={<CheckMark />} />
           </div>
 
