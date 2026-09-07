@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2v2 Dossier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@500;700;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+:root{
+  --sheet:#d7cbae; --sheet-3:#e0d6bd;
+  --ink:#1e1a13; --ink-2:#4a4335; --ink-3:#5c5544;
+  --stamp:#8e2b22; --olive:#4e503c; --rule:#a89b7c; --rule-2:#bfb293;
+  --band:#1e1a13;
+  --f-sten:"Big Shoulders Stencil Display","Arial Narrow",sans-serif;
+  --f-type:"Courier Prime","Courier New",monospace;
+  --measure:65ch;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--sheet); color:var(--ink);
+  font:400 16.5px/1.7 var(--f-type);
+}
+::selection{background:var(--ink);color:var(--sheet)}
+:focus-visible{outline:2px solid var(--stamp);outline-offset:2px}
+a{color:var(--ink);text-decoration-color:var(--stamp);text-underline-offset:.2em;text-decoration-thickness:1px}
+a:hover{color:var(--stamp)}
+*{scrollbar-color:var(--rule) transparent;scrollbar-width:thin}
+*::-webkit-scrollbar{height:10px;width:10px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--rule);border:3px solid var(--sheet)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 clamp(1rem,4vw,2.75rem)}
+
+/* classification banding: the hazard stripe, translated */
+.band{
+  background:repeating-linear-gradient(45deg,var(--band) 0 14px,transparent 14px 28px);
+  height:16px;
+}
+.classline{
+  display:flex;flex-wrap:wrap;gap:.6rem 1.4rem;align-items:baseline;
+  border-top:2px solid var(--ink);border-bottom:1px solid var(--ink);
+  padding:.5rem 0;margin:0;
+}
+.classline b{
+  font:900 clamp(1.1rem,3.2vw,1.5rem)/1 var(--f-sten);letter-spacing:.06em;
+  color:var(--stamp);text-transform:uppercase;
+}
+.classline span{font:400 .78rem/1.4 var(--f-type);color:var(--ink-3);letter-spacing:.04em}
+
+/* cover sheet */
+header.cover{padding:0 0 1.2rem}
+h1{
+  font:900 clamp(2.6rem,9vw,5.2rem)/0.86 var(--f-sten);
+  letter-spacing:.005em;text-transform:uppercase;margin:1.6rem 0 0;
+  max-width:20ch;text-wrap:balance;
+}
+.fields{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));
+  gap:0;margin:1.5rem 0 0;border-top:1px solid var(--rule);
+}
+.field{border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);padding:.5rem .7rem}
+.field:last-child{border-right:0}
+.field dt{font:700 .72rem/1.4 var(--f-type);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+.field dd{margin:.15rem 0 0;font:700 1.02rem/1.4 var(--f-type);color:var(--ink)}
+.brief{margin:1.4rem 0 0;max-width:var(--measure);color:var(--ink-2)}
+
+/* file tabs: rank by inversion */
+nav.files{position:sticky;top:0;z-index:20;background:var(--sheet);border-bottom:2px solid var(--ink)}
+nav.files .wrap{display:flex;align-items:stretch;gap:.4rem}
+.ftab{
+  appearance:none;border:1px solid var(--ink);border-bottom:0;background:transparent;
+  color:var(--ink-2);cursor:pointer;padding:.7rem 1.1rem .6rem;margin-top:.45rem;
+  font:700 .8rem/1.25 var(--f-type);letter-spacing:.1em;text-transform:uppercase;
+}
+.ftab:hover{color:var(--ink);background:var(--sheet-3)}
+.ftab[aria-selected="true"]{background:var(--ink);color:var(--sheet)}
+.ftab small{display:block;font-size:.72rem;letter-spacing:.03em;text-transform:none;margin-top:.2rem;opacity:.75}
+/* plates */
+section.plate{padding:clamp(3rem,8vw,5.5rem) 0 0}
+.plate-head{display:flex;gap:.9rem;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:.4rem}
+.plate-no{font:700 .74rem/1 var(--f-type);letter-spacing:.12em;color:var(--stamp);white-space:nowrap}
+h2{
+  font:700 clamp(1.5rem,4.4vw,2.3rem)/1 var(--f-sten);letter-spacing:.02em;
+  text-transform:uppercase;margin:0;text-wrap:balance;
+}
+.note{margin:1.05rem 0 0;max-width:var(--measure);color:var(--ink-2)}
+h4{font:700 .74rem/1.3 var(--f-type);letter-spacing:.13em;text-transform:uppercase;color:var(--olive);margin:2rem 0 .5rem}
+p{max-width:var(--measure)}
+
+/* findings as typed cells */
+ol.finds{list-style:none;margin:1.5rem 0 0;padding:0}
+.find{display:grid;grid-template-columns:2.9rem 1fr;gap:0 .9rem;padding:1rem 0;border-top:1px solid var(--rule-2)}
+.find:first-child{border-top:1px solid var(--rule)}
+.cell{
+  appearance:none;background:transparent;border:0;cursor:pointer;padding:.1rem 0 0;
+  font:700 1.15rem/1.2 var(--f-type);color:var(--ink);text-align:left;
+}
+.cell:hover{color:var(--stamp)}
+.find[data-state="2"] .cell{color:var(--stamp);transform:rotate(-4deg) translateY(1px)}
+.find h5{margin:0 0 .3rem;font:700 1.02rem/1.4 var(--f-type);text-wrap:balance}
+.find p{margin:0;color:var(--ink-2);max-width:62ch}
+.refs{margin:.5rem 0 0;font:400 .78rem/1.6 var(--f-type);color:var(--ink-3)}
+.find[data-state="1"] h5{text-decoration:line-through;text-decoration-color:var(--stamp);text-decoration-thickness:2px}
+.find[data-state="1"] h5,.find[data-state="1"] p{color:var(--ink-3)}
+.find[data-state="2"] h5{color:var(--ink-3)}
+
+/* tables carry the page */
+.tw{overflow-x:auto;margin:1.6rem 0 0;border-bottom:1px solid var(--rule)}
+table{width:100%;border-collapse:collapse;font:400 .84rem/1.5 var(--f-type);font-variant-numeric:tabular-nums}
+caption{caption-side:top;text-align:left;padding:0 0 .6rem;font:400 .8rem/1.6 var(--f-type);color:var(--ink-3);max-width:80ch}
+th,td{padding:.4rem .6rem;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule-2)}
+th{font:700 .72rem/1.3 var(--f-type);letter-spacing:.09em;text-transform:uppercase;color:var(--olive);
+   border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);
+   position:sticky;top:0;background:var(--sheet)}
+th:first-child,td:first-child{text-align:left;white-space:normal;min-width:13rem}
+tbody tr:hover td{background:var(--sheet-3)}
+tbody tr:last-child td{border-bottom:0}
+td.dim{color:var(--ink-3)}
+.up{color:var(--olive);font-weight:700}
+.dn{color:var(--stamp);font-weight:700}
+/* state is line form, never hue */
+tr.you td{box-shadow:inset 0 -1px 0 var(--ink)}
+tr.you td:first-child::before{content:"\203A ";color:var(--stamp);font-weight:700}
+tr.thin td:first-child{text-decoration:underline;text-decoration-style:dashed;text-decoration-color:var(--rule);text-underline-offset:.25em}
+
+/* redaction: only where the data genuinely does not exist */
+.redact{background:var(--ink);color:var(--ink);user-select:none;padding:0 .35em;border-radius:1px}
+.absent{border-top:1px solid var(--stamp);margin:1.5rem 0 0;padding:.9rem 0 0;max-width:var(--measure)}
+.absent h4{margin-top:0}
+.absent li{margin:.5rem 0;color:var(--ink-2)}
+.absent .redact{margin-right:.4em}
+.struck{border-top:1px solid var(--stamp);margin:1.5rem 0 0;padding:.9rem 0 0}
+.struck li{margin:.7rem 0;max-width:var(--measure);color:var(--ink-2)}
+.struck del{text-decoration-color:var(--stamp);text-decoration-thickness:2px;color:var(--ink-3)}
+.struck ins{text-decoration:none;display:block;margin-top:.2rem;color:var(--ink)}
+ul.plain{max-width:var(--measure);color:var(--ink-2);padding-left:1.3rem}
+ul.plain li{margin:.45rem 0}
+
+/* build order strips */
+.bo{margin:.6rem 0 0;font:400 .82rem/1.85 var(--f-type);font-variant-numeric:tabular-nums}
+.bo-line{display:grid;grid-template-columns:4.4rem 3.8rem 1fr;gap:.7rem;padding:.3rem 0;border-top:1px solid var(--rule-2)}
+.bo-res{font-weight:700;letter-spacing:.06em}
+.bo-res.w{color:var(--olive)}.bo-res.l{color:var(--stamp)}.bo-res.u{color:var(--ink-3)}
+.bo-seq{color:var(--ink-2);white-space:normal}
+.bo-seq em{font-style:normal;font-weight:700;color:var(--ink);border-bottom:2px solid var(--stamp)}
+
+.callout{margin:1.4rem 0 0;padding:.9rem 0 0;border-top:1px solid var(--ink);max-width:var(--measure)}
+.callout p{margin:0}.callout p+p{margin-top:.6rem}
+code{font:400 .9em/1 var(--f-type);border-bottom:1px dotted var(--rule)}
+
+footer{margin-top:clamp(3.5rem,9vw,6rem);border-top:2px solid var(--ink);padding:1.1rem 0 3rem;
+  font:400 .82rem/1.75 var(--f-type);color:var(--ink-3)}
+footer p{max-width:var(--measure)}
+.hidden{display:none!important}
+@media (max-width:640px){
+  .find{grid-template-columns:2.3rem 1fr}
+  .bo-line{grid-template-columns:3.4rem 3.2rem 1fr;gap:.45rem}
+  .fields{grid-template-columns:1fr 1fr}
+}
+/* nothing glides: one authored moment, snapped */
+@media (prefers-reduced-motion:no-preference){
+  .plate{animation:snap .01s steps(1) both,hold .3s linear both}
+  @keyframes snap{from{opacity:.55}to{opacity:1}}
+  @keyframes hold{from{opacity:.55}to{opacity:1}}
+}
+</style>
+</head>
+<body>
+
+<div class="band" aria-hidden="true"></div>
+<header class="cover">
+  <div class="wrap">
+    <p class="classline"><b>Restricted</b><span>ORIGINATOR: SELF-COMPILED</span><span>DISTRIBUTION: TWO (2) COPIES</span><span>NOT FOR THIRD PARTIES</span></p>
+    <h1>2v2 Operations Dossier</h1>
+    <dl class="fields">
+      <div class="field"><dt>Subject</dt><dd id="f-subject">Merds</dd></div>
+      <div class="field"><dt>Record</dt><dd id="f-record">34W–23L · 60%</dd></div>
+      <div class="field"><dt>Patch</dt><dd>2.5.3 · build 49048</dd></div>
+      <div class="field"><dt>Mode</dt><dd>2v2 automatch</dd></div>
+      <div class="field"><dt>Forces</dt><dd>USF · British</dd></div>
+      <div class="field"><dt>Compiled</dt><dd>07 Sep 2026</dd></div>
+    </dl>
+    <p class="brief">Built from your last 19 replays, your match history, and 68 games from 1400+ rated 2v2
+      players to compare against. Costs come straight out of the game files. Every number here is
+      real and says how many games it rests on. A blacked-out line means the data does not exist
+      anywhere; a struck-through line means we got something wrong and fixed it.</p>
+  </div>
+</header>
+
+<nav class="files" aria-label="Subject">
+  <div class="wrap">
+    <button class="ftab" id="tab-merds" role="tab" aria-selected="true">Merds<small>19 replays</small></button>
+    <button class="ftab" id="tab-daniels" role="tab" aria-selected="false">daniels<small>19 replays</small></button>
+    <button class="ftab" id="tab-team" role="tab" aria-selected="false">Together<small>19 shared</small></button>
+  </div>
+</nav>
+
+<main id="main"></main>
+
+<footer>
+  <div class="wrap">
+    <p>No photography or film material is used in this document. None exists for this project,
+      and none was appropriated. The classification register is typographic.</p>
+  </div>
+</footer>
+
+<script>
+const D = {
+  merds: {
+    name:"Merds", record:"2v2 5-5 · team 14-16", games:"57 recent matches",
+    finds:[
+      {f:"usf",t:"Skip the Motor Pool. Go Barracks into Tank Depot.",d:"You build three production buildings. The best USF opener builds two, and 86% of those games stop there. Your Greyhound turns up at 7:15 and shoves your first Sherman out to 16:00. Cut it and your armour lands roughly where the Greyhound used to.",r:["usf-clock", "usf-tech", "usf-openers", "usf-build"]},
+      {f:"usf",t:"Convert to 76mm the moment your first Sherman is out.",d:"You do it at 28 minutes, and only in 2 of 9 games. Good players convert straight after the Tank Depot, in 164 of the top follow-ups. You are driving stock Shermans for most of every game.",r:["usf-tech", "usf-build"]},
+      {f:"usf",t:"Two riflemen, then upgrade. Not five.",d:"You make five before your first upgrade. Good USF players make two, and almost none go past three. You also reach a vehicle having bought nothing, where they have two upgrades down.",r:["usf-seq", "usf-clock", "usf-build"]},
+      {f:"usf",t:"Stop taking fights you are already losing.",d:"You die 4.25 times a minute in losses against 2.89 in wins, and your kill/death halves. This is the only thing that shows up in every single cut of your games, whatever mode or faction you filter to.",r:["usf-counters", "modepure"]},
+      {f:"usf",t:"Quit spamming capture orders when it goes badly.",d:"74 capture orders in losses against 48 in wins, and only one in five sticks against one in three. You also move your rally point twice as often. Fewer orders, better chosen.",r:["usf-beh", "usf-counters"]},
+      {f:"usf",t:"Get BARs early or skip them.",d:"150 manpower and 40 fuel at 17:44, by which point your tanks are already out and want the same fuel. Good players take their first upgrade at 3:10.",r:["usf-upg", "usf-clock"]},
+      {f:"usf",t:"Try Heavy Weapons or Airborne.",d:"Armored is your default in 44% of games and it sits below average. Those two are about four points better and you have one game between them.",r:["usf-bg"]},
+      {f:"uk",t:"Get the Vickers down in the first minute.",d:"Yours arrives at 1:55 and your first team weapon at 3:15. Good British players have one down by 20 seconds, and almost all of them by 2:51. You win British games by holding ground, so this is the worst thing to be late on.",r:["uk-clock", "uk-tech", "uk-counters"]},
+      {f:"uk",t:"Your Company Command Post is 7 to 17 minutes late.",d:"Good players have it at 13:51, nearly all of them by 15:09. You get there at 22:08 on Matildas and 31:26 on Grants. British tech is a fixed ladder, so everything above that rung is waiting on you.",r:["uk-clock", "uk-tech"]},
+      {f:"uk",t:"Drop Australian Defense and Indian Artillery.",d:"They are the two worst British battlegroups in the game and they are your two most played. Heavy Armor is the best one and you have never touched it.",r:["uk-bg"]},
+      {f:"uk",t:"Keep your opener. Fix minute four onwards.",d:"Section Upgrades is the second-best British line and you play it 56% of the time. The pick is right; your record on it is 21 points under par. That is execution, not selection.",r:["uk-openers"]},
+      {f:"uk",t:"Build tanks on British.",d:"Three of your ten British games had no vehicle at all, and you lose zero vehicles in the ones you win. Armour is part of how this faction wins for you.",r:["uk-tech", "uk-counters"]},
+      {f:"uk",t:"More buildings is right on British and wrong on USF.",d:"Your British wins use four production buildings against three in losses. USF is the reverse: two in wins, three and a half in losses. British is a ladder you climb, USF is a menu you should not over-order from. Do not carry one lesson to the other.",r:["uk-beh", "uk-tech", "usf-beh"]},
+      {f:"both",t:"British is your better team faction, not USF.",d:"9-9 on British against 4-6 on USF in team games. Your 60% overall is a 1v1 number: in team games you are 14-16. The old reading had USF ahead and that was 1v1 doing the work.",r:["modepure", "uk-counters", "usf-counters"]},
+      {f:"both",t:"Get a mortar out before three minutes.",d:"Four of five wins had one in your first five builds. None of the five losses did. Only 21 of 58 good USF players build one at all, so this is your edge rather than the standard thing to do.",r:["mortar", "indirect", "uk-bo"]},
+      {f:"both",t:"Your losses are frantic, not lazy.",d:"You issue more commands per minute when you lose, on both factions: 44 against 41 on USF, 43 against 35 on British. More capture orders, more retreats, less to show for it. Idle time is near zero either way, so nothing about your losses is passive.",r:["usf-beh", "uk-beh"]}
+    ,
+      {f:"both",t:"Keep squads alive long enough to veteran up.",d:"This is the biggest single split in your 2v2 games and it had no entry here until now. In 2v2 wins your squads reach rank 4 with 7,400 experience; in losses rank 2 with 2,700. On USF at 2v2 it is rank 7.5 and 18,600 against 2.5 and 4,750. Veterans hit harder and die less, so losing squads early costs you the veterans that would have stopped you losing squads. It is a loop, and it is why damage output barely differs while trades collapse.",r:["usf-counters", "uk-counters", "modepure"]},
+      {f:"both",t:"Their first tank at six minutes is what beats you, and it is not an AT problem.",d:"Their first real vehicle shows up at 9:44 in your wins and 6:38 in your losses, and you win 40% when it lands before 8:00 against 60% after. Your response is not the issue: counting tanks and AT rifles as well as guns, you have an answer +0:04 behind their tank in wins and +0:56 in losses, which is the same number. Being ready first does not help either. So the thing to fix is why they had fuel for a tank at six minutes, not how fast you answer it.",r:["armour", "usf-counters", "uk-counters"]},
+      {f:"usf",t:"Do not chase territory on USF.",d:"Captures are slightly higher in your USF losses, 0.58 a minute against 0.51. On British it is the other way round and holding ground genuinely wins games. USF is where you win by trading well, so grabbing more points is not the lever there.",r:["usf-counters", "usf-beh"]}],
+    usfOpeners:[["Barracks then Tank Depot","62.6",1816,"24%","10-6 (62.5%)",1],["WSC then Tank Depot","55.1",1070,"3%","1-1",0],["Barracks then Rifle Upgrades","55.0",2080,"3%","1-1",0],["Barracks then Motor Pool","53.5",7970,"57%","17-21 (44.7%)",2],["Barracks then WSC","46.5",4333,"10%","4-3",0],["WSC then Motor Pool","44.7",812,"1%","0-1",0],["WSC then Barracks","40.1",664,"1%","1-0",0],["WSC only","38.0",266,"0%","never",0]],
+    usfTech:[["Barracks (Riflemen)","8/9","0:38","0:27 – 1:01",0],["WSC (mortar)","6/9","3:00","2:01 – 7:17",0],["Motor Pool (Greyhound)","6/9","7:15","6:15 – 7:56",1],["Tank Depot (Easy 8)","3/9","14:24","11:16 – 17:42",0],["Tank Depot (Sherman)","5/9","16:02","12:55 – 18:45",0],["Sherman 76mm conversion","2/9","28:18","24:05 – 32:31",1]],
+    usfBg:[["Heavy Weapons","53.6","+3.23",1823,"never",1],["Airborne","53.4","+2.98",4231,"1 (0-1)",1],["Special Operations","51.6","+1.28",5246,"3",0],["Free French","51.3","+1.19",2411,"1 (1-0)",0],["Italian Partisan","50.0","-0.16",456,"never",0],["Armored","49.3","-0.96",2992,"4 (1-1)",2],["Advanced Infantry","48.7","-1.50",2621,"never",0],["No Battlegroup","48.5","-1.85",970,"never",0]],
+    usfCounters:[["kill/death ratio","1.82","0.57"],["enemy kills","4.74","2.52"],["own deaths","2.89","4.25"],["damage dealt","397","336"],["squads lost","0.15","0.33"],["vehicles made","0.11","0.09"],["vehicles lost","0.03","0.05"],["captures","0.57","0.61"]],
+    usfUpg:[["Grenade Package",100,10,"25s","7/9","4:15","1:26 – 16:24","1-1",0],["Mechanized Support Center",100,30,"60s","6/9","5:04","3:14 – 7:43","2-2",0],["Infantry Support Center",100,30,"60s","3/9","4:44","3:57 – 8:25","none",0],["BARs (global)",150,40,"30s","4/9","17:44","15:59 – 21:33","1-0",1],["Improvised Armor",125,25,"30s","4/9","14:13","8:02 – 31:57","1-2",0],["Sherman 76mm",150,30,"30s","3/9","15:55","14:08 – 16:31","none",0]],
+    ukOpeners:[["Company Command","54.8",3237,"25%","2-2",0],["Platoon Command then Section Upgrades","54.6",702,"56%","3-6 (33.3%)",2],["Platoon Command then Humber","49.8",6255,"0%","never",0],["Platoon Command then Stuart","49.1",4532,"6%","1-0",0],["Platoon Command then Bishop","48.3",592,"0%","never",0],["Platoon Command, nothing after","32.0",1860,"12%","1-1",0]],
+    ukBg:[["Heavy Armor","51.3","+0.99",3678,"never",1],["Canadian Shock","50.8","+0.43",1494,"1 (no outcome)",1],["Air and Sea","49.4","-1.05",3955,"1 (0-1)",0],["Polish Cavalry","48.0","-2.54",3255,"1 (1-0)",0],["Indian Artillery","47.5","-2.90",2961,"3 (2-0)",2],["Australian Defense","46.6","-3.73",1968,"3 (0-2)",2],["Special Service","45.8","—",1189,"never",0]],
+    ukTech:[["Section CP (Tommies)","10/10","0:31","0:27 – 1:06",0],["Vickers","5/10","1:55","0:54 – 12:14",0],["mortar","4/10","4:00","1:49 – 23:35",0],["Platoon CP (Humber)","3/10","6:52","5:03 – 9:29",0],["6pdr","5/10","9:50","4:34 – 11:11",0],["Company CP (Matilda)","3/10","22:08","16:27 – 38:49",1],["Company CP (Grant)","2/10","31:26","21:24 – 41:28",1]],
+    ukUpg:[["Infantry Training",200,30,"25s","9/10","7:33","4:46 – 13:04","3-3",0],["Rifle Grenades",100,15,"25s","7/10","4:21","1:44 – 25:45","1-3",0],["Medium Vehicles Training",200,30,"25s","3/10","34:26","19:27 – 34:52","0-1",1],["Stuart unlock",100,15,"30s","2/10","8:39","5:54 – 11:24","1-0",0],["Grant unlock",125,20,"30s","2/10","24:12","16:47 – 31:37","1-0",0],["Team Weapons Training",200,30,"25s","1/10","7:29","—","none",0],["Bishop unlock",100,25,"30s","1/10","11:25","—","none",0]],
+    ukCounters:[["kill/death ratio","1.29","0.68"],["enemy kills","3.24","2.16"],["own deaths","2.63","3.76"],["damage dealt","329","295"],["squads lost","0.23","0.31"],["vehicles lost","0.00","0.03"],["captures","0.92","0.78"]],
+    modepure:[["kill/death ratio","1.51","0.67","1.01","0.59","yes, milder"],["own deaths","2.73","4.01","3.08","4.06","yes"],["squads lost","0.21","0.32","0.27","0.34","yes"],["vehicles lost","0.04","0.04","0.06","0.05","no signal in either"],["captures","0.75","0.70","0.90","0.78","yes, stronger at 2v2"],["damage dealt","374","309","292","348","reverses"]],
+    usfBuild:{title:"Armored, 4 games, 1-1 plus 2 unknown", note:"The win is the only one with four Riflemen before the mortar and no Greyhound detour.",
+      rows:[["WIN","33min","0:28 rifles · 1:00 rifles · 2:03 rifles · 3:06 rifles · 3:11 <em>mortar</em> · 4:39 mech support · 6:56 rifles · 11:16 Easy 8"],["LOSS","20min","0:21 scout · 0:45 rifles · 1:37 rifles · 2:25 grenades · 3:14 mech support · 4:52 rifles · 7:16 Greyhound · 8:47 57mm"],["?","27min","0:28 rifles · 0:46 rifles · 1:00 rifles · 2:01 <em>mortar</em> · 3:18 rifles · 6:07 mech support · 7:56 Greyhound · 11:31 Chaffee"],["?","24min","0:27 rifles · 1:00 rifles · 2:53 <em>mortar</em> · 3:28 mech support · 6:15 Greyhound · 14:24 Easy 8"]]},
+    ukBuild:[
+      {title:"Australian Defense, 3 games, 0-2 plus 1 unknown", note:"Worst battlegroup in the game. First unit at 1:06 in one, mortar at 23:35 in another. No two games alike.",
+       rows:[["LOSS","29min","0:32 Tommy · 1:13 Tommy · 2:04 Tommy · 3:14 Tommy · 6:02 Dingo · 6:03 mortar · 7:33 Inf Training · 10:30 6pdr"],["LOSS","40min","1:06 Tommy · 2:28 Tommy · 4:12 Tommy · 8:05 rifle grenades · 12:27 Crusader · 13:04 Inf Training · 23:35 mortar"],["?","50min","0:30 Tommy · 1:34 Tommy · 2:20 Tommy · 2:56 Tommy · 4:21 rifle grenades · 7:29 TW Training · 9:29 Humber"]]},
+      {title:"Indian Artillery, 3 games, 2-0 plus 1 unknown", note:"Both wins have a mortar inside two minutes. Neither Australian Defense loss does.",
+       rows:[["WIN","45min","0:27 Tommy · 0:56 Tommy · <em>1:00 Vickers</em> · 1:54 Tommy · <em>1:56 mortar</em> · 2:54 Tommy · 5:38 Vickers"],["WIN","8min","0:37 Tommy · 0:56 Tommy · <em>1:49 mortar</em> · 3:13 Tommy · 5:46 Inf Training"],["?","9min","0:31 Tommy · 1:04 Tommy · 1:55 Vickers · 6:15 6pdr · 7:05 Inf Training"]]}
+    ],
+    mortar:{lines:["mortar within the first five production events: <b>4 of 5 wins, 0 of 5 losses</b>","Fisher exact, two tailed: <b>p = 0.048</b>","in the wins, first mortar at 1:48, 1:54, 3:12 and 7:18"],
+      body:"Three of four came inside 3:12, too early to be a consequence of a game already going well. Your regular partner shows no mortar pattern across the same ten games, so this is not simply a marker for games that were winnable anyway. Ten games: a hypothesis worth testing, not a settled fact."}
+  },
+  daniels: {
+    name:"daniels", record:"2v2 5-5 · team 12-18", games:"50 recent matches",
+    finds:[
+      {f:"usf",t:"Build a Sherman. You never have.",d:"Not one medium tank across seven USF games. Your armour is a Chaffee at 10:39, a Hellcat at 23:32 and a Char B1 call-in. Barracks into Tank Depot is the best USF opener going, 62.6% over 1,816 games, and good players have their Tank Depot at 14:31.",r:["usf-clock", "usf-tech", "usf-openers"]},
+      {f:"usf",t:"Two riflemen before your first upgrade, not eight.",d:"You make eight. Good USF players make two and almost never more than three. You also reach a vehicle with no upgrades where they have two.",r:["usf-seq", "usf-clock"]},
+      {f:"usf",t:"You win USF without winning fights, and that is fragile.",d:"Your kill/death is 0.72 in the games you win. You get there by out-capping instead, 0.82 against 0.59. Damage is flat either way. Against anyone who punishes loose units that plan falls over, which is the 6-12 record.",r:["usf-counters"]},
+      {f:"usf",t:"Get team weapons out earlier.",d:"10:21, and in only four of seven games. Good players have one at 2:37. Holding ground is how you win, so this is the wrong thing to be late on.",r:["usf-clock", "usf-tech"]},
+      {f:"usf",t:"Pick your battlegroup earlier on USF.",d:"4:13, where the field picks at 0:19 and nearly all of them by 3:28. On British your 3:54 is fine. This is USF-only, and it delays everything on that tree.",r:["usf-clock", "usf-beh"]},
+      {f:"usf",t:"Fire the abilities you unlock.",d:"You unlock about four a game and fire two in your wins and none in your losses. That is progression you paid for and never spent. Best replay sample in this whole file.",r:["usf-beh"]},
+      {f:"usf",t:"Do not replace lost armour. Stop losing it.",d:"You build more vehicles in losses, 0.13 a minute against 0.08, and lose zero in wins. Building more is not the fix.",r:["usf-counters"]},
+      {f:"usf",t:"Retreat less, not more.",d:"18 retreats in wins against 28 in losses. Fewer fights you have to bail out of, rather than better bailing.",r:["usf-beh", "usf-counters"]},
+      {f:"usf",t:"Try Heavy Weapons or Airborne.",d:"Free French in seven of seven games. It is a fine pick at 51.3%, but those two are better and you have never played either.",r:["usf-bg"]},
+      {f:"uk",t:"Your first tank is twelve minutes late.",d:"17:07, where good British players have one at 5:20 and nearly all of them by 6:57. This is the biggest gap in the whole analysis, for either of you, on any measure. 69 of 74 of them had a vehicle out.",r:["uk-clock", "uk-tech"]},
+      {f:"uk",t:"Get your Company Command Post down by 14 minutes.",d:"Yours lands at 19:06. Good players are there at 13:51. British tech is a fixed ladder, so this gates your entire late game.",r:["uk-clock", "uk-tech"]},
+      {f:"uk",t:"Get the Vickers down in the first minute.",d:"4:18, where the field has a team weapon at 0:20. The most common good British build opens with the Vickers before anything else, even the first building.",r:["uk-clock", "uk-tech", "uk-openers"]},
+      {f:"uk",t:"Keep your openers.",d:"You beat par on all four British lines you play, across 70 games. There is genuinely nothing to fix in the pick.",r:["uk-openers"]},
+      {f:"uk",t:"Retreat damaged tanks.",d:"Zero vehicles lost in your wins, 0.05 a minute in losses, and you build the same number either way. Every loss is pure waste.",r:["uk-counters"]},
+      {f:"uk",t:"Try Heavy Armor.",d:"Best British battlegroup at 51.3% over 3,678 games, and you have never played it. Your most-used, Air and Sea, is slightly below average.",r:["uk-bg"]},
+      {f:"uk",t:"Check whether the caches are on purpose.",d:"29 of them across 12 games, roughly 360 manpower a game. It is your most frequent research by a mile and it costs no fuel, so it may well be right. Just know you are choosing it every game.",r:["uk-upg"]},
+      {f:"uk",t:"Your British is basically unmeasured. Save replays.",d:"Only one win and two losses across twelve British replays carry a result, so nothing can be split. What the raw numbers do show is the lowest squad veterancy in this file, and there is no way yet to tell whether that is real or just thin data.",r:["uk-beh", "uk-counters"]},
+      {f:"both",t:"USF is your better 2v2 faction, not British.",d:"4-3 on USF against 1-2 on British at 2v2. USF only looked bad because of 1v1, where you are 2-5. None of the USF build advice changes, but do not switch off the faction. Your real problem is 3v3 and 4v4, 3-7 and 4-6.",r:["modepure", "usf-counters", "uk-counters"]},
+      {f:"both",t:"Stop losing squads. It is the whole thing.",d:"Squad losses roughly double in your losses on every faction: 0.13 to 0.29 on British, 0.11 to 0.23 on USF. Production, damage and idle time barely move. Your losses are bleed, not tempo.",r:["uk-counters", "usf-counters", "modepure"]}
+    ,
+      {f:"both",t:"Get a mortar down before four minutes, and in more games.",d:"You build one in 3 of 12 British games at typically 7:09, and 2 of 7 USF games at 7:41. Good players who take one have it at 3:04 on British and 3:36 on USF. So you are roughly four minutes late and you skip it two games out of three. Your record with one is 1-0 on British and 1-1 on USF; without one it is 0-2 and 3-2. Small numbers, but the team page is blunter: when both of you bring indirect fire you are 2-0.",r:["indirect", "uk-clock", "usf-clock"]},
+      {f:"both",t:"Their first tank at six minutes is what beats you.",d:"Their first real vehicle shows up at 9:44 in your wins and 6:38 in your losses, and the team wins 40% when it lands before 8:00 against 60% after. Two jobs come out of that, and they are different: deny the fuel that builds the tank, and have your own AT ready, which is the finding below this one.",r:["armour", "usf-counters", "uk-counters"]},
+      {f:"both",t:"Squad veterancy is the one thing your data will not confirm.",d:"Across your 2v2 games your squads bank 3,800 experience in wins against 1,100 in losses, which matches your partner. But split by faction it disappears: flat on USF, and on British it runs backwards at rank 0.5 in wins against 1.0 in losses, the lowest veterancy anywhere in this file. Either your British squads genuinely never live long enough to matter, or three decided games is too few to see it. Save replays and this resolves itself.",r:["modepure", "uk-beh", "uk-counters"]},
+      {f:"both",t:"Your anti-tank timing is fine. Stop worrying about it.",d:"Counting everything that answers a tank, guns, bazookas, tank destroyers, your own tanks, and battlegroup infantry that arrives with AT rifles built in, you have an answer about a minute after their first tank: +0:51 in wins and +1:06 in losses. Those are the same number. Being ready before their tank does not help either, 1-1 against 3-4. Their early tank still separates wins from losses, but not because you are slow to respond.",r:["armour"]},
+      {title:"Canadian Shock, 4 games, 1-0 plus 3 unknown", note:"Ability order: Incendiary Munitions then Pyrotechnics, or Attacking Spirit, Shock Troops, Smoke.", rows:[]}
+    ],
+    mortar:null
+  }
+};
+
+const SEQ = {"merds": {"usf": [["infantry before 1st unit upgrade", "5.0", "2-11", "2", 2], ["infantry before 1st tech building", "4.0", "2-4", "2", 2], ["unit upgrades before 1st vehicle", "0.0", "0-0", "1", 2], ["infantry before 1st team weapon", "3.0", "2-5", "&mdash;", 0], ["infantry by 5:00", "4.0", "2-5", "&mdash;", 0], ["team weapons per game", "1.0", "0-3", "&mdash;", 0], ["infantry per game", "5.0", "2-11", "&mdash;", 0]], "uk": [["infantry before 1st unit upgrade", "3.5", "2-8", "3", 1], ["infantry before 1st tech/unlock", "3.5", "2-5", "3", 1], ["unit upgrades before 1st vehicle", "1.0", "0-1", "1", 1], ["infantry before 1st team weapon", "3.5", "1-8", "&mdash;", 0], ["infantry by 5:00", "3.5", "2-5", "&mdash;", 0], ["team weapons per game", "2.0", "0-3", "&mdash;", 0], ["infantry per game", "5.0", "2-10", "&mdash;", 0]]}, "daniels": {"usf": [["infantry before 1st unit upgrade", "8.0", "5-9", "2", 2], ["infantry before 1st tech building", "5.0", "3-5", "2", 2], ["unit upgrades before 1st vehicle", "0.0", "0-0", "1", 2], ["infantry before 1st team weapon", "5.0", "3-8", "&mdash;", 0], ["infantry by 5:00", "5.0", "3-5", "&mdash;", 0], ["team weapons per game", "1.0", "0-3", "&mdash;", 0], ["infantry per game", "8.0", "5-9", "&mdash;", 0]], "uk": [["infantry before 1st unit upgrade", "3.0", "2-3", "3", 1], ["infantry before 1st tech/unlock", "3.0", "2-4", "3", 1], ["unit upgrades before 1st vehicle", "1.0", "0-1", "1", 1], ["infantry before 1st team weapon", "3.0", "1-4", "&mdash;", 0], ["infantry by 5:00", "3.0", "2-4", "&mdash;", 0], ["team weapons per game", "1.5", "0-3", "&mdash;", 0], ["infantry per game", "4.0", "3-8", "&mdash;", 0]]}};
+
+const WL = {"merds": {"n": "5W-5L, all factions", "rows": [["team weapons total", "1.0", "3.0", "5/5", 2], ["1st team weapon", "2:30", "6:03", "4/5", 2], ["1st upgrade", "19:55", "8:05", "2/5", 2], ["1st vehicle", "11:16", "7:23", "3/4", 2], ["1st medium armour", "16:27", "28:47", "3/2", 2], ["infantry before 1st upgrade", "5.0", "3.0", "5/5", 1], ["infantry by 5:00", "4.0", "3.0", "5/5", 1], ["infantry before tech", "4.0", "3.0", "5/5", 0], ["production events by 10:00", "7.0", "7.0", "5/5", 0]], "note": "Only 2 of 5 wins contain a unit upgrade at all, against 5 of 5 losses. In wins you keep producing and defer the upgrade; in losses you buy one at 8:05.", "read": "Win shape: keep making infantry, skip the early upgrade, one early team weapon, skip the light vehicle, medium armour by 16:30. Loss shape: fewer infantry, an upgrade at 8:05, three team weapons from 6:03, a Greyhound at 7:23, medium armour at 28:47 or never. Note that the first vehicle is <b>later</b> in your wins while medium armour is <b>earlier</b>, which is the Motor Pool detour showing up in your own results rather than in the population data."}, "daniels": {"n": "5W-5L, all factions", "rows": [["infantry by 5:00", "5.0", "3.0", "5/5", 1], ["infantry before tech", "5.0", "3.0", "5/5", 1], ["1st vehicle", "16:16", "10:58", "3/5", 2], ["team weapons total", "2.0", "1.0", "5/5", 1], ["1st medium armour", "24:22", "21:48", "3/2", 0], ["1st team weapon", "9:49", "8:26", "3/4", 0], ["infantry before 1st upgrade", "7.0", "6.0", "5/5", 0], ["production events by 10:00", "7.0", "6.0", "5/5", 0]], "note": "On USF alone (4W-3L) infantry before the first upgrade is 7.5 against 8.0, so that habit does not separate your wins from your losses. It is still far off the population reference.", "read": "Win shape: more infantry early, tech later, first vehicle around 16:00. Loss shape: less early infantry, a vehicle at 10:58. The later-vehicle-in-wins direction matches your partner, and it agrees with vehicles lost being zero in your wins."}};
+
+const INDBG = {"daniels": {"rows": [["Air and Sea", "8", "0 / 8", "6 / 8", "7:27", "4:19 &ndash; 25:06", "2 / 8", "0-2", 2], ["Canadian Shock", "4", "3 / 4", "0 / 4", "7:09", "4:08 &ndash; 12:06", "1 / 4", "1-0", 1]], "verdict": "<p><b>On typical timing, waiting costs you nothing.</b> First indirect fire lands at\n   7:27 on Air and Sea against 7:09 on Canadian Shock. Those are the same number, so the simple\n   version of this argument does not hold and I had it wrong a moment ago.</p>\n   <p><b>What it costs you is reliability.</b> Air and Sea ranges from 4:19 to 25:06, and in 2 of\n   8 games you finished with no indirect fire at all. Canadian Shock ranges 4:08 to 12:06 with one\n   such game. The pack howitzer arrives through battlegroup progression, which arrives faster when\n   the game is already going well, so in the games where you are behind it turns up late or never.\n   That is backwards from what indirect fire is for.</p>\n   <p><b>The fix is not to choose.</b> You have built a mortar in 0 of 8 Air and Sea games and\n   never both in the same game. The mortar costs no fuel, comes from a building you already have,\n   and does not compete with a battlegroup call-in. Build it anyway and treat the pack howitzer as\n   an addition. Your own counters lean the same way: team weapons run 2.0 in your wins against 1.0\n   in your losses.</p>\n   <p>Records here are 0-2 and 1-0. Ignore them; the timing and the two games with nothing are the\n   real evidence.</p>"}, "merds": {"rows": [["Air and Sea", "1", "0 / 1", "1 / 1", "9:57", "&mdash;", "0 / 1", "0-1", 2], ["Indian Artillery", "3", "2 / 3", "0 / 3", "1:52", "1:49 &ndash; 1:56", "1 / 3", "2-0", 1]], "verdict": "<p>You have one Air and Sea game, so there is nothing to conclude about it. It is\n   listed only for contrast with Indian Artillery, where both of your wins carried a mortar inside\n   two minutes.</p>\n   <p>Your pattern is the opposite of your partner's: you reach for the mortar and reach for it\n   early, and that is the single strongest signal in your file.</p>"}};
+const ARM = {"rows": [["their 1st combat vehicle", "9:44", "6:38", "5/5", 2], ["your 1st AT", "10:53", "8:47", "3/5", 1], ["your AT minus their vehicle", "+1:23", "+1:06", "3/5", 0]], "wr": [["their vehicle before 8:00", "2-3", "40%", "5", 2], ["their vehicle at or after 8:00", "3-2", "60%", "5", 1], ["their vehicle before 10:00", "3-4", "43%", "7", 2], ["their vehicle at or after 10:00", "2-1", "67%", "3", 1]]};
+const GRE = {"merds": {"rows": [["took grenades", "2-4", "33%", "6", 2], ["no grenades at all", "3-1", "75%", "4", 1], ["grenades before 4:00", "0-2", "0%", "2", 2], ["grenades 4:00 to 8:00", "1-0", "100%", "1", 0], ["grenades after 8:00", "1-2", "33%", "3", 0]], "med": ["when you bought them", "11:07", "5:15", "2/4"]}, "daniels": {"rows": [["took grenades", "5-5", "50%", "10", 0], ["no grenades at all", "none", "&mdash;", "0", 0], ["grenades before 4:00", "4-3", "57%", "7", 1], ["grenades 4:00 to 8:00", "0-1", "0%", "1", 0], ["grenades after 8:00", "1-1", "50%", "2", 0]], "med": ["when you bought them", "2:49", "3:26", "5/5"]}};
+const PROV = [["bucket win rate", "buildings and rungs only", "cohdb population", "yes, thousands of games", "USF openers, British lines", 1], ["reference sequence", "units and upgrades in order, no clock", "cohdb detail pages", "yes, 73 to 449 games", "reference build", 1], ["sequencing", "unit counts before milestones", "replays vs that reference", "yes, counts only", "sequencing", 1], ["tech timeline", "timing of each production building", "replays, via source id", "no", "tech timeline", 2], ["timing summary", "first unit, battlegroup, weapon, vehicle", "replays", "no", "timings", 2], ["upgrades", "timing, plus real manpower and fuel", "replays + game files", "costs yes, timing no", "upgrades", 0], ["composition", "which units, how many", "replays", "no", "tech timeline", 2], ["per battlegroup", "full timed sequence per game", "replays", "no", "build per battlegroup", 2], ["combat counters", "kills, losses, captures, veterancy", "Relic API", "no", "win conditions", 2], ["behaviour", "retreats, orders, cancels, tempo", "replays", "no", "behaviour", 2]];
+const VS = {"merds": {"usf": [["battlegroup pick", "0:22", "0:19", "0:10 &ndash; 3:28", "on pace", 1], ["first unit", "0:28", "0:27", "0:06 &ndash; 0:32", "on pace, see caveat", 0], ["first team weapon", "3:00", "2:37", "1:14 &ndash; 7:46", "on pace", 1], ["first mortar, in wins", "1:48 &ndash; 3:12", "3:36", "1:45 &ndash; 8:44", "ahead of the field", 1], ["Motor Pool", "7:15", "6:39", "5:47 &ndash; 7:35", "on pace, but see below", 0], ["Tank Depot, via 1st Sherman", "16:02", "14:31", "12:31 &ndash; 17:18", "inside range", 0], ["first medium armour", "16:02", "16:03", "14:06 &ndash; 18:42", "on pace", 1], ["Sherman 76mm conversion", "28:18", "&mdash;", "&mdash;", "not benchmarked, but far after your armour", 2], ["infantry before 1st upgrade", "5", "2", "2 &ndash; 3", "OUTSIDE", 2], ["upgrades before 1st vehicle", "0", "2", "1 &ndash; 4", "OUTSIDE", 2]], "uk": [["battlegroup pick", "0:46", "3:06", "0:23 &ndash; 6:46", "early, but inside range", 0], ["first team weapon", "3:15", "0:20", "0:06 &ndash; 2:51", "OUTSIDE", 2], ["Vickers specifically", "1:55", "0:20", "0:06 &ndash; 2:51", "late, inside range", 0], ["Platoon Command Post, via Humber", "6:52", "4:35", "4:09 &ndash; 5:19", "OUTSIDE", 2], ["first vehicle", "6:52", "5:20", "0:58 &ndash; 6:57", "just inside range", 0], ["first mortar", "4:00", "3:04", "2:25 &ndash; 4:03", "on pace", 1], ["Company Command Post, via Matilda", "22:08", "13:51", "13:06 &ndash; 15:09", "OUTSIDE by 7 min", 2], ["Company Command Post, via Grant", "31:26", "13:51", "13:06 &ndash; 15:09", "OUTSIDE by 17 min", 2], ["first medium armour", "22:08", "17:04", "15:46 &ndash; 19:33", "OUTSIDE", 2], ["infantry before 1st upgrade", "3.5", "3", "3 &ndash; 4", "on pace", 1]]}, "daniels": {"usf": [["battlegroup pick", "4:13", "0:19", "0:10 &ndash; 3:28", "OUTSIDE", 2], ["first unit", "0:32", "0:27", "0:06 &ndash; 0:32", "on pace, see caveat", 0], ["first team weapon", "10:21", "2:37", "1:14 &ndash; 7:46", "OUTSIDE", 2], ["first vehicle", "9:42", "8:26", "7:12 &ndash; 11:55", "on pace", 1], ["Tank Depot", "never", "14:31", "12:31 &ndash; 17:18", "never built", 2], ["first medium armour", "never", "16:03", "14:06 &ndash; 18:42", "never built", 2], ["infantry before 1st upgrade", "8", "2", "2 &ndash; 3", "OUTSIDE", 2], ["upgrades before 1st vehicle", "0", "2", "1 &ndash; 4", "OUTSIDE", 2]], "uk": [["battlegroup pick", "3:54", "3:06", "0:23 &ndash; 6:46", "on pace", 1], ["first team weapon", "5:20", "0:20", "0:06 &ndash; 2:51", "OUTSIDE", 2], ["Vickers specifically", "4:18", "0:20", "0:06 &ndash; 2:51", "OUTSIDE", 2], ["first vehicle", "17:07", "5:20", "0:58 &ndash; 6:57", "OUTSIDE by 12 min", 2], ["Company Command Post, via Grant", "19:06", "13:51", "13:06 &ndash; 15:09", "OUTSIDE", 2], ["first medium armour", "19:06", "17:04", "15:46 &ndash; 19:33", "inside range", 0], ["infantry before 1st upgrade", "3", "3", "3 &ndash; 4", "on pace", 1]]}};
+const NOTE = {"merds": {"usf": "Only two wins and two losses carry a result here, so every row is a direction at best. The rows that agree with an independent angle elsewhere in this file are the ones to trust.", "uk": "Three wins and three losses. Note that production building count runs the <i>opposite</i> way to your USF: more buildings in your British wins, fewer in your USF wins."}, "daniels": {"usf": "Four wins and three losses, the best replay sample of any cell in this document.", "uk": "One win and two losses. Not enough to split, so only the loss column and the all-games figures are shown. Treat this cell as undescribed rather than described."}};
+const BEH = {"merds": {"usf": {"n": "2W-2L", "rows": [["production buildings", "2.0", "3.5", 2], ["longest production gap", "5:10", "11:01", 2], ["capture orders", "48", "74", 2], ["capture conversion", "0.37", "0.20", 1], ["retreats per minute", "1.25", "1.56", 2], ["retreats total", "32", "33", 0], ["commands per minute", "40.8", "44.4", 2], ["camera per command", "2.81", "2.59", 0], ["rally point moves", "5", "10", 2], ["transport loads", "6.5", "16", 2], ["attack from hold", "1", "4", 0], ["weapon pickup orders", "6.0", "1.5", 1], ["bg abilities fired / unlocked", "0.80", "0.60", 1], ["squad vet rank", "7.5", "2.5", 1], ["squad vet xp", "18,600", "4,750", 1]]}, "uk": {"n": "3W-3L", "rows": [["production buildings", "4.0", "3.0", 1], ["longest production gap", "17:04", "18:17", 0], ["capture orders", "68", "90", 2], ["capture conversion", "0.27", "0.23", 0], ["retreats per minute", "1.27", "1.52", 2], ["retreats total", "33", "48", 2], ["commands per minute", "34.6", "43.2", 2], ["camera per command", "2.95", "2.67", 0], ["upgrade hovers", "12", "19", 2], ["transport loads", "14", "5", 1], ["rally point moves", "8", "5", 0], ["manual facing", "1", "3", 0], ["bg abilities fired / unlocked", "0.83", "1.00", 0], ["squad vet rank", "4.0", "2.0", 1], ["squad vet xp", "7,400", "2,700", 1]]}}, "daniels": {"usf": {"n": "4W-3L", "rows": [["production buildings", "2.5", "3.0", 2], ["longest production gap", "8:34", "10:55", 2], ["capture orders", "29.5", "33", 0], ["capture conversion", "0.59", "0.45", 1], ["retreats per minute", "0.98", "1.12", 2], ["retreats total", "18", "28", 2], ["commands per minute", "66.4", "72.5", 2], ["camera per command", "1.05", "1.06", 0], ["bg abilities unlocked", "4.5", "4.0", 0], ["bg abilities fired", "2.0", "0.0", 2], ["bg abilities fired / unlocked", "0.50", "0.00", 2], ["upgrade hovers", "6", "7", 0], ["transport loads", "3.5", "3", 0], ["squad vet rank", "1.0", "1.0", 0], ["squad vet xp", "1,900", "1,100", 1]]}, "uk": {"n": "1W-2L", "rows": [["production buildings", "&mdash;", "3.5", 0], ["longest production gap", "&mdash;", "13:44", 0], ["capture orders", "&mdash;", "29.5", 0], ["capture conversion", "&mdash;", "0.67", 0], ["retreats per minute", "&mdash;", "1.24", 0], ["retreats total", "&mdash;", "31", 0], ["commands per minute", "&mdash;", "40.6", 0], ["camera per command", "&mdash;", "1.83", 0], ["bg abilities fired / unlocked", "&mdash;", "0.71", 0], ["squad vet rank", "&mdash;", "0.5", 2], ["squad vet xp", "&mdash;", "600", 2]]}}};
+const ATP = {"lag": [["Merds, when you win", "+0:04", "&minus;9:13 to +2:46", "3", 1], ["Merds, when you lose", "+0:56", "&minus;11:37 to +6:14", "5", 1], ["daniels, when you win", "+0:51", "&minus;2:01 to +1:23", "4", 1], ["daniels, when you lose", "+1:06", "&minus;2:44 to +4:38", "5", 1]], "rec": [["Merds had an answer ready first", "3", "1-2", "33%", 0], ["Merds was still building", "5", "2-3", "40%", 0], ["daniels had an answer ready first", "2", "1-1", "50%", 0], ["daniels was still building", "7", "3-4", "43%", 0]]};
+const ENC = {"first": [["they retreated first (you won the opening fight)", "10 of 15", "2-4", "33%", 2], ["you retreated first (they won it)", "5 of 15", "1-1", "50%", 0]], "bal": [["you retreat less per minute than them", "3", "2-1", "67%", 1], ["you retreat more per minute than them", "5", "1-4", "20%", 2]], "rate": [["your retreats per minute", "2.36", "2.65", 1], ["their retreats per minute", "2.58", "2.42", 0], ["difference, yours minus theirs", "-0.35", "+0.31", 1]], "timing": [["your first retreat", "2:18", "1:35 &ndash; 2:32", 0], ["their first retreat", "2:15", "0:30 &ndash; 3:08", 0]]};
+const TEAM = {"pair": [["Merds British + daniels USF", "5", "3-2", "matches both players' stronger stronger faction once 1v1 is taken out", 1], ["Merds USF + daniels British", "7", "1-1", "each of you on your weaker half", 2], ["Merds USF + daniels USF", "2", "1-1", "&mdash;", 0], ["Merds British + daniels British", "5", "0-1", "&mdash;", 2]], "ind": [["both of you built indirect fire", "2", "2-0", "100%", 1], ["one of you did", "5", "2-3", "40%", 0], ["neither did", "3", "1-2", "33%", 2]], "at": [["both of you built AT", "1", "0-1", "0%", 0], ["one of you did", "8", "4-4", "50%", 0], ["neither did", "1", "1-0", "100%", 0]], "coord": [["capture overlap within 30s", "75%", "63%", "you win working the same ground", 1], ["retreats within 15s of each other", "24%", "33%", "you win retreating separately", 1], ["gap between your first tech", "3:04", "3:15", "no signal", 0]], "dup": [["rifle grenades", "4 of 19", "per-player upgrade, not shared. Both taking it is correct", 0], ["Training Center infantry", "2 of 19", "per-player, not waste", 0], ["Grant unlock", "1 of 19", "per-player, not waste", 0], ["Mechanized Support Center", "1 of 19", "per-player, not waste", 0]]};
+const MODE = {"merds": {"record": "2v2 5-5 &middot; team modes 14-16", "stamp": "Merds &middot; 2v2 5-5 &middot; team 14-16 (47%)", "byfac": [["US Forces", "7-2", "2-2", "2-3", "0-1", "4-6 (40%)", 2], ["British", "5-3", "3-3", "3-2", "3-4", "9-9 (50%)", 1]], "usf": [["kill/death ratio", "1.01", "0.54", "1.01", "0.63", 1], ["enemy kills", "3.05", "2.50", "3.16", "2.76", 0], ["own deaths", "2.85", "4.08", "3.11", "4.56", 2], ["damage dealt", "289", "317", "328", "317", 2], ["squads lost", "0.14", "0.33", "0.18", "0.28", 2], ["vehicles lost", "0.03", "0.05", "0.03", "0.02", 0], ["captures", "0.51", "0.58", "0.73", "0.69", 2], ["points lost", "0.31", "0.43", "0.43", "0.52", 0], ["squad vet rank", "3.5", "3.5", "7.5", "2.5", 0], ["squad vet xp", "6850", "7000", "18600", "4750", 0]], "uk": [["kill/death ratio", "1.11", "0.70", "1.00", "0.59", 1], ["enemy kills", "3.08", "2.24", "3.08", "2.40", 0], ["own deaths", "2.75", "3.54", "3.08", "4.06", 2], ["damage dealt", "331", "281", "292", "383", 2], ["squads lost", "0.25", "0.32", "0.27", "0.37", 2], ["vehicles lost", "0.03", "0.03", "0.09", "0.07", 0], ["captures", "0.69", "0.70", "0.94", "0.84", 0], ["points lost", "0.35", "0.53", "0.53", "0.65", 1], ["squad vet rank", "2.0", "2.0", "4.0", "2.0", 1], ["squad vet xp", "5400", "2700", "7400", "2700", 1]]}, "daniels": {"record": "2v2 5-5 &middot; team modes 12-18", "stamp": "daniels &middot; 2v2 5-5 &middot; team 12-18 (40%)", "byfac": [["US Forces", "2-5", "4-3", "0-3", "0-1", "4-7 (36%)", 1], ["British", "2-0", "1-2", "3-4", "2-3", "6-9 (40%)", 2]], "usf": [["kill/death ratio", "0.72", "0.50", "0.72", "0.55", 2], ["enemy kills", "1.75", "1.77", "1.75", "1.81", 2], ["own deaths", "2.66", "3.19", "2.66", "3.22", 0], ["damage dealt", "242", "184", "242", "219", 0], ["squads lost", "0.11", "0.23", "0.11", "0.23", 2], ["vehicles lost", "0.00", "0.10", "0.00", "0.09", 1], ["captures", "0.82", "0.43", "0.82", "0.59", 1], ["points lost", "0.56", "0.28", "0.56", "0.55", 0], ["squad vet rank", "1.0", "1.0", "1.0", "1.0", 0], ["squad vet xp", "1900", "1800", "1900", "1100", 0]], "uk": [["kill/death ratio", "1.14", "0.51", "&mdash;", "&mdash;", 1], ["enemy kills", "2.43", "1.95", "&mdash;", "&mdash;", 0], ["own deaths", "2.43", "3.25", "&mdash;", "&mdash;", 2], ["damage dealt", "269", "256", "&mdash;", "&mdash;", 0], ["squads lost", "0.22", "0.29", "&mdash;", "&mdash;", 2], ["vehicles lost", "0.00", "0.05", "&mdash;", "&mdash;", 1], ["captures", "0.62", "0.53", "&mdash;", "&mdash;", 0], ["points lost", "0.31", "0.34", "&mdash;", "&mdash;", 0], ["squad vet rank", "0.5", "1.0", "&mdash;", "&mdash;", 2], ["squad vet xp", "1000", "1200", "&mdash;", "&mdash;", 2]]}};
+const IND = {"merds": {"wr": [["mortar, no pack howitzer", "4-2", "67%", "6/9", 1], ["pack howitzer, no mortar", "0-1", "0%", "1/9", 2], ["neither", "1-2", "33%", "3/9", 0], ["both", "none", "&mdash;", "0/9", 0], ["mortar before 4:00", "3-0", "100%", "3/9", 1], ["mortar at or after 4:00", "1-2", "33%", "3/9", 2]]}, "daniels": {"wr": [["mortar, no pack howitzer", "2-1", "67%", "3/10", 1], ["pack howitzer, no mortar", "0-1", "0%", "1/10", 2], ["neither", "3-3", "50%", "6/10", 0], ["both", "none", "&mdash;", "0/10", 0], ["mortar before 4:00", "none", "&mdash;", "0/10", 0], ["mortar at or after 4:00", "2-1", "67%", "3/10", 1]]}};
+const INDCOST = [["81mm mortar", "45 crew + 60 weapon", "0", "your first production building", "4:08", 1], ["Pack howitzer, British", "45 crew + 90 weapon", "0", "Air and Sea battlegroup (pop 49.4%, adj &minus;1.05)", "9:26", 2], ["Pack howitzer, USF", "45 crew + 90 weapon", "0", "Special Operations battlegroup (pop 51.6%, adj +1.28)", "never taken", 0]];
+
+const POP_BUILDS = {
+  usf:{h:"Barracks then Tank Depot · 62.6% · most common sequence, 73 games",
+    steps:["Construct Barracks","Riflemen Squad","Riflemen Squad","Grenade Package","Construct Medical Station","Mechanized Support Center","Construct Tank Depot"],
+    tech:"86.1% build Barracks and Tank Depot and stop. 11.0% add a Weapon Support Center. This is a two-building build.",
+    fu:[[164,"Sherman · 76mm Conversion · Sherman(76)"],[144,"Sherman · Sherman · 76mm Conversion"],[110,"Sherman · 76mm Conversion · three Sherman(76)"]],
+    fuNote:"The conversion appears in all three. It is not optional."},
+  uk:{h:"Company Command · 54.8% · most common sequence, 449 games",
+    steps:["Vickers Machine Gun Team","Construct Section Command Post","Dingo Light Scout Car","Infantry Section","Infantry Section","Construct Platoon Command Post","6-pounder Anti-tank Gun Team","Construct Company Command Post"],
+    tech:"53.3% run exactly Section then Platoon then Company Command Post. British tech is linear: no skipping.",
+    fu:[[1074,"Unlock Grants · Grant · Grant"],[859,"Unlock Grants · four Grants"],[557,"Unlock Grants · Grant · Grant · Royal Engineers · Grant"]],
+    fuNote:"Note the Vickers first, before the Section Command Post."}
+};
+const ABSENT = [
+  "Per-unit performance. Replays record commands, not outcomes, so no source anywhere states how a specific squad or tank performed.",
+  "A population timing benchmark. cohdb holds the replays and publishes ordering and frequency only, never a clock. 44 replay ids for 1600+ rated 2v2 games are collected and await a signed-in session.",
+  "Axis factions. Six games each, no replays. Ruled out as insufficient rather than estimated.",
+  "Build orders from 13 further replay files. All were Operation Hoff co-op games against AI, which vault cannot parse. No competitive data is missing.",
+  "Win rate per build-order variant. cohdb publishes how often each sequence is played, never how often it wins."
+];
+
+const STRUCK = {
+  merds:[
+    ["Anti-tank is your partner's lane, you had none in 5 of 10 games.", "That came from counting only AT guns and tank destroyers. Count your own tanks and AT rifles too, as you should, and you had an answer in 8 of 10 games about a minute behind their tank. The gap was in the definition, not your play."],
+    ["Hold your battlegroup pick past the first minute.", "Wrong on USF. The good players is 0:19 and your 0:22 is completely normal. On British the typical is 3:06, so your 0:46 there is genuinely early, but the USF half of that advice was criticising standard play."],
+    ["No population timing benchmark exists, so timings cannot be compared.", "It does exist. cohdb publishes exact timestamps on every replay's build page, and 68 replays at 1400+ in 2v2 now provide the clock each timing plate is measured against. I repeated the wrong claim for most of this analysis."],
+    ["Your USF is stronger than your British, 58% against 54%.","Both were all-modes figures dominated by 1v1. In team modes it is British 9-9 against USF 4-6, so the ranking inverts."],
+    ["You deal more damage in your losses.",
+     "Overturned on 57 matches, then reinstated for 2v2 only. At 2v2 it is 292 in wins against 348 in losses. The all-modes reversal was itself confounded by 27 1v1 games, so the original reading stands for the mode you play."],
+    ["Your captures collapse in your losses.",
+     "Pooled, the gap is 0.75 against 0.70. On USF alone captures are higher in losses. Only at 2v2 does it favour wins, 0.90 against 0.78."],
+    ["You lose roughly double the squads your partner does.",
+     "Across the 20 recent matches you played together: 0.23 against 0.25 per minute. Essentially identical. Drawn from 10 games and wrong."],
+    ["Drop bare Platoon Command, a 32.0% opener.",
+     "That bucket collects games where nothing followed the first building. Every faction's equivalent sits at the bottom for the same reason. That bucket does not mean what it looks like, so it says nothing about the line itself."],
+    ["Idle resources are probably your limiter.",
+     "1.5% of game length in wins, 1.2% in losses. Effectively zero. Raised twice and wrong both times."]
+  ],
+  daniels:[
+    ["You are the team's anti-tank, and when you have none you lose.", "Built on the same narrow definition. With tanks and AT rifles counted you had an answer in 9 of 10 games, +0:51 behind their tank in wins and +1:06 in losses. Neither of you is uncovered and neither of you is slow."],
+    ["No population timing benchmark exists, so timings cannot be compared.", "It does exist, on cohdb's per-replay build pages. 68 replays at 1400+ in 2v2 now supply the clock, and it is what exposed your 17:07 first vehicle against a field typical of 5:20."],
+    ["Play less USF; it is 33% against British at 47%.","All-modes again. At 2v2 you are 4-3 on USF and 1-2 on British. The 33% came from a 2-5 record in 1v1, a mode this document is not about."],
+    ["Bare Platoon Command is a bad opener at 32.0%.",
+     "Your own 5-5 across 10 games on it is the clearest evidence that the bucket does not mean what it looks like."]
+  ]
+};
+
+const esc = s => String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const REF = {
+  "usf-openers":"USF openers","usf-build":"USF reference build","usf-tech":"USF tech timeline",
+  "usf-bg":"USF battlegroups","usf-counters":"USF win conditions","usf-upg":"USF upgrades","usf-seq":"USF sequencing","usf-beh":"USF behaviour","uk-beh":"British behaviour","usf-clock":"USF vs population clock","uk-clock":"British vs population clock","uk-seq":"British sequencing","winloss":"wins against losses","indirect":"mortar or howitzer","armour":"early enemy armour","grenades":"grenades",
+  "usf-bo":"USF build per battlegroup","uk-openers":"British lines",
+  "uk-build":"British reference build","uk-tech":"British tech timeline",
+  "uk-bg":"British battlegroups","uk-counters":"British win conditions",
+  "uk-upg":"British upgrades","uk-bo":"British build per battlegroup",
+  "mortar":"early mortar","modepure":"by mode check"
+};
+const flagCls = f => f===1?"up":f===2?"dn":"";
+
+function tbl(caption, head, rows, opts={}){
+  const {youCol=-1, flagIdx=-1, numFrom=1, thin=[]} = opts;
+  const body = rows.map((r,ri)=>{
+    const flag = flagIdx>=0 ? r[flagIdx] : 0;
+    const cls=[flag===2?"you":"", thin.includes(ri)?"thin":""].filter(Boolean).join(" ");
+    const cells = r.slice(0, flagIdx>=0?flagIdx:r.length).map((c,i)=>{
+      const cls=[i>=numFrom?"":"", i===youCol?flagCls(flag):""].filter(Boolean).join(" ");
+      return `<td${cls?` class="${cls}"`:""}>${c}</td>`;
+    }).join("");
+    return `<tr${cls?` class="${cls}"`:''}>${cells}</tr>`;
+  }).join("");
+  return `<div class="tw"><table><caption>${caption}</caption><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+const counters = (key,which)=>tbl(
+  "Everything here is per minute of game time. Team games is the column to trust; 2v2 is the mode you actually queue together but rests on fewer games.",
+  ["what","team win","team loss","2v2 win","2v2 loss"],
+  MODE[key][which].map(r=>[r[0],r[1],r[2],r[3],r[4],r[5]]),{youCol:1,flagIdx:5});
+
+function buildStrip(b){
+  if(!b) return "";
+  const rows=(b.rows||[]).map(r=>`<div class="bo-line"><span class="bo-res ${r[0]==='WIN'?'w':r[0]==='LOSS'?'l':'u'}">${r[0]}</span><span class="dim">${r[1]}</span><span class="bo-seq">${r[2]}</span></div>`).join("");
+  return `<h4>${esc(b.title)}</h4>${b.note?`<p class="note">${esc(b.note)}</p>`:""}${rows?`<div class="bo">${rows}</div>`:""}`;
+}
+function popBuild(p){
+  return `<h4>What the population actually builds</h4><p class="note">${esc(p.h)}</p>
+  <div class="bo">${p.steps.map((s,i)=>`<div class="bo-line"><span class="dim">${String(i+1).padStart(2,"0")}</span><span></span><span class="bo-seq">${esc(s)}</span></div>`).join("")}</div>
+  <div class="callout"><p>${esc(p.tech)}</p></div>
+  ${tbl("What good players build next, by how often. This is how common each line is, not how often it wins.",["games","sequence"],p.fu.map(f=>[f[0].toLocaleString(),f[1]]),{numFrom:9})}
+  <p class="note" style="margin-top:.6rem">${esc(p.fuNote)}</p>`;
+}
+function plate(no,id,title,note,inner){
+  return `<section class="plate"${id?` id="${id}"`:""}><div class="wrap">
+    <div class="plate-head">${no?`<span class="plate-no">${no}</span>`:""}<h2>${esc(title)}</h2></div>
+    ${note?`<p class="note">${note}</p>`:""}${inner}</div></section>`;
+}
+
+function renderTeam(){
+  const p=[];
+  p.push(plate("","","Playing together",
+    `You are both in all 19 replays, so this is the one part nobody else could work out for you.
+     Ten of those games have a known result, so treat these as leads rather than laws.`,
+    `<ol class="finds">
+      <li class="find" data-find="team-0" data-state="0"><button class="cell" type="button" aria-label="Mark item 1">[ ]</button>
+        <div><h5>01 &nbsp;Run Merds British and daniels USF.</h5>
+        <p>3-2 across five games, your best combination, and it puts each of you on your stronger faction once 1v1 is taken out. Merds is 9-9 on British against 4-6 on USF in team games. daniels is 4-3 on USF against 1-2 on British at 2v2. The pairing you queue most, Merds USF with daniels British, has you both on your weaker side.</p>
+        <p class="refs">Evidence: <a href="#team-pairing">faction pairing</a></p></div></li>
+      <li class="find" data-find="team-1" data-state="0"><button class="cell" type="button" aria-label="Mark item 2">[ ]</button>
+        <div><h5>02 &nbsp;At least one of you must have indirect fire. Ideally both.</h5>
+        <p>Both of you brought one: 2-0. One of you: 2-3. Neither: 1-2. In four of the ten games we know the result of, neither of you had a mortar or a howitzer at all. That is the easiest thing on this page to fix, and the pattern runs the right way across all three cases.</p>
+        <p class="refs">Evidence: <a href="#team-indirect">indirect fire coverage</a></p></div></li>
+      <li class="find" data-find="team-2" data-state="0"><button class="cell" type="button" aria-label="Mark item 3">[ ]</button>
+        <div><h5>03 &nbsp;Do not retreat at the same time.</h5>
+        <p>In your wins, 24% of Merds' retreats happen within 15 seconds of one of daniels'. In your losses it is 33%. Retreating together is the whole line folding at once. One of you should be holding while the other resets.</p>
+        <p class="refs">Evidence: <a href="#team-coord">coordination</a></p></div></li>
+      <li class="find" data-find="team-3" data-state="0"><button class="cell" type="button" aria-label="Mark item 4">[ ]</button>
+        <div><h5>04 &nbsp;Work the same ground, not opposite halves.</h5>
+        <p>You issue capture orders within 30 seconds of each other 75% of the time in wins, against 63% in losses. Splitting the map is the obvious 2v2 answer and it is not what your wins look like. When you push the same ground, you win.</p>
+        <p class="refs">Evidence: <a href="#team-coord">coordination</a></p></div></li>
+      <li class="find" data-find="team-4" data-state="0"><button class="cell" type="button" aria-label="Mark item 5">[ ]</button>
+        <div><h5>05 &nbsp;Duplicate upgrades are not your problem.</h5>
+        <p>You both buy rifle grenades in 4 of 19 games and Training Center infantry in 2. Those only affect your own units, so both of you buying them is correct, not wasted. There is nothing shared being double-built.</p>
+        <p class="refs">Evidence: <a href="#team-dup">duplicate upgrades</a></p></div></li>
+      <li class="find" data-find="team-5" data-state="0"><button class="cell" type="button" aria-label="Mark item 6">[ ]</button>
+        <div><h5>06 &nbsp;Stop counting the first fight. Count all of them.</h5>
+        <p>You win the opening engagement more often than not: they retreat first in 10 of 15 games. It does not help. Your own first retreat happens at 2:18 in almost every game regardless, and when they blink first you are 2-4. What actually tracks the result is the running total: retreat fewer times per minute than them and you are 2-1, retreat more and you are 1-4.</p>
+        <p class="refs">Evidence: <a href="#team-encounter">who wins the fights</a></p></div></li>
+    </ol>`));
+  p.push(plate("PLATE T1","team-pairing","Faction pairing","",
+    tbl("Which faction combinations you queue, and how they go.",["pairing","games","decided","note"],
+      TEAM.pair.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:2,flagIdx:4})));
+  p.push(plate("PLATE T2","team-indirect","Indirect fire coverage",
+    `Counting a mortar, pack howitzer, Bishop or 25pdr on either side of the team.`,
+    tbl("How you did depending on how many of you brought a mortar or howitzer.",["coverage","games","record","win%"],
+      TEAM.ind.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:3,flagIdx:4})
+    + `<h4>Anti-tank timing, per player</h4>`
+    + tbl("How long after their first tank each of you had something that could answer it. Counts AT guns, bazookas, tank destroyers, any tank of your own, and battlegroup infantry that arrives with AT rifles already on it, such as Polish sections with Boys rifles. All of them answer a tank.",
+        ["whose answer, and when","behind their tank","range","games"],
+        ATP.lag.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:1,flagIdx:4})
+    + tbl("How you did depending on whether you beat their tank to the field.",
+        ["who, and whether they were ready","games","record","win rate"],
+        ATP.rec.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:3,flagIdx:4})
+    + `<div class="callout">
+       <p><b>You are fast enough. This is not your problem.</b> Both of you have an answer within
+       about a minute of their first tank, and the number barely moves between wins and losses:
+       Merds +0:04 against +0:56, daniels +0:51 against +1:06. The ranges overlap almost
+       completely.</p>
+       <p><b>Being ready first does not help either.</b> Merds is 1-2 when his answer beats their
+       tank and 2-3 when it does not. daniels is 1-1 and 3-4. Those are the same number.</p>
+       <p>So their tank at 6:38 still separates your losses from your wins, but not because you
+       react slowly. Either the early tank means they won the fuel fight, or it does damage in a
+       window that having AT does not close. Stop optimising the response and look at why they had
+       fuel for a tank at six minutes.</p>
+       <p><b>Two earlier versions of this table were wrong.</b> The first used whichever of you got
+       AT first, which is meaningless when you each cover your own flank. The second counted only
+       AT guns and tank destroyers, which made it look like daniels was often uncovered. Counting
+       tanks too, as you should, almost nobody is ever uncovered.</p></div>`));
+  p.push(plate("PLATE T3","team-coord","Coordination","",
+    tbl("Across the 10 games we know the result of.",["metric","win","loss","reading"],
+      TEAM.coord.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:1,flagIdx:4})));
+  p.push(plate("PLATE T4","team-encounter","Who wins the fights",
+    `Whoever retreats first lost that fight, so retreats are a decent read on who is winning
+     engagements. 15 games here, 8 with a known result, after throwing out games where someone
+     dropped to AI.`,
+    tbl("Your first retreat against theirs. This is the opening-fight question.",
+      ["when your first retreats happen","typically","range"],
+      ENC.timing.map(r=>[r[0],r[1],r[2],r[3]]),{flagIdx:3})
+    + tbl("How you did depending on who blinked first.",["who retreated first","games","record","win rate"],
+      ENC.first.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:3,flagIdx:4})
+    + `<h4>The running total, which does predict things</h4>`
+    + tbl("Retreats per minute, so game length does not skew it.",["what","when you win","when you lose"],
+      ENC.rate.map(r=>[r[0],r[1],r[2],r[3]]),{youCol:1,flagIdx:3})
+    + tbl("How you did depending on the balance across the whole game.",["retreat balance","games","record","win rate"],
+      ENC.bal.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:3,flagIdx:4})
+    + `<div class="callout">
+       <p><b>You do win the opening fight more often.</b> They retreat first in 10 of 15 games. So
+       that part of the hunch is right.</p>
+       <p><b>It just does not predict anything.</b> Your first retreat lands at 2:18 in almost
+       every game, in a range of 1:35 to 2:32. That is a rhythm, not a decision, and when they
+       blink first you are 2-4 anyway.</p>
+       <p><b>What does predict it is the running total.</b> You retreat 0.35 fewer times a minute
+       than them in your wins and 0.31 more in your losses. Retreat less than them across the game
+       and you are 2-1; retreat more and you are 1-4. It is not the first fight, it is all of
+       them.</p></div>`));
+  p.push(plate("PLATE T5","team-dup","Duplicate upgrades","",
+    tbl("Upgrades you both bought in the same game.",["upgrade","games","verdict"],
+      TEAM.dup.map(r=>[r[0],r[1],r[2],r[3]]),{flagIdx:3})));
+  p.push(plate("","","Reading limits","",
+    `<ul class="plain">
+      <li>10 of 19 shared games have a result, so every record here is 5W-5L or thinner.</li>
+      <li>Both of you are in the same games, so your metrics are not independent observations.</li>
+      <li>Capture overlap uses order timing, not map position. Two orders 30 seconds apart may still be at opposite ends of the map.</li>
+      <li>Retreat synchrony cannot be attributed to a squad, only to a player, because the command stream carries no squad id.</li>
+    </ul>`));
+  return p.join("");
+}
+
+function render(key){
+  const d=D[key];
+  const item=(x,i,n)=>`
+    <li class="find" data-find="${key}-${i}" data-state="0">
+      <button class="cell" type="button" aria-label="Mark item ${n}">[ ]</button>
+      <div><h5>${String(n).padStart(2,"0")} &nbsp;${esc(x.t)}</h5><p>${esc(x.d)}</p>
+      <p class="refs">Evidence: ${x.r.map(r=>`<a href="#${key}-${r}">${REF[r]||r}</a>`).join(" · ")}</p></div>
+    </li>`;
+  const group=(tag,label)=>{
+    const rows=d.finds.map((x,i)=>[x,i]).filter(([x])=>x.f===tag);
+    if(!rows.length) return "";
+    return `<h4>${label}</h4><ol class="finds">${rows.map(([x,i],j)=>item(x,i,j+1)).join("")}</ol>`;
+  };
+  const finds=group("usf","US Forces")+group("uk","British")+group("both","Both factions");
+
+  const struck = STRUCK[key].map(s=>`<li><del>${esc(s[0])}</del><ins>${esc(s[1])}</ins></li>`).join("");
+  const p=[];
+
+  p.push(plate("","","Findings",
+    `Ranked by expected impact. Mark an item as worked <b>[X]</b> or set aside; the marks persist
+     in this browser. Every item points at the figures that earn it.`,
+    finds));
+
+  p.push(plate("PLATE 1",`${key}-usf-openers`,"USF openers",
+    `USF buildings are parallel. Barracks, Weapon Support Center, Motor Pool and Tank Depot are
+     independent, so which ones you build and in what order is a genuine choice. This is the one
+     faction here where "opener" means an order.`,
+    `<div class="callout"><p><b>What "opener" means in this document.</b> It is cohdb's own bucket,
+     not a definition of mine. For USF it is which production buildings you built and in what
+     order, which is why the column below reads "buildings and order". For British there is only
+     one possible building order, so the bucket is instead the rung of the ladder you reached plus
+     the first classified purchase there; that plate is called <a href="#${key}-uk-openers">British
+     lines</a> for that reason.</p>
+     <p><b>What I do not know.</b> cohdb publishes neither its classification rules nor the time
+     window it uses, so I inferred the scheme from the bucket names, the tech paths and the
+     most-common sequences. The exact cut-off for what counts as "the first purchase", and whether
+     it is a time limit or a step limit, is unknown. That uncertainty applies to every bucket win
+     rate in this file.</p></div>`
+    +
+    tbl("How the field does with each one, against how you do.",["opener: buildings and order","field win rate","games behind it","how often you pick it","your record"],
+      d.usfOpeners.map(r=>[r[0],r[1]+"%",r[2].toLocaleString(),r[3],r[4],r[5]]),{youCol:1,flagIdx:5})));
+  p.push(plate("PLATE 2",`${key}-usf-build`,"USF reference build","",popBuild(POP_BUILDS.usf)));
+  p.push(plate("PLATE 3",`${key}-usf-tech`,"USF tech timeline",
+    `<code>BuildSquad</code> carries a source id per production building, so the first unit out of
+     each building dates it. Upper bounds on completion, not placement times.`,
+    tbl("When each building first produced something, which dates the building.",["building, dated by its first unit","games","typically","range"],
+      d.usfTech.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{flagIdx:4})));
+  p.push(plate("PLATE 4",`${key}-usf-bg`,"USF battlegroups","",
+    tbl("How the field does with each battlegroup in 2v2 on this patch. The vs average column is how far above or below par it sits.",
+      ["battlegroup","field win rate","vs average","times picked","your games"],
+      d.usfBg.map(r=>[r[0],r[1]+"%",r[2],r[3].toLocaleString(),r[4],r[5]]),{youCol:1,flagIdx:5})));
+  p.push(plate("PLATE 5",`${key}-usf-counters`,"USF win conditions","",
+    counters(key,"usf")));
+  p.push(plate("PLATE 6",`${key}-usf-upg`,"USF upgrades",
+    `Costs read from the game files. Timings are the first instance per game.`,
+    tbl("Manpower and fuel are the real in-game costs, read from the game files.",
+      ["upgrade","manpower","fuel","build time","games","typically","range","record"],
+      d.usfUpg.map(r=>[r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8]]),{flagIdx:8})));
+  p.push(plate("PLATE 6b",`${key}-usf-seq`,"USF sequencing",
+    `How much you make before you upgrade or tech, against the population's most common
+     Barracks into Tank Depot sequence (73 games). That reference builds two Riflemen, takes the
+     Grenade Package, then the support centre, then the Tank Depot.`,
+    tbl("Counts, not clock times. A marked row is where you do something different from the field.",
+      ["what","you, typically","your range","good players"],
+      SEQ[key].usf.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:1,flagIdx:4})));
+  p.push(plate("PLATE 5b",`${key}-usf-clock`,"USF against the population clock",
+    `Your times against 68 games of 1400+ rated 2v2 players, 58 on USF and 74 on British. <b>One thing to ignore:</b> their first unit and first building land at 0:05 to 0:09, which is almost certainly the game counting what you queue before it even starts. Our replays count that differently, so skip those two rows. Everything from the first team weapon down is a fair comparison.`,
+    tbl("Your typical time against theirs. \"Most of them\" is the middle half of the field, so sitting outside it means you are genuinely off.",
+      ["what","you","good players","most of them","verdict"],
+      VS[key].usf.map(r=>[r[0],r[1],r[2],r[3],r[4],r[5]]),{youCol:1,flagIdx:5})));
+  p.push(plate("PLATE 6c",`${key}-usf-beh`,"USF behaviour",
+    `Command-level behaviour from the replays, split by outcome. ${NOTE[key].usf}`,
+    tbl(`${BEH[key].usf.n}. Typical values. A marked row is one where the gap is big, or where another page agrees with it.`,
+      ["what","when you win","when you lose"],BEH[key].usf.rows.map(r=>[r[0],r[1],r[2],r[3]]),{youCol:1,flagIdx:3})));
+  if(d.usfBuild) p.push(plate("PLATE 7",`${key}-usf-bo`,"USF build per battlegroup","",buildStrip(d.usfBuild)));
+
+  p.push(plate("PLATE 8",`${key}-uk-openers`,"British lines",
+    `British buildings are not a choice of order. The ladder is forced: Barracks (cohdb's Section Command Post), then Motor Platoon (Platoon Command Post), then Armoured Platoon (Company Command Post). Every tech path in the population data starts Section then Platoon and none skips a rung. So a British line is two decisions, not an order: <b>how far up the ladder you climb, and what you buy first when you get there</b>. \"Platoon Command, Humber\" means you stopped at the Motor Platoon and took the Humber first. \"Company Command\" means you climbed to the Armoured Platoon. \"Section Upgrades\" means you branched to the Training Center instead of buying a vehicle. USF is the opposite: its four buildings are parallel, so there the order is a real choice.`,
+    tbl("How the field does with each one, against how you do. A line is the rung reached plus the first purchase there.",["line: rung and first buy","field win rate","games behind it","how often you pick it","your record"],
+      d.ukOpeners.map(r=>[r[0],r[1]+"%",r[2].toLocaleString(),r[3],r[4],r[5]]),{youCol:1,flagIdx:5})));
+  p.push(plate("PLATE 9",`${key}-uk-build`,"British reference build","",popBuild(POP_BUILDS.uk)));
+  p.push(plate("PLATE 10",`${key}-uk-tech`,"British tech timeline",
+    `Rungs on the forced ladder, so these are pace figures, not choices. The only decision the
+     timing reflects is how long each rung took you.`,
+    tbl("When each building first produced something, which dates the building.",["building, dated by its first unit","games","typically","range"],
+      d.ukTech.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{flagIdx:4})));
+  p.push(plate("PLATE 11",`${key}-uk-bg`,"British battlegroups","",
+    tbl("How the field does with each battlegroup in 2v2 on this patch.",
+      ["battlegroup","field win rate","vs average","times picked","your games"],
+      d.ukBg.map(r=>[r[0],r[1]+"%",r[2],r[3].toLocaleString(),r[4],r[5]]),{youCol:1,flagIdx:5})));
+  p.push(plate("PLATE 12",`${key}-uk-counters`,"British win conditions","",
+    counters(key,"uk")));
+  p.push(plate("PLATE 13",`${key}-uk-upg`,"British upgrades","",
+    tbl("Manpower and fuel are the real in-game costs, read from the game files.",
+      ["upgrade","manpower","fuel","build time","games","typically","range","record"],
+      d.ukUpg.map(r=>[r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8]]),{flagIdx:8})));
+  p.push(plate("PLATE 13b",`${key}-uk-seq`,"British sequencing",
+    `Against the population's most common Section Upgrades sequence (209 games): three Infantry
+     Sections, the Grenade Package, the Field Infirmary, then the Platoon Command Post.`,
+    tbl("Counts, not clock times.",["what","you, typically","your range","good players"],
+      SEQ[key].uk.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:1,flagIdx:4})));
+  p.push(plate("PLATE 12b",`${key}-uk-clock`,"British against the population clock",
+    `Your times against 68 games of 1400+ rated 2v2 players, 58 on USF and 74 on British. <b>One thing to ignore:</b> their first unit and first building land at 0:05 to 0:09, which is almost certainly the game counting what you queue before it even starts. Our replays count that differently, so skip those two rows. Everything from the first team weapon down is a fair comparison.`,
+    tbl("Your typical time against theirs. \"Most of them\" is the middle half of the field, so sitting outside it means you are genuinely off.",
+      ["what","you","good players","most of them","verdict"],
+      VS[key].uk.map(r=>[r[0],r[1],r[2],r[3],r[4],r[5]]),{youCol:1,flagIdx:5})));
+  p.push(plate("PLATE 13c",`${key}-uk-beh`,"British behaviour",
+    `Command-level behaviour from the replays, split by outcome. ${NOTE[key].uk}`,
+    tbl(`${BEH[key].uk.n}. Typical values.`,["what","when you win","when you lose"],
+      BEH[key].uk.rows.map(r=>[r[0],r[1],r[2],r[3]]),{youCol:1,flagIdx:3})));
+  p.push(plate("PLATE 14",`${key}-uk-bo`,"British build per battlegroup","",d.ukBuild.map(buildStrip).join("")));
+
+  if(d.mortar) p.push(plate("PLATE 15",`${key}-mortar`,"Early mortar","",
+    `<ul class="plain">${d.mortar.lines.map(l=>`<li>${l}</li>`).join("")}</ul>
+     <p class="note" style="margin-top:1rem">${esc(d.mortar.body)}</p>`));
+
+  p.push(plate("PLATE 15b",`${key}-indirect`,"Mortar or howitzer",
+    `The pack howitzer, not the 25pdr emplacement. Neither costs fuel and neither waits on tech,
+     so this is a real either/or. Costs are read from the game files.`,
+    tbl("What each one costs and what gates it. Neither costs fuel, so the real price is the battlegroup.",
+      ["piece","manpower","fuel","what unlocks it","when you get it"],
+      INDCOST.map(r=>[r[0],r[1],r[2],r[3],r[4],r[5]]),{youCol:2,flagIdx:5})
+    + tbl("Your record by what indirect fire you actually had. A dashed label marks a row resting on fewer than three games.",
+      ["what you had","record","win%","games"],
+      IND[key].wr.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:2,flagIdx:4,
+        thin:IND[key].wr.map((r,i)=>[r[3],i]).filter(([n])=>+n.split("/")[0]<3).map(([,i])=>i)})
+    + `<div class="callout"><p><b>Build the mortar, but not for the reason you might expect.</b>
+       Neither piece costs fuel and neither waits on tech, so the real price of the pack howitzer
+       is committing to the battlegroup that carries it. On British that is Air and Sea, which the
+       population rates below baseline at 49.4% and which is already the weaker of the two
+       battlegroups in this file.</p>
+       <p>Across both files the pack howitzer arrives at a 9:26 typical and the mortar at 4:08,
+       but that comparison mixes players and battlegroups. The per-battlegroup table below is the
+       one to read, and it does not say what the pooled figure suggests. What does hold everywhere:
+       neither of you has ever built both pieces in the same game.</p>
+       <p><b>The USF version is untested and worth trying.</b> Special Operations carries the M29
+       Weasel with pack howitzer, and that battlegroup sits <i>above</i> population baseline at
+       51.6%. Across nineteen replays neither of you has ever taken it; the Special Operations
+       games in this file took the plain Weasel instead. Same zero-fuel indirect fire without
+       committing to a below-baseline battlegroup.</p>
+       <p>Caveat: two decided games on the pack howitzer side. This is a direction, not a result.</p></div>`
+    + `<h4>Waiting for it, by battlegroup</h4>`
+    + tbl("British games only. \"No indirect at all\" is games that ended with neither piece built.",
+        ["battlegroup","games","with mortar","with pack how.","1st indirect (typical)","range","no indirect at all","decided"],
+        INDBG[key].rows.map(r=>[r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8]]),{youCol:4,flagIdx:8})
+    + `<div class="callout">${INDBG[key].verdict}</div>`));
+  p.push(plate("PLATE 16",`${key}-winloss`,"Build order in wins against losses",
+    `Same sequencing metrics split by outcome, over the 10 games that have both a replay and a
+     known result. Five wins and five losses, so treat every row as a hypothesis. The n column is
+     how many games actually contained that event.`,
+    tbl(`${WL[key].n}. A flagged row is one where the gap is large relative to the others.`,
+      ["what","when you win","when you lose","games"],
+      WL[key].rows.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:1,flagIdx:4,
+        thin:WL[key].rows.map((r,i)=>[r[3],i]).filter(([n])=>n.split("/").some(v=>+v<3)).map(([,i])=>i)})
+    + `<div class="callout"><p>${WL[key].note}</p><p>${WL[key].read}</p></div>`));
+  p.push(plate("PLATE 17",`${key}-armour`,"Against early enemy armour",
+    `Team-level, from the opponents' own commands in the same replays. Their first combat vehicle
+     excludes HQ recon (Kradsch&uuml;tze, Kettenkrad), the 250 light carrier, and non-combat trucks,
+     so it is the first thing that actually shoots.`,
+    tbl("Across the 10 games we know the result of. AT is counted per player further down, since the team-earliest figure is misleading in 2v2.",
+      ["what","when you win","when you lose","games"],
+      ARM.rows.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:1,flagIdx:4})
+    + tbl("How you did depending on how early their first vehicle showed up.",["window","record","win%","games"],
+      ARM.wr.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:2,flagIdx:4})
+    + `<div class="callout"><p><b>The first half of the hunch is right.</b> Their first combat
+       vehicle lands at 9:44 in your wins and 6:38 in your losses, and your record splits 40% when
+       it arrives before 8:00 against 60% after.</p>
+       <p><b>The second half is not.</b> Your AT trails their vehicle by 1:23 in wins and 1:06 in
+       losses, which is the same number, and you actually reach AT <i>earlier</i> in your losses,
+       8:47 against 10:53. You are not slower to respond when you lose. You respond slightly
+       faster and still lose, which points at denying the fuel rather than reacting to the vehicle.
+       In 6 of 10 games your AT arrived after their vehicle, and in 2 of 10 neither of you built
+       any AT at all.</p></div>`));
+  p.push(plate("PLATE 18",`${key}-grenades`,"Grenades",
+    `The Grenade Package on USF, rifle grenades on British. 100 manpower and 10 or 15 fuel. Taken
+     in 33 of 38 player-games at a 3:26 typical, range 1:26 to 25:45.`,
+    tbl("How you did depending on whether and when you bought them.",["case","record","win%","games"],
+      GRE[key].rows.map(r=>[r[0],r[1],r[2],r[3],r[4]]),{youCol:2,flagIdx:4})
+    + tbl("When you bought them, wins against losses.",["what","when you win","when you lose","games"],
+      [GRE[key].med.concat([0])],{youCol:1,flagIdx:4})
+    + (key==="merds"
+      ? `<div class="callout"><p>Skipping them entirely runs 3-1 and taking them before 4:00 runs
+         0-2. <b>But read this next to the win/loss plate, not as fresh evidence.</b> Grenades are
+         the most common unit upgrade you buy, so "no grenades in wins" and "no unit upgrade in
+         wins" are largely the same four games seen twice, not two independent findings.</p>
+         <p>What it does add: the population's reference build takes the Grenade Package at step 4
+         of 7, so skipping it is a real deviation and not obviously correct. On 10 games this is a
+         thing to test deliberately, not a rule.</p></div>`
+      : `<div class="callout"><p><b>No signal here.</b> You take them in all 10 decided games, at
+         2:49 in wins and 3:26 in losses. Those are the same number, and you have no games without
+         them to compare against.</p>
+         <p>That is worth knowing rather than a problem: your grenade timing is consistent and sits
+         where the population's reference build puts it, at step 4 of 7 on USF and step 5 of 8 on
+         British. Nothing to change.</p></div>`)));
+  p.push(plate("CHECK",`${key}-modepure`,"Record by mode",
+    `<b>Read this plate before any other.</b> The API returns every mode mixed, and pooling them
+     produced two recommendations that were wrong for the mode you actually play. Records below are
+     split properly.`,
+    tbl("Your record split by faction and mode. The team games column is the one that matters.",
+      ["faction","1v1","2v2","3v3","4v4","all team games"],
+      MODE[key].byfac.map(r=>[r[0],r[1],r[2],r[3],r[4],r[5],r[6]]),{youCol:5,flagIdx:6})
+    + (key==="merds"
+      ? `<div class="callout"><p><b>Your 60% is a 1v1 number.</b> You are 20-7 in 1v1 and 14-16 in
+         team modes. Every pooled figure in this file leans toward 1v1 unless the plate says
+         otherwise.</p>
+         <p><b>British is your stronger team-mode faction, not USF.</b> 9-9 against 4-6. The
+         earlier reading had USF ahead at 58% against 54%, and that was the contamination talking.
+         See <a href="#merds-struck">struck from the record</a>.</p></div>`
+      : `<div class="callout"><p><b>USF is your stronger 2v2 faction, not British.</b> 4-3 against
+         1-2. USF only looked weak because of 1v1, where you are 2-5; in the mode you actually play
+         together it is your better half.</p>
+         <p>Your 3v3 and 4v4 are the real weak spot: 3-7 and 4-6 across both factions.</p>
+         </div>`)));
+
+  p.push(plate("","","Not in any source",
+    `A bar marks data that does not exist. None of it was estimated, and nothing on this page
+     depends on it.`,
+    `<div class="absent"><ul class="plain">${ABSENT.map(a=>`<li><span class="redact">&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</span>${esc(a)}</li>`).join("")}</ul></div>`));
+
+
+  p.push(plate("",`${key}-struck`,"Struck from the record",
+    key==="merds"
+      ? `Findings that were overturned by a larger or mode-matched sample. They stay in the file
+         rather than being quietly replaced.`
+      : `One finding was overturned. Nothing else in this file was reversed by the by mode check,
+         which is itself worth knowing.`,
+    `<div class="struck"><ul class="plain">${struck}</ul></div>`));
+  p.push(plate("","","Reading limits","",
+    `<ul class="plain">
+      <li>Counter plates mix game modes. Every opener, line, battlegroup and population figure is 2v2, patch 2.5.3.</li>
+      <li>Population sequences are the most common, not the highest win rate.</li>
+      <li>Tech path percentages ignore the mode and patch filters.</li>
+      <li>Battlegroup adjusted is cohdb's own metric, not independently verified.</li>
+      <li>Production building placement is not decoded by <code>vault</code>; tech timelines are inferred from first units.</li>
+      <li>Only 10 of 19 replays have a known outcome.</li>
+    </ul>`));
+  return p.join("");
+}
+
+const main=document.getElementById("main");
+const tabs=[["merds",document.getElementById("tab-merds")],["daniels",document.getElementById("tab-daniels")],["team",document.getElementById("tab-team")]];
+let current=null;
+const CELL=["[ ]","[X]","[—]"];
+
+function wireCells(){
+  main.querySelectorAll(".find").forEach(li=>{
+    const id=li.dataset.find, btn=li.querySelector(".cell");
+    let v="0"; try{ v=localStorage.getItem("coh3:"+id)||"0"; }catch{}
+    li.dataset.state=v; btn.textContent=CELL[+v];
+    btn.addEventListener("click",()=>{
+      v=String((+v+1)%3);
+      li.dataset.state=v; btn.textContent=CELL[+v];
+      try{ localStorage.setItem("coh3:"+id,v); }catch{}
+    });
+  });
+}
+function show(key){
+  if(current===key) return;
+  current=key;
+  main.innerHTML = key==="team" ? renderTeam() : render(key);
+  document.getElementById("f-subject").textContent = key==="team" ? "Merds + daniels" : D[key].name;
+  document.getElementById("f-record").textContent = key==="team" ? "19 shared replays" : D[key].record;
+  tabs.forEach(([k,b])=>b.setAttribute("aria-selected",String(k===key)));
+  wireCells();
+  try{ localStorage.setItem("coh3:player",key); }catch{}
+}
+tabs.forEach(([k,b])=>{
+  b.addEventListener("click",()=>show(k));
+  b.addEventListener("keydown",e=>{
+    if(e.key==="ArrowRight"||e.key==="ArrowLeft"){
+      e.preventDefault();
+      const o=tabs.find(([kk])=>kk!==k); o[1].focus(); show(o[0]);
+    }
+  });
+});
+let saved="merds"; try{ saved=localStorage.getItem("coh3:player")||"merds"; }catch{}
+show((D[saved]||saved==="team")?saved:"merds");
+
+</script>
+</body>
+</html>
