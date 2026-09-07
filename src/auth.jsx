@@ -4,25 +4,36 @@ import { pb, onAuthChange, currentUser, isLoggedIn, logout as pbLogout } from ".
 const AuthCtx = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(currentUser());
+  // Never trust a client-side-expired token as "logged in".
+  const [user, setUser] = useState(isLoggedIn() ? currentUser() : null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthChange((u) => setUser(u));
-    // Refresh the cached session on load so profile/role changes (e.g. becoming
-    // admin) propagate without needing to sign out and back in.
-    if (isLoggedIn()) {
-      pb.collection("users").authRefresh().catch((err) => {
-        // 401 = token is invalid (DB reset, account deleted, secret key changed).
-        // Clear the stale session so the user lands on the login screen instead
-        // of seeing an empty app. Non-401 errors (offline, 5xx) keep the cache.
-        if (err?.status === 401 || err?.response?.code === 401) {
-          pbLogout();
+    let alive = true;
+
+    // Verify the session BEFORE rendering the app. Rendering while a stale token
+    // is still in flight is the bug that shows an empty catalog (the app mounts,
+    // fires data queries with the dead token, and only then does the 401 arrive).
+    (async () => {
+      if (isLoggedIn()) {
+        try {
+          await pb.collection("users").authRefresh();
+        } catch (err) {
+          // Auth failure = the token is dead (secret rotated on redeploy, account
+          // deleted, server-side expiry). Clear it so we land on the login screen
+          // instead of an empty app. Network/5xx errors keep the cache (offline).
+          const status = err?.status ?? err?.response?.code;
+          if (status === 401 || status === 403) pbLogout();
         }
-      });
-    }
-    setReady(true);
-    return unsub;
+      } else if (currentUser()) {
+        // Token is expired/invalid client-side but a stale record lingers — drop it.
+        pbLogout();
+      }
+      if (alive) setReady(true);
+    })();
+
+    return () => { alive = false; unsub(); };
   }, []);
 
   const value = {
