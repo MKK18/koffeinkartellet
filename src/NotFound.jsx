@@ -1,43 +1,18 @@
-import { FontLink } from "./ui.jsx";
 import { navigate } from "./router.js";
 
-// 404 — a page the ledger has no record of. Kept in the Contraband Ledger world:
-// a stamped VOID over a monumental code, one way back.
+// 404 on the table: an empty bowl and one way back.
 export default function NotFound({ loggedIn }) {
   return (
-    <div className="cl" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <FontLink />
-      <div style={{ position: "relative", textAlign: "center", maxWidth: 460 }}>
-        <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.24em", textTransform: "uppercase", color: "var(--dim)", marginBottom: 18 }}>
-          Koffeinkartellet · Bonded Ledger
+    <div className="ct auth">
+      <div className="auth-col" style={{ textAlign: "center" }}>
+        <div className="auth-card" style={{ padding: "40px 28px 32px" }}>
+          <span className="bowl" aria-hidden="true" style={{ width: 96, height: 96, display: "inline-block", "--b": "var(--tint)", "--b2": "var(--rule-2)" }} />
+          <h1 style={{ marginTop: 18 }}>Nothing at this address</h1>
+          <p className="auth-lede" style={{ marginInline: "auto", maxWidth: "32ch" }}>The link may be old, or the page was moved. Head back to the table.</p>
+          <button type="button" onClick={() => navigate(loggedIn ? "/app" : "/")} className="btn btn-primary" style={{ marginTop: 8 }}>
+            {loggedIn ? "Back to the table" : "Back to the start"}
+          </button>
         </div>
-
-        <div style={{ position: "relative", display: "inline-block" }}>
-          <div style={{ fontFamily: "var(--font-display)", fontSize: "clamp(96px,26vw,200px)", lineHeight: 0.82, color: "var(--bone)", letterSpacing: "-0.02em" }}>
-            4<span style={{ color: "var(--stamp)" }}>0</span>4
-          </div>
-          {/* stamped over the code */}
-          <span style={{
-            position: "absolute", top: "52%", left: "50%",
-            transform: "translate(-50%,-50%) rotate(-11deg)",
-            border: "3px solid var(--stamp-deep)", color: "var(--stamp-deep)",
-            fontFamily: "var(--font-mono)", fontWeight: 600, fontSize: "clamp(18px,4vw,26px)",
-            letterSpacing: "0.14em", textTransform: "uppercase", padding: "6px 16px",
-            borderRadius: 4, opacity: 0.92, background: "rgba(16,13,10,0.55)", whiteSpace: "nowrap",
-          }}>Not on file</span>
-        </div>
-
-        <p style={{ fontFamily: "var(--font-body)", fontSize: 17, color: "var(--manila)", lineHeight: 1.55, margin: "22px auto 0", maxWidth: "34ch" }}>
-          No entry at this address. Either it was never logged, or it's been struck from the ledger.
-        </p>
-
-        <button
-          onClick={() => navigate(loggedIn ? "/app" : "/")}
-          className="cl-stamp-btn"
-          style={{ marginTop: 30 }}
-        >
-          Back to the ledger <span className="arw">→</span>
-        </button>
       </div>
     </div>
   );

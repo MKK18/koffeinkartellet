@@ -1,16 +1,16 @@
 {
   "name": "Koffeinkartellet",
   "short_name": "Koffein",
-  "description": "Coffee tasting journal — shared with your household.",
+  "description": "A private coffee journal for a few friends.",
   "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f6efe2",
-  "theme_color": "#f6efe2",
+  "background_color": "#1f4a63",
+  "theme_color": "#1f4a63",
   "icons": [
-    { "src": "/icon.svg",     "sizes": "any",     "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/icon.svg",     "sizes": "any",     "type": "image/svg+xml", "purpose": "any" },
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png",     "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png",     "purpose": "any maskable" }
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png",     "purpose": "any" }
   ]
 }

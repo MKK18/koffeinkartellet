@@ -46,7 +46,7 @@ export async function signUpWithInvite({ email, password, name, color, code }) {
   try {
     await pb.send("/api/signup", {
       method: "POST",
-      body: { email, password, name, color: color || "#8B5E3C", code },
+      body: { email, password, name, color: color || "#2e6b52", code },
     });
   } catch (err) {
     // Surface the server's friendly message (bad/used/expired code, etc.).

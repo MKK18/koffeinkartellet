@@ -1,5 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#E2611D"/>
-  <text x="256" y="372" font-family="Archivo, system-ui, -apple-system, sans-serif" font-weight="900" font-size="360" text-anchor="middle" fill="#fff8f0" letter-spacing="-8">K</text>
+  <!-- Koffeinkartellet app icon: a cupping bowl seen from above on the form-blue table,
+       ringed once in red pencil. Authored by hand for the Cupping Table world. -->
+  <rect width="512" height="512" rx="112" fill="#1f4a63"/>
+  <circle cx="256" cy="262" r="150" fill="#ffffff"/>
+  <circle cx="256" cy="262" r="150" fill="none" stroke="#c3ced6" stroke-width="6"/>
+  <defs>
+    <radialGradient id="cup" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#4f2d15"/><stop offset=".5" stop-color="#4f2d15"/>
+      <stop offset=".8" stop-color="#7a4c28"/><stop offset=".93" stop-color="#b38558"/><stop offset="1" stop-color="#cfa77a"/>
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="262" r="124" fill="url(#cup)"/>
+  <path d="M398 132C346 88 196 92 136 162 82 226 112 360 236 386c124 26 196-42 186-130-6-58-48-104-106-120" fill="none" stroke="#c8372d" stroke-width="16" stroke-linecap="round"/>
 </svg>

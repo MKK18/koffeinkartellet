@@ -25,17 +25,17 @@ export const VARIETALS = [
 ];
 export const FLAVOR_TAGS = ["Fruity", "Floral", "Chocolatey", "Nutty", "Caramel", "Spicy", "Earthy", "Bright", "Funky", "Smoky", "Citrus", "Berry", "Stone Fruit", "Herbal", "Jasmine", "Rose", "Tropical", "Winey", "Juicy", "Clean", "Complex", "Savory"];
 
-// Flavour tags organised into SCAA-flavor-wheel-ish categories, each with a
-// soft category color (the little dot) and per-tag emoji.
+// Flavour tags organised into SCAA-flavor-wheel-ish categories. The picker
+// shows them as words only; there are no category colours.
 export const FLAVOR_CATEGORIES = [
-  { name: "Fruity", color: "#d97670", tags: ["Fruity", "Berry", "Citrus", "Stone Fruit", "Tropical"] },
-  { name: "Floral", color: "#e08fb0", tags: ["Floral", "Jasmine", "Rose"] },
-  { name: "Cocoa & Sweet", color: "#a87148", tags: ["Chocolatey", "Caramel"] },
-  { name: "Nutty", color: "#c8a878", tags: ["Nutty"] },
-  { name: "Spice", color: "#d8884a", tags: ["Spicy"] },
-  { name: "Earthy & Herbal", color: "#7a9468", tags: ["Earthy", "Herbal", "Smoky"] },
-  { name: "Fermented", color: "#9c7ab0", tags: ["Funky", "Winey"] },
-  { name: "Other", color: "#a89878", tags: ["Bright", "Juicy", "Clean", "Complex", "Savory"] },
+  { name: "Fruity", tags: ["Fruity", "Berry", "Citrus", "Stone Fruit", "Tropical"] },
+  { name: "Floral", tags: ["Floral", "Jasmine", "Rose"] },
+  { name: "Cocoa & Sweet", tags: ["Chocolatey", "Caramel"] },
+  { name: "Nutty", tags: ["Nutty"] },
+  { name: "Spice", tags: ["Spicy"] },
+  { name: "Earthy & Herbal", tags: ["Earthy", "Herbal", "Smoky"] },
+  { name: "Fermented", tags: ["Funky", "Winey"] },
+  { name: "Other", tags: ["Bright", "Juicy", "Clean", "Complex", "Savory"] },
 ];
 
 export const TAG_EMOJI = {

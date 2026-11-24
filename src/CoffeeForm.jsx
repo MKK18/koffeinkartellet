@@ -1,18 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Sheet, SectionHead, Spinner, Combobox, MultiCombobox, FlavorPicker } from "./components.jsx";
+import { Sheet, SectionHead, Spinner, Combobox, MultiCombobox, FlavorPicker, Icon, Slip } from "./components.jsx";
 import { PROCESSES, ROAST_LEVELS, VARIETALS, FLAVOR_TAGS, COFFEE_COUNTRIES, compressImage, extractBeanFromImage, extractBeanFromUrl, fetchExternalImage, scrapePageImage } from "./lib.js";
 import { createCoffee, updateCoffee, deleteCoffee, searchCoffeesByName, coffeeImageUrl } from "./data.js";
 import { useAuth } from "./auth.jsx";
 import { useNav } from "./nav.jsx";
-
-const MONO = "var(--font-mono)";
-const DISPLAY = "var(--font-display)";
-
-// Dark input style object — passed to the comboboxes (which take a `style` prop);
-// mirrors the .cl-input class used elsewhere.
-const INPUT = { width: "100%", background: "var(--ink-2)", border: "1px solid var(--ink-line)", color: "var(--bone)", fontFamily: MONO, fontSize: 14, padding: "14px 15px", outline: "none", boxSizing: "border-box" };
-
-const Cam = ({ s = 30 }) => (<svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="var(--stamp)" strokeWidth="1.4"><rect x="3" y="6" width="18" height="14" rx="1" /><path d="M3 10h18" /><circle cx="12" cy="14" r="3.2" /><path d="M8 6l1.5-2h5L16 6" /></svg>);
 
 const EMPTY = {
   name: "", roaster: "", origin: [], region: "", producer: "", varietal: [],
@@ -25,30 +16,20 @@ const toArr = (v) => {
   return [];
 };
 
-function Field({ label, value, onChange, placeholder, type, full }) {
+function Field({ label, value, onChange, placeholder, type, full, id, hint, inputMode }) {
   return (
-    <div style={full ? { gridColumn: "1/-1" } : {}}>
-      <span className="cl-label">{label}</span>
-      <input type={type || "text"} className="cl-input" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || ""} />
-    </div>
-  );
-}
-function Select({ label, value, onChange, options }) {
-  return (
-    <div>
-      <span className="cl-label">{label}</span>
-      <select className="cl-input" value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">Select…</option>
-        {options.map((o) => <option key={o}>{o}</option>)}
-      </select>
+    <div className="field" style={full ? { gridColumn: "1/-1" } : undefined}>
+      <label className="label" htmlFor={id}>{label}</label>
+      <input id={id} type={type || "text"} className="input" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || ""} inputMode={inputMode} />
+      {hint && <span className="hint">{hint}</span>}
     </div>
   );
 }
 
 const TABS = [
-  { id: "photo", label: "Photo" },
-  { id: "link", label: "Link" },
-  { id: "manual", label: "Manual" },
+  { id: "photo", label: "Photo", icon: "camera" },
+  { id: "link", label: "Shop link", icon: "link" },
+  { id: "manual", label: "Type it in", icon: "edit" },
 ];
 
 export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting }) {
@@ -79,8 +60,12 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
   const [error, setError] = useState("");
   const fileRef = useRef();
   const uploadRef = useRef();
+  const initial = useRef(null);
+  const [confirmDel, setConfirmDel] = useState(false);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  if (initial.current === null) initial.current = JSON.stringify(form);
+  const dirty = !!imageBlob || JSON.stringify(form) !== initial.current;
 
   const applyExtracted = (x) => setForm((f) => {
     const origins = toArr(x.origin);
@@ -183,7 +168,7 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
 
   const remove = async () => {
     if (!editing) return;
-    if (!confirm(`Delete "${coffee.name}"? This removes it and all its tastings from everyone's catalog.`)) return;
+    if (!confirmDel) { setConfirmDel(true); return; }
     setDeleting(true); setError("");
     try {
       await deleteCoffee(coffee.id);
@@ -212,153 +197,142 @@ export default function CoffeeForm({ coffee, onClose, onSaved, onOpenExisting })
     }
   };
 
+  const canSave = !!form.name.trim() && !saving && !scanning && !deleting;
+
   return (
-    <Sheet onClose={onClose}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h2 style={{ margin: 0, fontFamily: DISPLAY, fontSize: 26, fontWeight: 400, textTransform: "uppercase", color: "var(--bone)" }}>{editing ? "Edit coffee" : "Add a coffee"}</h2>
-        <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", fontSize: 24, color: "var(--dim)", cursor: "pointer", lineHeight: 1 }}>×</button>
+    <Sheet title={editing ? "Edit coffee" : "Add a coffee"} onClose={onClose} dirty={dirty && !saving} maxWidth={640}>
+      <div className="seg" role="tablist" aria-label="How to add it">
+        {TABS.map((t) => (
+          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}><Icon name={t.icon} />{t.label}</button>
+        ))}
       </div>
 
-      <div style={{ display: "flex", gap: 4, border: "1px solid var(--ink-line)", padding: 4, marginBottom: 18 }}>
-        {TABS.map((t) => {
-          const active = tab === t.id;
-          return (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: "10px 4px", border: "none", cursor: "pointer", fontFamily: MONO, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", background: active ? "var(--stamp)" : "transparent", color: active ? "#fff" : "var(--dim)" }}>{t.label}</button>
-          );
-        })}
-      </div>
-
-      <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={(e) => handleImageFile(e.target.files[0])} />
+      <input ref={fileRef} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { handleImageFile(e.target.files[0]); e.target.value = ""; }} />
 
       {tab === "photo" && (
         preview ? (
-          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-            <img src={preview} alt="package" style={{ width: 96, height: 96, objectFit: "cover", border: "1px solid var(--ink-line)" }} />
-            <div style={{ flex: 1, fontFamily: MONO, fontSize: 12, letterSpacing: "0.03em" }}>
-              {scanning && <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--stamp)" }}><Spinner /> Scanning &amp; searching the web…</div>}
-              {!scanning && scanMsg && <div style={{ color: "#f0b7a6" }}>{scanMsg}</div>}
-              {!scanning && !scanMsg && <div style={{ color: "var(--ok)" }}>Photo attached.</div>}
-              {!scanning && <button onClick={() => fileRef.current?.click()} className="cl-ghost-btn" style={{ marginTop: 10, padding: "8px 14px" }}>Replace photo</button>}
+          <div className="bv-shot">
+            <img src={preview} alt="The bag" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {scanning && <div className="bv-busy"><Spinner />Reading the label and looking it up…</div>}
+              {!scanning && scanMsg && <Slip>{scanMsg}</Slip>}
+              {!scanning && !scanMsg && <div style={{ fontWeight: 700, color: "var(--buy)", display: "flex", gap: 6, alignItems: "center" }}><Icon name="check" size={18} />Photo added</div>}
+              {!scanning && <button type="button" onClick={() => fileRef.current?.click()} className="linkbtn" style={{ marginTop: 6, fontSize: 14 }}>Use a different photo</button>}
             </div>
           </div>
         ) : (
-          <div onClick={() => fileRef.current?.click()}
-            onDrop={(e) => { e.preventDefault(); handleImageFile(e.dataTransfer.files[0]); }}
-            onDragOver={(e) => e.preventDefault()}
-            style={{ border: "1px dashed var(--ink-line)", padding: "40px 20px", textAlign: "center", cursor: "pointer", background: "var(--ink)" }}>
-            <div style={{ marginBottom: 12 }}><Cam /></div>
-            <div style={{ fontFamily: DISPLAY, fontSize: 20, textTransform: "uppercase", color: "var(--bone)", marginBottom: 6 }}>Take or upload a package photo</div>
-            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.04em", color: "var(--dim)" }}>AI scans it, fills the details, drops you on Manual to review.</div>
+          <div className="dropzone" onDrop={(e) => { e.preventDefault(); handleImageFile(e.dataTransfer.files[0]); }} onDragOver={(e) => e.preventDefault()}>
+            <button type="button" className="btn btn-red" style={{ minHeight: 54 }} onClick={() => fileRef.current?.click()}><Icon name="camera" />Take or choose a photo</button>
+            <p className="hint" style={{ textAlign: "center", margin: "10px auto 0", maxWidth: "34ch" }}>We read the label and fill in the details. You check them on the next step.</p>
           </div>
         )
       )}
 
       {tab === "link" && (
-        <div>
-          <span className="cl-label">Roaster product link</span>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input type="url" value={url} onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fetchFromUrl(); } }}
-              placeholder="https://roaster.com/shop/that-coffee" className="cl-input" style={{ flex: 1 }} />
-            <button onClick={fetchFromUrl} disabled={fetchingUrl || !url.trim()} className="cl-stamp-btn" style={{ padding: "0 18px", whiteSpace: "nowrap" }}>
-              {fetchingUrl ? <Spinner /> : "Fetch"}
-            </button>
-          </div>
-          {urlMsg ? (
-            <div style={{ marginTop: 10, fontSize: 12, fontFamily: MONO, color: "#f0b7a6" }}>{urlMsg}</div>
-          ) : (
-            <div style={{ marginTop: 10, fontSize: 11, fontFamily: MONO, letterSpacing: "0.03em", color: "var(--dim)" }}>Paste a roaster's product page. AI reads it, fills the details, drops you on Manual to review.</div>
-          )}
-        </div>
+        <form onSubmit={(e) => { e.preventDefault(); fetchFromUrl(); }}>
+          <label className="field" style={{ marginBottom: 10 }}>
+            <span className="label">Roaster's product page</span>
+            <input type="url" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://roaster.com/shop/that-coffee" className="input" />
+          </label>
+          <button type="submit" disabled={fetchingUrl || !url.trim()} className="btn btn-primary">{fetchingUrl ? <><Spinner />Reading the page…</> : "Fill in from link"}</button>
+          {urlMsg ? <Slip style={{ marginTop: 12 }}>{urlMsg}</Slip> : <p className="hint">We read the page and fill in the details for you to check.</p>}
+        </form>
       )}
 
       {tab === "manual" && (
         <>
           {filledFrom && (
-            <div style={{ background: "rgba(127,174,106,.12)", border: "1px solid var(--ok)", padding: "10px 12px", marginBottom: 14, fontFamily: MONO, fontSize: 11, letterSpacing: "0.04em", color: "var(--ok)" }}>
-              ✓ Filled in from the {filledFrom === "photo" ? "photo" : "link"} — check &amp; adjust below.
-            </div>
+            <p role="status" style={{ margin: "0 0 6px", padding: "10px 12px", borderRadius: 10, background: "var(--buy-tint)", color: "var(--buy)", fontWeight: 600, fontSize: 15, display: "flex", gap: 8, alignItems: "center" }}>
+              <Icon name="check" size={18} />Filled in from the {filledFrom === "photo" ? "photo" : "link"}. Check it over.
+            </p>
           )}
 
-          <SectionHead title="Photo" />
-          <input ref={uploadRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleImageFile(e.target.files[0], { scan: false })} />
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 4 }}>
-            {preview ? (
-              <img src={preview} alt="package" style={{ width: 72, height: 72, objectFit: "cover", border: "1px solid var(--ink-line)" }} />
-            ) : (
-              <div style={{ width: 72, height: 72, background: "var(--ink)", border: "1px dashed var(--ink-line)", display: "flex", alignItems: "center", justifyContent: "center" }}><Cam s={24} /></div>
-            )}
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <button onClick={() => uploadRef.current?.click()} className="cl-ghost-btn" style={{ padding: "9px 14px" }}>{preview ? "Replace photo" : "Upload photo"}</button>
-              {preview && <button onClick={removeImage} className="cl-ghost-btn" style={{ padding: "9px 14px", color: "var(--stamp)", borderColor: "var(--stamp)" }}>Remove</button>}
-            </div>
-          </div>
-
-          <SectionHead title="Basics" />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Field label="Coffee name *" value={form.name} onChange={(v) => set("name", v)} placeholder="e.g. Yirgacheffe Kochere" full />
+          <SectionHead title="The coffee" />
+          <div className="form-grid">
+            <Field id="f-name" label="Name" value={form.name} onChange={(v) => set("name", v)} placeholder="e.g. Kieni AA" full />
             {!editing && dupes.length > 0 && (
-              <div style={{ gridColumn: "1/-1", background: "var(--ink)", border: "1px solid var(--ink-line)", padding: "10px 12px" }}>
-                <div style={{ fontSize: 10, color: "var(--dim)", fontFamily: MONO, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Already in the catalog?</div>
+              <div style={{ gridColumn: "1/-1", marginTop: -6, marginBottom: 14, padding: "10px 12px", borderRadius: 10, background: "var(--tint)" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink-2)", marginBottom: 4 }}>Already on the table?</div>
                 {dupes.map((d) => (
-                  <button key={d.id} onClick={() => onOpenExisting?.(d)} style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: "none", padding: "6px 0", cursor: "pointer", fontFamily: MONO, fontSize: 12, color: "var(--stamp)" }}>
-                    ↳ {d.name}{d.roaster ? ` · ${d.roaster}` : ""}
+                  <button key={d.id} type="button" onClick={() => onOpenExisting?.(d)} className="linkbtn" style={{ display: "block", padding: "4px 0", fontSize: 15 }}>
+                    {d.name}{d.roaster ? `, ${d.roaster}` : ""}
                   </button>
                 ))}
               </div>
             )}
-            <Field label="Roaster" value={form.roaster} onChange={(v) => set("roaster", v)} placeholder="e.g. DAK Coffee Roasters" full />
+            <Field id="f-roaster" label="Roaster" value={form.roaster} onChange={(v) => set("roaster", v)} placeholder="e.g. Coffee Collective" full />
+          </div>
+          <div className="field">
+            <span className="label">Photo</span>
+            <input ref={uploadRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { handleImageFile(e.target.files[0], { scan: false }); e.target.value = ""; }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              {preview ? <img src={preview} alt="" style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 10, border: "1.5px solid var(--rule)" }} />
+                : <span className="bowl" aria-hidden="true" style={{ width: 56, height: 56, display: "inline-block" }} />}
+              <button type="button" onClick={() => uploadRef.current?.click()} className="btn btn-line"><Icon name="image" />{preview ? "Change photo" : "Add a photo"}</button>
+              {preview && <button type="button" onClick={removeImage} className="btn btn-quiet">Remove</button>}
+            </div>
           </div>
 
-          <SectionHead title="Origin & provenance" />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div>
-              <span className="cl-label">Country</span>
-              <MultiCombobox values={form.origin} onChange={(v) => set("origin", v)} options={COFFEE_COUNTRIES} placeholder="e.g. Ethiopia (add more for blends)" style={INPUT} />
+          <SectionHead title="Where it's from" />
+          <div className="form-grid">
+            <div className="field">
+              <label className="label" htmlFor="f-origin">Country</label>
+              <MultiCombobox id="f-origin" values={form.origin} onChange={(v) => set("origin", v)} options={COFFEE_COUNTRIES} placeholder="e.g. Ethiopia" />
             </div>
-            <Field label="Region" value={form.region} onChange={(v) => set("region", v)} placeholder="e.g. Yirgacheffe" />
-            <Field label="Producer / farm" value={form.producer} onChange={(v) => set("producer", v)} placeholder="e.g. Daye Bensa" />
-            <Field label="Importer" value={form.importer} onChange={(v) => set("importer", v)} placeholder="optional" />
+            <Field id="f-region" label="Region" value={form.region} onChange={(v) => set("region", v)} placeholder="e.g. Yirgacheffe" />
+            <Field id="f-producer" label="Producer or farm" value={form.producer} onChange={(v) => set("producer", v)} placeholder="e.g. Daye Bensa" />
+            <Field id="f-importer" label="Importer" value={form.importer} onChange={(v) => set("importer", v)} placeholder="Optional" />
           </div>
 
-          <SectionHead title="Bean details" />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div>
-              <span className="cl-label">Varietal</span>
-              <MultiCombobox values={form.varietal} onChange={(v) => set("varietal", v)} options={VARIETALS} placeholder="e.g. Gesha, Udaini, Pink Bourbon" style={INPUT} />
+          <SectionHead title="The beans" />
+          <div className="form-grid">
+            <div className="field">
+              <label className="label" htmlFor="f-var">Varietal</label>
+              <MultiCombobox id="f-var" values={form.varietal} onChange={(v) => set("varietal", v)} options={VARIETALS} placeholder="e.g. Gesha" />
             </div>
-            <div>
-              <span className="cl-label">Process</span>
-              <Combobox value={form.process} onChange={(v) => set("process", v)} options={PROCESSES} placeholder="e.g. Lactic Anaerobic" style={INPUT} />
+            <div className="field">
+              <label className="label" htmlFor="f-proc">Process</label>
+              <Combobox id="f-proc" value={form.process} onChange={(v) => set("process", v)} options={PROCESSES} placeholder="e.g. Washed" />
             </div>
-            <div>
-              <span className="cl-label">Roast level</span>
-              <Combobox value={form.roastLevel} onChange={(v) => set("roastLevel", v)} options={ROAST_LEVELS} placeholder="Light / Medium / Dark" style={INPUT} />
+            <div className="field">
+              <label className="label" htmlFor="f-roast">Roast</label>
+              <Combobox id="f-roast" value={form.roastLevel} onChange={(v) => set("roastLevel", v)} options={ROAST_LEVELS} placeholder="Light, medium, dark" />
             </div>
-            <Field label="Altitude (masl)" value={form.altitude} onChange={(v) => set("altitude", v)} placeholder="e.g. 1900–2200" />
-            <Field label="Harvest" value={form.harvest} onChange={(v) => set("harvest", v)} placeholder="e.g. Nov 2024" full />
+            <Field id="f-alt" label="Altitude (metres)" value={form.altitude} onChange={(v) => set("altitude", v)} placeholder="e.g. 1900–2200" inputMode="numeric" />
+            <Field id="f-harvest" label="Harvest" value={form.harvest} onChange={(v) => set("harvest", v)} placeholder="e.g. Nov 2025" full />
           </div>
 
-          <SectionHead title="Flavour notes" />
+          <SectionHead title="Flavour notes on the bag" />
           <FlavorPicker value={form.tags} onChange={(v) => set("tags", v)} />
 
-          <SectionHead title="From the bag" />
-          <textarea className="cl-input" style={{ minHeight: 70, resize: "vertical" }} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Roaster's tasting notes, origin story…" />
+          <div className="field" style={{ marginTop: 8 }}>
+            <label className="label" htmlFor="f-notes">From the bag</label>
+            <textarea id="f-notes" className="input" value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="The roaster's tasting notes or story" />
+          </div>
         </>
       )}
 
-      {error && <div style={{ background: "rgba(226,67,29,.12)", border: "1px solid var(--stamp)", color: "#f0b7a6", padding: "10px 12px", fontSize: 12, fontFamily: MONO, marginTop: 16 }}>{error}</div>}
+      {error && <Slip style={{ marginTop: 16 }}>{error}</Slip>}
 
-      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", alignItems: "center", marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--ink-line)" }}>
-        {canDelete && (
-          <button onClick={remove} disabled={deleting} className="cl-ghost-btn" style={{ color: "var(--stamp)", borderColor: "var(--stamp)", marginRight: "auto" }}>
-            {deleting ? "Deleting…" : "Delete"}
+      {confirmDel && (
+        <div className="slip" role="alertdialog" aria-label="Delete this coffee?" style={{ marginTop: 16, flexWrap: "wrap", alignItems: "center" }}>
+          <Icon name="alert" />
+          <span style={{ flex: "1 1 220px" }}>Delete {coffee?.name}? Every tasting of it goes too, for the whole crew. This can't be undone.</span>
+          <button type="button" className="btn btn-quiet" onClick={() => setConfirmDel(false)}>Keep it</button>
+          <button type="button" className="btn btn-ink" onClick={remove} disabled={deleting}>{deleting ? "Deleting…" : "Delete for everyone"}</button>
+        </div>
+      )}
+
+      <div className="form-foot">
+        {canDelete && !confirmDel && (
+          <button type="button" onClick={remove} disabled={deleting} className="btn btn-quiet" style={{ marginRight: "auto", color: "var(--red-deep)" }}>
+            <Icon name="trash" />{deleting ? "Deleting…" : "Delete coffee"}
           </button>
         )}
-        {tab !== "manual" && !canDelete && <span style={{ flex: 1, fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--dim-2)" }}>or fill it in on Manual →</span>}
-        <button onClick={onClose} className="cl-ghost-btn">Cancel</button>
-        <button onClick={save} disabled={saving || scanning || deleting} className="cl-stamp-btn">
-          {saving ? "Saving…" : editing ? "Save changes" : "Add to catalog"}
+        {tab !== "manual" && !form.name.trim() && <span className="hint" style={{ flex: "1 1 100%", margin: 0 }}>No photo or link? <button type="button" className="linkbtn" onClick={() => setTab("manual")}>Type it in instead</button></span>}
+        <button type="button" onClick={onClose} className="btn btn-quiet">Cancel</button>
+        <button type="button" onClick={save} disabled={!canSave} className="btn btn-primary">
+          {saving ? "Saving…" : editing ? "Save changes" : "Add to coffees"}
         </button>
       </div>
     </Sheet>

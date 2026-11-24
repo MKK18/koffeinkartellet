@@ -3,23 +3,22 @@ import { getApiKey, setApiKey, getProvider, setProvider as writeProvider } from 
 import { updateProfile, changePassword, requestEmailChange, currentUser } from "./pb.js";
 import { useAuth } from "./auth.jsx";
 import { compressImage } from "./lib.js";
-import { RATER_COLORS } from "./ui.jsx";
-import { Sheet, SectionHead, Avatar } from "./components.jsx";
-
-const MONO = "var(--font-mono)";
-const DISPLAY = "var(--font-display)";
+import { Sheet, SectionHead, Avatar, Icon } from "./components.jsx";
+import { CREW_COLORS, inkSafe } from "./marks.js";
 
 function Note({ ok, children }) {
   if (!children) return null;
-  return <div style={{ marginTop: 8, fontSize: 12, fontFamily: MONO, letterSpacing: "0.03em", color: ok ? "var(--ok)" : "#f0b7a6" }}>{children}</div>;
+  return ok
+    ? <div role="status" style={{ marginTop: 8, fontSize: 15, fontWeight: 600, color: "var(--buy)", display: "flex", gap: 6, alignItems: "center" }}><Icon name="check" size={18} />{children}</div>
+    : <div className="slip" role="alert" style={{ marginTop: 10 }}><Icon name="alert" /><div>{children}</div></div>;
 }
-const L = ({ children }) => <span className="cl-label">{children}</span>;
+const L = ({ children, htmlFor }) => <label className="label" htmlFor={htmlFor}>{children}</label>;
 
 export default function SettingsModal({ onClose }) {
   const { user, refresh } = useAuth();
 
   const [name, setName] = useState(user?.name || "");
-  const [color, setColor] = useState(user?.color || RATER_COLORS[0]);
+  const [color, setColor] = useState(user?.color ? inkSafe(user.color) : CREW_COLORS[0]);
   const [bio, setBio] = useState(user?.bio || "");
   const [avatarBlob, setAvatarBlob] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState("");
@@ -90,89 +89,76 @@ export default function SettingsModal({ onClose }) {
 
   const saveKey = () => { setApiKey(key.trim()); writeProvider(aiProvider); setKeyMsg({ ok: true, t: "Saved." }); };
 
-  const inputMb = { marginBottom: 12 };
+  const dirty = name !== (user?.name || "") || bio !== (user?.bio || "") || !!avatarBlob || removeAvatar || !!oldPw || !!newPw || !!newEmail;
+  const row = { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 4 };
 
   return (
-    <Sheet onClose={onClose} maxWidth={480}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-        <h2 style={{ margin: 0, fontFamily: DISPLAY, fontSize: 24, fontWeight: 400, textTransform: "uppercase", color: "var(--bone)" }}>Account &amp; settings</h2>
-        <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", fontSize: 24, color: "var(--dim)", cursor: "pointer", lineHeight: 1 }}>×</button>
-      </div>
-      <div style={{ fontSize: 11, color: "var(--dim)", fontFamily: MONO, letterSpacing: "0.06em" }}>Signed in as {currentUser()?.email}</div>
+    <Sheet title="Account and settings" onClose={onClose} maxWidth={520} dirty={dirty}>
+      <p style={{ margin: "0 0 4px", fontSize: 15, color: "var(--ink-2)" }}>Signed in as {currentUser()?.email}</p>
 
       <SectionHead title="Profile" />
-      <L>Photo</L>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, flexWrap: "wrap" }}>
         {avatarPreview
-          ? <img src={avatarPreview} alt="" style={{ width: 56, height: 56, objectFit: "cover", border: "1px solid var(--ink-line)" }} />
-          : <Avatar user={{ ...user, color, avatar: removeAvatar ? "" : user?.avatar }} size={56} />}
-        <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => pickAvatar(e.target.files[0])} />
-        <button onClick={() => fileRef.current?.click()} className="cl-ghost-btn" style={{ padding: "9px 12px" }}>Upload photo</button>
-        {(user?.avatar || avatarPreview) && (
-          <button onClick={() => { setAvatarBlob(null); setAvatarPreview(""); setRemoveAvatar(true); }} className="cl-ghost-btn" style={{ padding: "9px 12px", color: "var(--stamp)", borderColor: "var(--stamp)" }}>Remove</button>
+          ? <img src={avatarPreview} alt="" style={{ width: 64, height: 64, objectFit: "cover", borderRadius: "50%" }} />
+          : <Avatar user={{ ...user, color, avatar: removeAvatar ? "" : user?.avatar }} size={64} />}
+        <input ref={fileRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => pickAvatar(e.target.files[0])} />
+        <button type="button" onClick={() => fileRef.current?.click()} className="btn btn-line"><Icon name="image" />{user?.avatar || avatarPreview ? "Change photo" : "Add a photo"}</button>
+        {(user?.avatar || avatarPreview) && !removeAvatar && (
+          <button type="button" onClick={() => { setAvatarBlob(null); setAvatarPreview(""); setRemoveAvatar(true); }} className="btn btn-quiet">Remove</button>
         )}
       </div>
-      {(avatarBlob || removeAvatar) && (
-        <div style={{ fontSize: 11, color: "var(--dim)", fontFamily: MONO, marginTop: -4, marginBottom: 12 }}>Save profile below to keep this change.</div>
-      )}
-      <L>Display name</L>
-      <input className="cl-input" style={inputMb} value={name} onChange={(e) => setName(e.target.value)} />
-      <L>Stamp color</L>
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-        {RATER_COLORS.map((c) => (
-          <button key={c} type="button" onClick={() => setColor(c)} aria-label={"color " + c} style={{ width: 32, height: 32, background: c, cursor: "pointer", border: color === c ? "2px solid var(--bone)" : "2px solid var(--ink-line)", outline: color === c ? "2px solid var(--stamp)" : "none", outlineOffset: 1 }} />
-        ))}
-      </div>
-      <L>Bio</L>
-      <textarea className="cl-input" style={{ minHeight: 50, resize: "vertical" }} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="optional" />
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
-        <button onClick={saveProfile} disabled={busy === "profile"} className="cl-stamp-btn">{busy === "profile" ? "Saving…" : "Save profile"}</button>
-      </div>
+      {(avatarBlob || removeAvatar) && <p className="hint" style={{ marginTop: -8, marginBottom: 12 }}>Save your profile to keep this change.</p>}
+      <div className="field"><L htmlFor="s-name">Name</L><input id="s-name" className="input" value={name} onChange={(e) => setName(e.target.value)} /></div>
+      <fieldset className="field" style={{ border: 0, padding: 0 }}>
+        <legend className="label">Your colour on the table</legend>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {CREW_COLORS.map((c) => (
+            <button key={c} type="button" onClick={() => setColor(c)} aria-label={`Colour ${c}`} aria-pressed={color === c}
+              style={{ width: 40, height: 40, borderRadius: "50%", background: c, cursor: "pointer", border: 0, boxShadow: color === c ? "0 0 0 3px #fff, 0 0 0 5.5px var(--pencil)" : "none" }} />
+          ))}
+        </div>
+      </fieldset>
+      <div className="field"><L htmlFor="s-bio">About you</L><textarea id="s-bio" className="input" style={{ minHeight: 64 }} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Optional, e.g. Washed Kenyans or nothing" /></div>
+      <div style={row}><button type="button" onClick={saveProfile} disabled={busy === "profile"} className="btn btn-primary">{busy === "profile" ? "Saving…" : "Save profile"}</button></div>
       <Note ok={profileMsg?.ok}>{profileMsg?.t}</Note>
 
-      <SectionHead title="Change password" />
-      <L>Current password</L>
-      <input type="password" className="cl-input" style={inputMb} value={oldPw} onChange={(e) => setOldPw(e.target.value)} autoComplete="current-password" />
-      <L>New password</L>
-      <input type="password" className="cl-input" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" />
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
-        <button onClick={savePassword} disabled={busy === "pw" || !oldPw || !newPw} className="cl-stamp-btn">{busy === "pw" ? "Saving…" : "Change password"}</button>
-      </div>
+      <SectionHead title="Password" />
+      <div className="field"><L htmlFor="s-old">Current password</L><input id="s-old" type="password" className="input" value={oldPw} onChange={(e) => setOldPw(e.target.value)} autoComplete="current-password" /></div>
+      <div className="field"><L htmlFor="s-new">New password</L><input id="s-new" type="password" className="input" value={newPw} onChange={(e) => setNewPw(e.target.value)} autoComplete="new-password" /><span className="hint">At least 8 characters.</span></div>
+      <div style={row}><button type="button" onClick={savePassword} disabled={busy === "pw" || !oldPw || !newPw} className="btn btn-primary">{busy === "pw" ? "Saving…" : "Change password"}</button></div>
       <Note ok={pwMsg?.ok}>{pwMsg?.t}</Note>
 
-      <SectionHead title="Change email" />
-      <L>New email</L>
-      <input type="email" className="cl-input" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="new@example.com" />
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
-        <button onClick={saveEmail} disabled={busy === "email" || !newEmail} className="cl-stamp-btn">{busy === "email" ? "Sending…" : "Send confirmation"}</button>
-      </div>
+      <SectionHead title="Email" />
+      <div className="field"><L htmlFor="s-email">New email</L><input id="s-email" type="email" className="input" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} autoComplete="email" /></div>
+      <div style={row}><button type="button" onClick={saveEmail} disabled={busy === "email" || !newEmail} className="btn btn-primary">{busy === "email" ? "Sending…" : "Send confirmation"}</button></div>
       <Note ok={emailMsg?.ok}>{emailMsg?.t}</Note>
 
-      <SectionHead title="AI provider key" />
-      <div style={{ fontSize: 11, color: "var(--dim)", fontFamily: MONO, letterSpacing: "0.03em", marginBottom: 12, lineHeight: 1.5 }}>Enables photo &amp; link scanning. If set, your key is used; otherwise the server's shared key is used automatically.</div>
-      <L>Provider</L>
-      <div style={{ display: "flex", gap: 4, border: "1px solid var(--ink-line)", padding: 4, marginBottom: 12 }}>
-        {[["anthropic", "Anthropic"], ["openai", "OpenAI"]].map(([id, lab]) => {
-          const active = aiProvider === id;
-          return (
-            <button key={id} type="button" onClick={() => setAiProvider(id)} style={{ flex: 1, padding: "10px 4px", border: "none", cursor: "pointer", fontFamily: MONO, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", background: active ? "var(--stamp)" : "transparent", color: active ? "#fff" : "var(--dim)" }}>{lab}</button>
-          );
-        })}
+      <SectionHead title="Scanning key" />
+      <p className="hint" style={{ marginTop: 0, marginBottom: 14 }}>Photo and link scanning use the server's shared key. Add your own only if you'd rather use it.</p>
+      <div className="field">
+        <span className="label">Provider</span>
+        <div className="chips" style={{ padding: 0 }} role="radiogroup" aria-label="Provider">
+          {[["anthropic", "Anthropic"], ["openai", "OpenAI"]].map(([id, lab]) => (
+            <button key={id} type="button" role="radio" aria-checked={aiProvider === id} aria-pressed={aiProvider === id} className="chip" onClick={() => setAiProvider(id)}>{lab}</button>
+          ))}
+        </div>
       </div>
-      <L>API key (optional)</L>
-      <div style={{ position: "relative" }}>
-        <input type={showKey ? "text" : "password"} value={key} onChange={(e) => setKey(e.target.value)} placeholder={providerInfo[aiProvider].placeholder} className="cl-input" style={{ paddingRight: 64 }} />
-        <button onClick={() => setShowKey((s) => !s)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--dim)", fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", padding: "4px 8px" }}>{showKey ? "Hide" : "Show"}</button>
+      <div className="field">
+        <L htmlFor="s-key">API key (optional)</L>
+        <div style={{ position: "relative" }}>
+          <input id="s-key" type={showKey ? "text" : "password"} value={key} onChange={(e) => setKey(e.target.value)} placeholder={providerInfo[aiProvider].placeholder} className="input" style={{ paddingRight: 76 }} autoComplete="off" />
+          <button type="button" onClick={() => setShowKey((v) => !v)} className="btn btn-quiet" style={{ position: "absolute", right: 4, top: 4, minHeight: 40 }}>{showKey ? "Hide" : "Show"}</button>
+        </div>
+        <span className="hint">{providerInfo[aiProvider].helper}</span>
       </div>
-      <div style={{ fontSize: 10, color: "var(--dim-2)", fontFamily: MONO, letterSpacing: "0.03em", marginTop: 6 }}>{providerInfo[aiProvider].helper}</div>
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 10 }}>
-        <button onClick={() => { setApiKey(""); setKey(""); setKeyMsg({ ok: true, t: "Removed." }); }} className="cl-ghost-btn" style={{ color: "var(--stamp)", borderColor: "var(--stamp)" }}>Remove key</button>
-        <button onClick={saveKey} className="cl-stamp-btn">Save</button>
+      <div style={row}>
+        {key && <button type="button" onClick={() => { setApiKey(""); setKey(""); setKeyMsg({ ok: true, t: "Key removed." }); }} className="btn btn-quiet">Remove key</button>}
+        <button type="button" onClick={saveKey} className="btn btn-primary">Save</button>
       </div>
       <Note ok={keyMsg?.ok}>{keyMsg?.t}</Note>
 
-      <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--ink-line)", display: "flex", justifyContent: "flex-end" }}>
-        <button onClick={onClose} className="cl-ghost-btn">Done</button>
+      <div style={{ marginTop: 28, paddingTop: 16, borderTop: "1px solid var(--rule)", display: "flex", justifyContent: "flex-end" }}>
+        <button type="button" onClick={onClose} className="btn btn-line">Done</button>
       </div>
     </Sheet>
   );

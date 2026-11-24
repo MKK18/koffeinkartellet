@@ -22,8 +22,8 @@ function Gate() {
 
   if (!ready) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#100d0a", color: "#8a7c67", fontFamily: "'Martian Mono', ui-monospace, monospace", fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase" }}>
-        Loading ledger…
+      <div className="ct" role="status" aria-label="Loading" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", background: "var(--table)" }}>
+        <span className="bowl" aria-hidden="true" style={{ width: 56, height: 56, display: "inline-block", opacity: 0.9 }} />
       </div>
     );
   }

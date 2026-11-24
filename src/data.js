@@ -221,3 +221,35 @@ export async function updateTasting(id, fields) {
 export async function deleteTasting(id) {
   return pb.collection("tastings").delete(id);
 }
+
+// ── Want to try ────────────────────────────────────────────
+
+// Every member's circled coffees (rows carry `user` and `coffee`).
+export async function listWants() {
+  try { return await pb.collection("wants").getFullList({ sort: "-created" }); }
+  catch { return []; } // collection missing on an older server → feature quietly off
+}
+
+export async function setWant(coffeeId, on) {
+  const me = currentUser()?.id;
+  if (!me) return;
+  const existing = await pb.collection("wants").getFullList({ filter: `user = "${me}" && coffee = "${coffeeId}"` }).catch(() => []);
+  if (on && !existing.length) await pb.collection("wants").create({ user: me, coffee: coffeeId });
+  if (!on) await Promise.all(existing.map((w) => pb.collection("wants").delete(w.id)));
+}
+
+// ── The crew ───────────────────────────────────────────────
+
+// Household members with me first; just me when there's no household yet.
+export async function getCrew() {
+  const me = currentUser();
+  const hh = await getMyHousehold().catch(() => null);
+  const members = hh?.members?.length ? hh.members : (me ? [me] : []);
+  const sorted = [...members].sort((a, b) => (a.id === me?.id ? -1 : b.id === me?.id ? 1 : String(a.name).localeCompare(String(b.name))));
+  return { group: hh?.group || null, members: sorted, ids: sorted.map((m) => m.id) };
+}
+
+export async function countCoffees() {
+  const res = await pb.collection("coffees").getList(1, 1, { fields: "id" });
+  return res.totalItems;
+}

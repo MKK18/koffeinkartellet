@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { login, signUpWithInvite } from "./pb.js";
 import { useAuth } from "./auth.jsx";
-import { RATER_COLORS, FontLink } from "./ui.jsx";
 import { navigate } from "./router.js";
+import { Icon, Slip } from "./components.jsx";
+import { CREW_COLORS } from "./marks.js";
+
+const startMode = () => (new URLSearchParams(window.location.search).has("invite") ? "signup" : "signin");
 
 export default function LoginScreen() {
   const { refresh } = useAuth();
-  const [mode, setMode] = useState("signin"); // 'signin' | 'signup'
+  const [mode, setMode] = useState(startMode); // 'signin' | 'signup'
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [color, setColor] = useState(RATER_COLORS[0]);
+  const [color, setColor] = useState(CREW_COLORS[0]);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -22,100 +25,84 @@ export default function LoginScreen() {
       if (mode === "signin") {
         await login(email.trim(), password);
       } else {
-        if (!name.trim()) throw new Error("Pick a display name.");
-        if (password.length < 8) throw new Error("Password must be at least 8 characters.");
-        await signUpWithInvite({ email: email.trim(), password, name: name.trim(), color, code });
+        if (!code.trim()) throw new Error("Enter the invite code you were sent.");
+        if (!name.trim()) throw new Error("Pick a name the crew will see.");
+        if (password.length < 8) throw new Error("Use a password of at least 8 characters.");
+        await signUpWithInvite({ email: email.trim(), password, name: name.trim(), color, code: code.trim() });
       }
       refresh();
     } catch (err) {
-      setError(err?.message || "Something went wrong. Try again.");
+      const m = err?.message || "";
+      setError(mode === "signin" && /authenticate|invalid|400/i.test(m)
+        ? "That email and password don't match. Check them and try again."
+        : m || "Something went wrong. Try again.");
     } finally {
       setBusy(false);
     }
   };
 
+  const swap = (m) => { setMode(m); setError(""); };
+
   return (
-    <div className="cl" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <FontLink />
-      <style>{LOGIN_CSS}</style>
-      <div style={{ width: "100%", maxWidth: 430 }}>
-        <a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }} className="cl-login-back">
-          ← Back to home
-        </a>
+    <div className="ct auth">
+      <div className="auth-col">
+        <a href="/" className="auth-back" onClick={(e) => { e.preventDefault(); navigate("/"); }}><Icon name="back" size={18} />Koffeinkartellet</a>
 
-        <div style={{ marginTop: 22, marginBottom: 20 }}>
-          <div className="cl-brand">KOFFEIN<b>KARTELLET</b></div>
-          <h1 className="cl-login-head">{mode === "signin" ? "Welcome back" : "Request entry"}</h1>
-          <div className="cl-login-sub">
-            {mode === "signin" ? "Present your credentials to the ledger" : "Entry requires a valid invitation code"}
-          </div>
-        </div>
+        <div className="auth-card">
+          <h1>{mode === "signin" ? "Welcome back" : "Join with your invite"}</h1>
+          <p className="auth-lede">{mode === "signin" ? "Sign in to see what the crew has been cupping." : "Someone in the crew sent you a code. Use it to make your account."}</p>
 
-        <form onSubmit={submit} className="cl-login-panel">
-          {mode === "signup" && (
-            <label className="cl-field">
-              <span className="cl-label">Invitation code</span>
-              <input className="cl-input" value={code} onChange={(e) => setCode(e.target.value)} placeholder="e.g. TUR-2026" autoCapitalize="characters" />
-            </label>
-          )}
-
-          <label className="cl-field">
-            <span className="cl-label">Email</span>
-            <input className="cl-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
-          </label>
-
-          <label className="cl-field">
-            <span className="cl-label">Password</span>
-            <input className="cl-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === "signup" ? "At least 8 characters" : "••••••••"} required />
-          </label>
-
-          {mode === "signup" && (
-            <>
-              <label className="cl-field">
-                <span className="cl-label">Display name</span>
-                <input className="cl-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Kiki" />
+          <form onSubmit={submit} noValidate>
+            {mode === "signup" && (
+              <label className="field">
+                <span className="label">Invite code</span>
+                <input className="input" value={code} onChange={(e) => setCode(e.target.value)} placeholder="e.g. BREW-7K2Q" autoCapitalize="characters" autoComplete="off" />
               </label>
-              <div className="cl-field">
-                <span className="cl-label">Your stamp color</span>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {RATER_COLORS.map((c) => (
-                    <button type="button" key={c} onClick={() => setColor(c)} aria-label={"color " + c} style={{
-                      width: 34, height: 34, background: c, cursor: "pointer",
-                      border: color === c ? "2px solid var(--bone)" : "2px solid var(--ink-line)",
-                      outline: color === c ? "2px solid var(--stamp)" : "none", outlineOffset: 1,
-                    }} />
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+            )}
+            <label className="field">
+              <span className="label">Email</span>
+              <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
+            </label>
+            <label className="field">
+              <span className="label">Password</span>
+              <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                autoComplete={mode === "signup" ? "new-password" : "current-password"} required />
+              {mode === "signup" && <span className="hint">At least 8 characters.</span>}
+            </label>
 
-          {error && <div className="cl-login-err">{error}</div>}
+            {mode === "signup" && (
+              <>
+                <label className="field">
+                  <span className="label">Your name</span>
+                  <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="What the crew calls you" autoComplete="nickname" />
+                </label>
+                <fieldset className="field" style={{ border: 0, padding: 0, margin: "0 0 18px" }}>
+                  <legend className="label">Your colour on the table</legend>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    {CREW_COLORS.map((c) => (
+                      <button type="button" key={c} onClick={() => setColor(c)} aria-label={`Colour ${c}`} aria-pressed={color === c}
+                        style={{ width: 40, height: 40, borderRadius: "50%", background: c, cursor: "pointer", border: 0,
+                          boxShadow: color === c ? "0 0 0 3px #fff, 0 0 0 5.5px var(--pencil)" : "none" }} />
+                    ))}
+                  </div>
+                </fieldset>
+              </>
+            )}
 
-          <button type="submit" disabled={busy} className="cl-stamp-btn" style={{ width: "100%", justifyContent: "center", marginTop: 4 }}>
-            {busy ? "One moment…" : mode === "signin" ? "Sign in →" : "Request entry →"}
-          </button>
-        </form>
+            {error && <Slip style={{ marginBottom: 14 }}>{error}</Slip>}
 
-        <div className="cl-login-toggle">
-          {mode === "signin" ? (
-            <>Got an invitation? <button onClick={() => { setMode("signup"); setError(""); }}>Request a seat</button></>
-          ) : (
-            <>Already a member? <button onClick={() => { setMode("signin"); setError(""); }}>Sign in</button></>
-          )}
+            <button type="submit" disabled={busy} className="btn btn-primary btn-block">
+              {busy ? "One moment…" : mode === "signin" ? "Sign in" : "Create my account"}
+            </button>
+          </form>
         </div>
+
+        <p className="auth-swap">
+          {mode === "signin"
+            ? <>Got an invite code? <button type="button" className="linkbtn" onClick={() => swap("signup")}>Join with it</button></>
+            : <>Already have an account? <button type="button" className="linkbtn" onClick={() => swap("signin")}>Sign in</button></>}
+        </p>
       </div>
     </div>
   );
 }
-
-const LOGIN_CSS = `
-.cl-login-back{font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);text-decoration:none}
-.cl-login-back:hover{color:var(--bone)}
-.cl-login-head{font-family:var(--font-display);font-weight:400;text-transform:uppercase;font-size:clamp(38px,9vw,58px);line-height:.9;letter-spacing:-.01em;color:var(--bone);margin:10px 0 0}
-.cl-login-sub{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-top:10px}
-.cl-login-panel{background:var(--ink-2);border:1px solid var(--ink-line);padding:26px 24px}
-.cl-login-err{background:rgba(226,67,29,.12);border:1px solid var(--stamp);color:#f0b7a6;font-family:var(--font-mono);font-size:12px;letter-spacing:.04em;padding:10px 12px;margin-bottom:14px}
-.cl-login-toggle{text-align:center;margin-top:18px;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
-.cl-login-toggle button{background:none;border:none;color:var(--stamp);font-family:inherit;font-size:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
-`;
